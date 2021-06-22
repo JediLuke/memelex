@@ -6,11 +6,11 @@ defmodule Memex.Application do
   def start(_type, _args) do
 
     children = [
-      Memex.BootCheck,
+      Memex.BootCheck
     ]
 
     opts = [
-      name: Memex.Supervisor,
+      name: Memex.TopSupervisor,
       strategy: :one_for_one
     ]
 
