@@ -10,7 +10,7 @@ defmodule Memex.Application do
     ]
 
     opts = [
-          name: Memex.Supervisor,
+      name: Memex.Supervisor,
       strategy: :one_for_one
     ]
 
