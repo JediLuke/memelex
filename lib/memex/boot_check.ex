@@ -2,6 +2,8 @@ defmodule Memex.BootCheck do
   use GenServer
   require Logger
 
+  #@memex_environment_file "./environments/jediluke.memex-env"
+  @memex_environment_file "./environments/sample.memex-env"
 
   def start_link(params)  do
     GenServer.start_link(__MODULE__, params)
@@ -29,10 +31,11 @@ defmodule Memex.BootCheck do
 
 
   defp existing_memex_environment_detected?() do
-    "./jediluke.memex-env" |> File.exists?()
+    @memex_environment_file |> File.exists?()
   end
 
   defp load_existing_memex_environment() do
+    ##TODO get the environment name
     Logger.info "Loading `Jediluke` environment..."
     :ok
   end
