@@ -26,6 +26,7 @@ defmodule Memex.TidBit do
       backlinks: [],        # a list of all the Tidbits which link to this one
       
       caption: nil,         # the text to be displayed in a tab or button
+      meta: []              # a place to put extra data, e.g. `due_date`
   ]
 
   @doc ~s(This is here for the sake of the nice API: TidBit.new/1)
@@ -92,6 +93,11 @@ defmodule Memex.TidBit do
   def validate_type!(%{type: ["external", "textfile"]} = params) do
     params
   end
+
+  def validate_type!(%{type: :text} = params) do
+    params
+  end
+
   def validate_type!(_params) do
     raise "not a valid type" #TODO do this properly lol
   end
@@ -107,6 +113,14 @@ defmodule Memex.TidBit do
       _else ->
           raise "for external textfiles, data must be in the format: `{:filepath, \"path\"}`"
     end
+  end
+
+  def check_the_data_is_valid_for_the_given_type(%{type: :text, data: txt} = params) when is_bitstring(txt) do
+    params
+  end
+
+  def check_the_data_is_valid_for_the_given_type(%{type: type}) do
+    raise "invalid data provided for Tidbit of type: #{inspect type}"
   end
 
   def validate_tags(%{tags: tags} = params) when is_list(tags) do
