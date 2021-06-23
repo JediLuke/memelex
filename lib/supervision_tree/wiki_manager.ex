@@ -8,6 +8,7 @@ defmodule Memex.Env.WikiManager do
     GenServer.start_link(__MODULE__, params, name: Memex.Env.WikiManager)
   end
 
+  ##TODO this process should be backing up the wiki to disc
 
   def init(env) do
     Logger.info "#{__MODULE__} initializing..."
@@ -25,10 +26,14 @@ defmodule Memex.Env.WikiManager do
     {:reply, {:ok, state.wiki}, state}
   end
 
-  def handle_cast({:add_tidbit, t}, state) do
+  def handle_call({:new_tidbit, %Memex.TidBit{} = t}, _from, state) do
     new_wiki = state.wiki |> Enum.into([t])
     wiki_file(state) |> Utils.FileIO.write_maplist(new_wiki)
-    {:noreply, %{state|wiki: new_wiki}}
+    {:reply, {:ok, t}, %{state|wiki: new_wiki}}
+  end
+
+  def handle_call(:whats_the_file_we_store_passwords_in_again?, _from, state) do
+    {:reply, {:ok, "#{state["memex_directory"]}/passwords.txt"}, state}
   end
 
 
