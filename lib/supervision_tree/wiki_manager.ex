@@ -8,7 +8,7 @@ defmodule Memex.Env.WikiManager do
     GenServer.start_link(__MODULE__, params, name: Memex.Env.WikiManager)
   end
 
-  ##TODO this process should be backing up the wiki to disc
+  ##TODO this process should be backing up the wiki to disc (periodiclly?)
 
   def init(env) do
     Logger.info "#{__MODULE__} initializing..."
@@ -17,7 +17,11 @@ defmodule Memex.Env.WikiManager do
 
 
   def handle_continue(:load_wiki_from_disk, state) do
-    tidbit_list = wiki_file(state) |> Utils.FileIO.read_maplist()
+    tidbit_list =
+      wiki_file(state)
+      |> Utils.FileIO.read_maplist()
+      |> convert_to_tidbit_structs()
+
     Logger.info "#{Enum.count(tidbit_list)} TidBits loaded from the Wiki file."
     {:noreply, state |> Map.merge(%{wiki: tidbit_list})}
   end
@@ -27,7 +31,7 @@ defmodule Memex.Env.WikiManager do
   end
 
   def handle_call({:new_tidbit, %Memex.TidBit{} = t}, _from, state) do
-    new_wiki = state.wiki |> Enum.into([t])
+    new_wiki = state.wiki ++ [t]
     wiki_file(state) |> Utils.FileIO.write_maplist(new_wiki)
     {:reply, {:ok, t}, %{state|wiki: new_wiki}}
   end
@@ -39,5 +43,21 @@ defmodule Memex.Env.WikiManager do
 
   defp wiki_file(%{"memex_directory" => dir}) do
     "#{dir}/tidbit-db.json"
+  end
+
+  defp convert_to_tidbit_structs(list_of_tidbits_as_maps) do
+    list_of_tidbits_as_maps
+    |> Enum.map(
+         fn(tidbit_map_with_string_keys) ->
+              struct_params =
+                  tidbit_map_with_string_keys
+                  |> convert_to_keyword_list()
+              Kernel.struct!(Memex.TidBit, struct_params)
+         end)
+  end
+  
+  defp convert_to_keyword_list(map) do
+    # https://stackoverflow.com/questions/54616306/convert-a-map-into-a-keyword-list-in-elixir
+    map |> Keyword.new(fn {k,v} -> {String.to_existing_atom(k),v} end)
   end
 end
