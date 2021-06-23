@@ -24,6 +24,8 @@ defmodule Memex.TidBit do
       tags: [],             # a list of tags ssociated with a TidBit
       links: [],            # a list of all the linked TidBits
       backlinks: [],        # a list of all the Tidbits which link to this one
+
+      history: nil,         # each time a TidBit changes, we track the history #TODO
       
       caption: nil,         # the text to be displayed in a tab or button
       meta: []              # a place to put extra data, e.g. `due_date`
@@ -53,15 +55,14 @@ defmodule Memex.TidBit do
   end
 
   def generate_uuid(params) do
-    params
-    |> Map.merge(%{uuid: "1234"}) #TODO get the real UUID validate_links_and_backlinks
+    params |> Map.merge(%{uuid: UUID.uuid4()})
   end
 
   def title_is_valid!(%{title: t} = params) when is_bitstring(t) do
     params
   end
   def title_is_valid!(_else) do
-    raise "invalid title"
+    raise "invalid or missing title"
   end
 
   def title_is_unique!(%{title: t} = params) do
