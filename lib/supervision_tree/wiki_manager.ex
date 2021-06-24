@@ -40,6 +40,31 @@ defmodule Memex.Env.WikiManager do
     {:reply, {:ok, "#{state["memex_directory"]}/passwords.txt"}, state}
   end
 
+  def handle_call({:update_tidbit, tidbit, updates}, _from, state) do
+
+    is_this_the_tidbit_were_looking_for? =
+      fn(t) -> t.title == tidbit.title and t.uuid == tidbit.uuid end
+    
+    tidbit =
+      state.wiki |> Enum.find(is_this_the_tidbit_were_looking_for?)
+
+    if tidbit == [] do
+      {:reply, {:error, "could not find a Tidbit with title: #{inspect tidbit.title}"}, state}
+    else
+
+      updated_tidbit =
+        tidbit |> Map.merge(updates) #TODO need more validation on these updates! Could overwrite any field here right now!
+      wiki_with_old_entry_removed =
+        state.wiki |> Enum.reject(is_this_the_tidbit_were_looking_for?)
+      new_wiki =
+        wiki_with_old_entry_removed ++ [updated_tidbit]
+
+      wiki_file(state) |> Utils.FileIO.write_maplist(new_wiki)
+
+      {:reply, {:ok, updated_tidbit}, %{state|wiki: new_wiki}}
+    end
+  end
+
 
   defp wiki_file(%{"memex_directory" => dir}) do
     "#{dir}/tidbit-db.json"

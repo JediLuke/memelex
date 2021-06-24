@@ -17,4 +17,8 @@ defmodule Memex.My.Wiki do
     tidbits
   end
 
+  def update(tidbit_being_updated, updates) do
+    WikiManager |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
+  end
+
 end
