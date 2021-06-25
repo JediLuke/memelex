@@ -54,6 +54,15 @@ defmodule Memex.TidBit do
     Kernel.struct!(__MODULE__, validated_params |> convert_to_keyword_list())
   end
 
+  @doc ~s(When we need to reference a TidBit e.g. a list of TidBits, use this function to get the reference.)
+  def construct_reference(%{title: t, uuid: uuid}) do
+    %{title: t, uuid: uuid}
+  end
+
+  def construct_link(%{title: t, uuid: uuid}) do
+    "#{t}-[#{t}/#{uuid}]"
+  end
+
   def generate_uuid(params) do
     params |> Map.merge(%{uuid: UUID.uuid4()})
   end
@@ -80,7 +89,7 @@ defmodule Memex.TidBit do
   def set_created_and_creator(params) do
     Map.merge(params, %{
       creator: "JediLuke", #TODO get from current environment
-      created: "now" #TODO get real datetime
+      created: DateTime.utc_now()
     })
   end
 
