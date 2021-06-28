@@ -49,6 +49,10 @@ defmodule Memex.TidBit do
     Memex.My.Wiki.link(base_node, link_node)
   end
 
+  def add_tag(tidbit, tag) do
+    Memex.My.Wiki.add_tag(tidbit, tag)
+  end
+
 
   @doc ~s(Creates a valid %TidBit{} - does NOT save it to disc!)
   def construct(params) when is_map(params) do
@@ -65,6 +69,10 @@ defmodule Memex.TidBit do
       |> validate_tags()
 
     Kernel.struct!(__MODULE__, validated_params |> convert_to_keyword_list())
+  end
+
+  def construct(title) when is_bitstring(title) do
+    construct(%{title: title})
   end
 
   @doc ~s(When we need to reference a TidBit e.g. a list of TidBits, use this function to get the reference.)
