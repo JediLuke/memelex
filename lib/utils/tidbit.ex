@@ -41,6 +41,14 @@ defmodule Memex.TidBit do
     Memex.My.Wiki.update(tidbit, params)
   end
 
+  def find(search_term) do
+    Memex.My.Wiki.find(search_term)
+  end
+
+  def link(base_node, link_node) do
+    Memex.My.Wiki.link(base_node, link_node)
+  end
+
 
   @doc ~s(Creates a valid %TidBit{} - does NOT save it to disc!)
   def construct(params) when is_map(params) do
