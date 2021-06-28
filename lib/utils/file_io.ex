@@ -10,7 +10,7 @@ defmodule Memex.Utils.FileIO do
 
   @moduledoc ~s(Writes a map to, and even overwrites!, a file.)
   def writemap(fp, data) when is_map(data) do
-    write(fp, Jason.encode!(data))
+    write(fp, Jason.encode!(data)) #TODO how do we encode atoms? Do they come back out as atoms?? I think my atoms are becoming text during the save...
   end
 
   @moduledoc ~s(Use this function to open files which have a list of maps, e.g. TidbitDB)
@@ -21,8 +21,19 @@ defmodule Memex.Utils.FileIO do
     end
   end
 
+  def read_maplist(fp, [encrypted?: true, key: key, password: password]) when is_bitstring(fp) do
+    case File.read(fp) do
+      {:ok, ""}   -> [] # empty files == empty List
+      {:ok, data} -> data |> Jason.decode!()
+    end
+  end
+
   @moduledoc ~s(Writes a list of maps, or even overwrites!, to a file.)
   def write_maplist(fp, data) when is_bitstring(fp) and is_list(data) do
+    write(fp, Jason.encode!(data))
+  end
+
+  def write_maplist(fp, data, [encrypted?: true, key: key]) when is_bitstring(fp) and is_list(data) do
     write(fp, Jason.encode!(data))
   end
 

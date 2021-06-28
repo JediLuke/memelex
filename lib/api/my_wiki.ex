@@ -1,14 +1,17 @@
 defmodule Memex.My.Wiki do
+  @moduledoc """
+  W.I.K.I. = What I Know is...
+  """
   alias Memex.Env.WikiManager
 
-  def new(%Memex.TidBit{} = t) do
+  def new_tidbit(%Memex.TidBit{} = t) do
     WikiManager |> GenServer.call({:new_tidbit, t})
   end
 
-  def new(params) do
+  def new_tidbit(params) do
     params
     |> Memex.TidBit.construct()
-    |> new()
+    |> new_tidbit()
   end
 
   def home do
@@ -23,6 +26,14 @@ defmodule Memex.My.Wiki do
   def list do
     {:ok, tidbits} = WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
     tidbits
+  end
+
+  def list(:types) do
+    list() |> Enum.map(& &1.type) |> Enum.uniq()
+  end
+
+  def list(:tags) do
+    list() |> Enum.map(& &1.tags) |> List.flatten() |> Enum.uniq()
   end
 
   @doc ~s(Update a Tidbit.)

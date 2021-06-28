@@ -33,7 +33,12 @@ defmodule Memex.TidBit do
 
   @doc ~s(This is here for the sake of the nice API: TidBit.new/1)
   def new(params) do
-    Memex.My.Wiki.new(tidbit: params)
+    Memex.My.Wiki.new_tidbit(params)
+  end
+
+  @doc ~s(This is here for the sake of the nice API: TidBit.update/2)
+  def update(tidbit, params) do
+    Memex.My.Wiki.update(tidbit, params)
   end
 
 
@@ -108,8 +113,12 @@ defmodule Memex.TidBit do
     params
   end
 
-  def validate_type!(_params) do
-    raise "not a valid type" #TODO do this properly lol
+  def validate_type!(%{type: :person} = params) do
+    params
+  end
+
+  def validate_type!(params) do
+    params |> Map.merge(%{type: :text}) # default to :text if type isn't provided
   end
 
   def check_the_data_is_valid_for_the_given_type(%{type: {:external, :textfile}} = params) do
@@ -125,12 +134,25 @@ defmodule Memex.TidBit do
     end
   end
 
+  def check_the_data_is_valid_for_the_given_type(%{type: :person} = params) do
+    case params.data do
+      %{name: _n} ->
+         params
+      _else ->
+         raise "when adding a new person to the Wiki, the data field must be a map containing a `name` field, e.g. %{name: \"Luke\"}"
+    end
+  end
+
   def check_the_data_is_valid_for_the_given_type(%{type: :text, data: txt} = params) when is_bitstring(txt) do
     params
   end
 
-  def check_the_data_is_valid_for_the_given_type(%{type: type}) do
-    raise "invalid data provided for Tidbit of type: #{inspect type}"
+  def check_the_data_is_valid_for_the_given_type(%{type: :text, data: junk_data}) do
+    raise "invalid data provided for creating new Tidbit. #{inspect %{type: :text, data: junk_data}}"
+  end
+
+  def check_the_data_is_valid_for_the_given_type(%{type: :text} = params) do
+    params |> Map.merge(%{data: ""})
   end
 
   def validate_tags(%{tags: tags} = params) when is_list(tags) do
