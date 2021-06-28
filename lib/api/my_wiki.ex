@@ -41,8 +41,8 @@ defmodule Memex.My.Wiki do
     WikiManager |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
   end
 
-  def find(tidbit) do
-    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, tidbit})
+  def find(search_term) do
+    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, search_term})
     tidbit
   end
 
@@ -56,7 +56,7 @@ defmodule Memex.My.Wiki do
 
     # then we update each seperately - with the correct list of course!!
     WikiManager |> GenServer.call({:update_tidbit, base_node, %{links: new_base_node_links}})
-    WikiManager |> GenServer.call({:update_tidbit, link_node, %{links: new_link_node_bases}})
+    WikiManager |> GenServer.call({:update_tidbit, link_node, %{backlinks: new_link_node_bases}})
 
     :ok
   end
