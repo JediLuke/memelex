@@ -49,19 +49,36 @@ defmodule Memex.Env.WikiManager do
       state.wiki |> Enum.find(is_this_the_tidbit_were_looking_for?)
 
     if tidbit == [] do
-      {:reply, {:error, "could not find a Tidbit with title: #{inspect tidbit.title}"}, state}
+      {:reply, {:error, "could not find a Tidbit with the title: #{inspect tidbit.title}"}, state}
     else
 
       updated_tidbit =
-        tidbit |> Map.merge(updates) #TODO need more validation on these updates! Could overwrite any field here right now!
+        tidbit
+        |> Map.merge(updates) #TODO need more validation on these updates! Could overwrite any field here right now!
+        |> Map.merge(%{modified: DateTime.utc_now(), modifier: "JediLuke"}) #TODO get real values for these
+      
       wiki_with_old_entry_removed =
         state.wiki |> Enum.reject(is_this_the_tidbit_were_looking_for?)
+      
       new_wiki =
         wiki_with_old_entry_removed ++ [updated_tidbit]
 
       wiki_file(state) |> Utils.FileIO.write_maplist(new_wiki)
 
       {:reply, {:ok, updated_tidbit}, %{state|wiki: new_wiki}}
+    end
+  end
+
+  def handle_call({:find_tidbits, search_term}, _from, state) do
+    similarity_cutoff = 0.72
+    same_title? =
+      # take in a %TidBit{} and test if it's title is a lot like what we're looking for
+      fn t -> String.jaro_distance(search_term, t.title) >= similarity_cutoff end
+    tidbits = state.wiki |> Enum.find(nil, same_title?)
+    if tidbits == nil do
+      {:reply, {:error, "could not find any TidBit with a title close to: `#{inspect search_term}`"}, state}
+    else
+      {:reply, {:ok, tidbits}, state}
     end
   end
 
