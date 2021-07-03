@@ -2,12 +2,9 @@ defmodule Memex.BootCheck do
   use GenServer
   require Logger
   alias Memex.Utils
-
-  @memex_environment_file "./environments/jediluke.memex-env"
-  #@memex_environment_file "./environments/sample.memex-env"
-
+ 
   def start_link(params)  do
-    GenServer.start_link(__MODULE__, params, name: Memex.BootCheck)
+    GenServer.start_link(__MODULE__, params, name: __MODULE__)
   end
 
 
@@ -19,46 +16,51 @@ defmodule Memex.BootCheck do
 
   @impl GenServer
   def handle_continue(:check_for_memex_environment, state) do
+
     #Logger.debug "Checking for an existing Memex environment..."
-    {:ok, memex_env_map} = load_or_create_memex_environment(@memex_environment_file)
-    Logger.info "Detected `#{memex_env_map["name"]}` environment..."
-    Memex.EnvironmentSupervisor.start_link(memex_env_map)
-    {:noreply, state}
-  end
+    env = Application.get_env(:memex, :environment)
 
-
-  defp load_or_create_memex_environment(memex_environment_file) do
-    if existing_memex_environment_detected?(memex_environment_file) do
-      load_existing_memex_environment()
-    else
-      create_new_memex_environment()
+    case probe(env) do
+      :new_environment ->
+         start_new_memex(env)
+         {:noreply, state}
+      :existing_environment ->
+         load_existing_memex(env)
+         {:noreply, state}
+      :invalid_environment_config ->
+         raise "attempted to boot without a valid environment configured"
     end
   end
 
-  defp existing_memex_environment_detected?(nil), do: false
-  defp existing_memex_environment_detected?(filepath) when is_bitstring(filepath) do
-    filepath |> File.exists?()
-  end
-  defp existing_memex_environment_detected?(_else), do: false
-
-  defp load_existing_memex_environment() do
-    env_map = Utils.FileIO.readmap(@memex_environment_file)
-    {:ok, env_map}
+  def probe(%{name: name, memex_directory: dir} = env) when is_bitstring(name) and is_bitstring(dir) do
+    if File.exists?(dir) do
+      explore_memex_directory(env)
+    else
+      :new_environment
+    end
   end
 
-  defp create_new_memex_environment() do
-    Logger.debug "creating a new Memex environment..."
+  def probe(_invalid_env) do
+    :invalid_environment_config
+  end
 
-    ##TODO ideally I would like to get the User to input a name
-    #      here, unfortunately, that was tricker than I would like...
+  def explore_memex_directory(env) do
+    # look for whoami doc, check it matches the env.name
+    # look for tidbit.js
+    # look for journal directory
+    :existing_environment #TODO so right now, this just checks if the memex directory exists
+  end
 
-    raise "This branch is dead - we need to auto-generate a completely valid environment, which includes a memex_directory, so we need user input and can't really proceed."
+  def start_new_memex(env) do
+    Logger.info "No `#{env.name}` environment..."
+    Logger.info "Creating new memex directory: #{env.memex_directory}..."
 
-    new_env_map  = %{"name" => "my_env"}
-    new_env_file = "./environments/#{new_env_map["name"]}.memex-env"
+    :ok = File.mkdir_p!(env.memex_directory)
+    Memex.EnvironmentSupervisor.start_link(env)
+  end
 
-    Utils.FileIO.writemap(new_env_file, new_env_map)
-    Logger.info "Loading `#{new_env_map["name"]}` environment..."
-    {:ok, new_env_map}
+  def load_existing_memex(env) do
+    Logger.info "Detected `#{env.name}` environment..."
+    Memex.EnvironmentSupervisor.start_link(env)
   end
 end

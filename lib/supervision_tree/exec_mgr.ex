@@ -17,13 +17,11 @@ defmodule Memex.Env.ExecutiveManager do
 
   @impl GenServer
   def handle_continue(:load_memex_from_disk, state) do
-    :ok = File.mkdir_p!(state["memex_directory"])
+
+
     Memex.Env.WikiManager.start_link(state)
     {:noreply, state}
   end
 
-  defp memex_filename(%{"name" => n}) do
-    "#{n}.memex-env"
-  end
 
 end
