@@ -41,6 +41,10 @@ defmodule Memex.My.Wiki do
     WikiManager |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
   end
 
+  def add_tag(tidbit, tag) when is_bitstring(tag) do
+    WikiManager |> GenServer.call({:add_tag, tidbit, tag})
+  end
+
   def find(search_term) do
     {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, search_term})
     tidbit
@@ -60,4 +64,10 @@ defmodule Memex.My.Wiki do
 
     :ok
   end
+
+  def read_external_wiki(filepath) do #TODO WikiMap??
+    # _filepath = "/home/pi/memex/JediLuke/tidbit-db.json-backup"
+    Memex.Utils.FileIO.read_maplist(filepath)
+  end
+  
 end
