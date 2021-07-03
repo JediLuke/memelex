@@ -1,6 +1,6 @@
 defmodule Memex.Utils.FileIO do
-  
-  @moduledoc ~s(Open a file and interpret it as a Map.)
+
+  @doc ~s(Open a file and interpret it as a Map.)
   def readmap(fp) when is_bitstring(fp) do
     case File.read(fp) do
       {:ok, ""}   -> %{} # empty files == empty Map
@@ -8,27 +8,29 @@ defmodule Memex.Utils.FileIO do
     end
   end
 
-  @moduledoc ~s(Writes a map to, and even overwrites!, a file.)
+  @doc ~s(Writes a map to, and even overwrites!, a file.)
   def writemap(fp, data) when is_map(data) do
     write(fp, Jason.encode!(data)) #TODO how do we encode atoms? Do they come back out as atoms?? I think my atoms are becoming text during the save...
   end
 
-  @moduledoc ~s(Use this function to open files which have a list of maps, e.g. TidbitDB)
+  @doc ~s(Use this function to open files which have a list of maps, e.g. TidbitDB)
   def read_maplist(fp) when is_bitstring(fp) do
     case File.read(fp) do
-      {:ok, ""}   -> [] # empty files == empty List
-      {:ok, data} -> data |> Jason.decode!()
+      {:ok, ""}   ->
+        [] # empty files == empty List
+      {:ok, data} ->
+        data |> Jason.decode!() |> convert_to_structs()
     end
   end
 
   def read_maplist(fp, [encrypted?: true, key: key, password: password]) when is_bitstring(fp) do
     case File.read(fp) do
       {:ok, ""}   -> [] # empty files == empty List
-      {:ok, data} -> data |> Jason.decode!()
+      {:ok, data} -> data |> Jason.decode!() |> convert_to_structs()
     end
   end
 
-  @moduledoc ~s(Writes a list of maps, or even overwrites!, to a file.)
+  @doc ~s(Writes a list of maps, or even overwrites!, to a file.)
   def write_maplist(fp, data) when is_bitstring(fp) and is_list(data) do
     write(fp, Jason.encode!(data))
   end
@@ -42,5 +44,21 @@ defmodule Memex.Utils.FileIO do
     file
     |> IO.binwrite(data)
     |> File.close() # returns :ok
+  end
+
+  # each entry in the maplist ought to have a Struct it can map to
+  defp convert_to_structs(list_of_maps) do
+    list_of_maps
+    |> Enum.map(
+         fn(map_with_string_keys) ->
+              struct_params =
+                map_with_string_keys |> convert_to_keyword_list()
+              Kernel.struct!(struct_params[:module] |> String.to_existing_atom(), struct_params)
+         end)
+  end
+
+  defp convert_to_keyword_list(map) do
+    # https://stackoverflow.com/questions/54616306/convert-a-map-into-a-keyword-list-in-elixir
+    map |> Keyword.new(fn {k,v} -> {String.to_existing_atom(k),v} end)
   end
 end
