@@ -11,24 +11,26 @@ defmodule Memex.TidBit do
 
   defstruct [
 
-      uuid: nil,            # each tiddler has a UUID
-      title: nil,           # the unique name for this tidbit
-      data: nil,            # the body text of the tidbit
+      uuid:  nil,       # each tiddler has a UUID
+      title: nil,       # the unique name for this tidbit
+      data:  nil,       # the body text of the tidbit
 
-      modified: nil,        # The time this tidbit was last modified
-      modifier: nil,        # The name of the last person to modify this TidBit
-      created: nil,         # the date this tidbit was created
-      creator: nil,         # the name of the person who created ths TidBit
+      modified: nil,    # The time this tidbit was last modified
+      modifier: nil,    # The name of the last person to modify this TidBit
+      created:  nil,    # the date this tidbit was created
+      creator:  nil,    # the name of the person who created ths TidBit
 
-      type: nil,            # the content-type of a tidbit
-      tags: [],             # a list of tags ssociated with a TidBit
-      links: [],            # a list of all the linked TidBits
-      backlinks: [],        # a list of all the Tidbits which link to this one
+      type:      [],    # the content-type of a tidbit - a list of strings
+      tags:      [],    # a list of tags ssociated with a TidBit
+      links:     [],    # a list of all the linked TidBits
+      backlinks: [],    # a list of all the Tidbits which link to this one
 
-      history: nil,         # each time a TidBit changes, we track the history #TODO
+      history: nil,     # each time a TidBit changes, we track the history #TODO
       
-      caption: nil,         # the text to be displayed in a tab or button
-      meta: []              # a place to put extra data, e.g. `due_date`
+      caption: nil,     # the text to be displayed in a tab or button
+      meta:    [],      # a place to put extra data, e.g. `due_date`
+
+      module: __MODULE__ # this allows us to reconstruct the correct Elixir struct from the JSON text files
   ]
 
   @doc ~s(This is here for the sake of the nice API: TidBit.new/1)
@@ -39,6 +41,10 @@ defmodule Memex.TidBit do
   @doc ~s(This is here for the sake of the nice API: TidBit.update/2)
   def update(tidbit, params) do
     Memex.My.Wiki.update(tidbit, params)
+  end
+
+  def list do
+    Memex.My.Wiki.list()
   end
 
   def find(search_term) do
@@ -121,27 +127,32 @@ defmodule Memex.TidBit do
     })
   end
 
-  def validate_type!(%{type: ["external", "textfile"]} = params) do
-    params
+  def validate_type!(%{type: {:external, :textfile}} = params) do #TODO check how this gets encoded & decoded when saving it to disc
+    # convert the tuple to a list, because JSON doesn't understand tuples
+    params |> Map.merge(%{type: ["external", "textfile"]})
   end
 
-  def validate_type!(%{type: :text} = params) do
+  def validate_type!(%{type: :text} = params) do 
     params
   end
 
   def validate_type!(%{type: :person} = params) do
-    params
+    params |> Map.merge(%{type: ["person"]})
+  end
+
+  def validate_type!(%{data: %Memex.Person{} = _p} = params) do
+    params |> Map.merge(%{type: ["person"]})
   end
 
   def validate_type!(params) do
-    params |> Map.merge(%{type: :text}) # default to :text if type isn't provided
+    params |> Map.merge(%{type: ["text"]}) # default to :text if type isn't provided
   end
 
-  def check_the_data_is_valid_for_the_given_type(%{type: {:external, :textfile}} = params) do
+  def check_the_data_is_valid_for_the_given_type(%{type: ["external", "textfile"]} = params) do # external means, it's a file saved on the disc
     case params.data do
       {:filepath, fp} when is_bitstring(fp) ->
           if File.exists?(fp) do
-               params
+               params |> Map.merge(%{data: %{filepath: fp}})
           else
                raise "the filepath appears valid, but could not file a file at: #{inspect fp}"
           end
@@ -150,24 +161,24 @@ defmodule Memex.TidBit do
     end
   end
 
-  def check_the_data_is_valid_for_the_given_type(%{type: :person} = params) do
+  def check_the_data_is_valid_for_the_given_type(%{type: ["person"]} = params) do
     case params.data do
-      %{name: _n} ->
+      %Memex.Person{} ->
          params
       _else ->
-         raise "when adding a new person to the Wiki, the data field must be a map containing a `name` field, e.g. %{name: \"Luke\"}"
+         raise "when adding a new person to the Wiki, the data field must be a %Person{} struct"
     end
   end
 
-  def check_the_data_is_valid_for_the_given_type(%{type: :text, data: txt} = params) when is_bitstring(txt) do
+  def check_the_data_is_valid_for_the_given_type(%{type: ["text"], data: txt} = params) when is_bitstring(txt) do
     params
   end
 
-  def check_the_data_is_valid_for_the_given_type(%{type: :text, data: junk_data}) do
+  def check_the_data_is_valid_for_the_given_type(%{type: ["text"], data: junk_data}) do
     raise "invalid data provided for creating new Tidbit. #{inspect %{type: :text, data: junk_data}}"
   end
 
-  def check_the_data_is_valid_for_the_given_type(%{type: :text} = params) do
+  def check_the_data_is_valid_for_the_given_type(%{type: ["text"]} = params) do
     params |> Map.merge(%{data: ""})
   end
 
