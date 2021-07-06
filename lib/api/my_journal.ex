@@ -1,15 +1,13 @@
 defmodule Memex.My.Journal do
   alias Memex.Env.WikiManager
+  require Logger
 
   @doc ~s(Opens today's Journal entry, with a fresh timestamp appended.)
   def now do
     now = Memex.My.current_time()
-
-    #{:ok, todays_entry} =
-    #  find_entry(now) |> TidBit.append(journal_timestamp(now)) #TODO and update modified time
-    
-    raise "now use gedit or whatever to open todays entry"
-    #System.cmd("gedit #{}")
+    {:ok, t} = now |> find_entry()
+    #TidBit.append(t, journal_timestamp(now)) #TODO and update modified time
+    open_entry(t)
   end
 
   @doc ~s(Open today's Journal entry.)
@@ -68,8 +66,10 @@ defmodule Memex.My.Journal do
 
   @doc ~s(Makes a new Journal TidBit for a datetime, including the file for the entry itself.)
   def new_journal_tidbit(datetime) do
+    new_title = journal_page_title(datetime)
+    Logger.info "creating new Journal entry `#{new_title}`..."
     Memex.My.Wiki.new_tidbit(%{
-      title: journal_page_title(datetime),
+      title: new_title,
       type: {:external, :textfile},
       tags: ["my_journal"],
       data: {:filepath, journal_entry_filepath(datetime)}
@@ -128,6 +128,11 @@ defmodule Memex.My.Journal do
   end
 
   def open_entry(%{data: %{filepath: page}}) when is_bitstring(page) do
+    {"", 0} = System.cmd("gedit", [page]) #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
+    :ok
+  end
+
+  def open_entry(%{data: %{"filepath" => page}}) when is_bitstring(page) do
     {"", 0} = System.cmd("gedit", [page]) #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
     :ok
   end
