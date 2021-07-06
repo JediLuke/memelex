@@ -20,13 +20,27 @@ defmodule Memex.My.Journal do
   end
 
   def yesterday do
-    raise "need to implement getting yesterdays entry"
+    {:ok, t} = find_relative_page_tidbit(-1) # negative values move backwards in time
+    open_entry(t)
   end
 
   def tomorrow do
-    {:ok, t} = Memex.My.current_time() |> DateTime.add(24*60*60, :second) |> find_entry() # add 24 hours to the current time
-    {"", 0} = System.cmd("gedit", [t.data.filepath]) #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
-    :ok
+    {:ok, t} = find_relative_page_tidbit(1) # one page forward in the journal
+    open_entry(t)
+  end
+
+  def open_relative_entry(x) when is_integer(x) do
+    {:ok, t} = find_relative_page_tidbit(x)
+    open_entry(t)
+  end
+
+  @doc ~s(Open a Journal entry relative to today, e.g. open the entry for 3 days from now.)
+  def find_relative_page_tidbit(x) when is_integer(x) do
+    one_day = 24*60*60 # number of seconds in 24 hours
+    
+    Memex.My.current_time()
+    |> DateTime.add(x*one_day, :second)
+    |> find_entry()
   end
 
   # either finds, or creates, the TidBit & text file for a Journal entry
@@ -111,6 +125,11 @@ defmodule Memex.My.Journal do
     end
       
     journal_entry_file
+  end
+
+  def open_entry(%{data: %{filepath: page}}) when is_bitstring(page) do
+    {"", 0} = System.cmd("gedit", [page]) #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
+    :ok
   end
 
   def memex_directory do
