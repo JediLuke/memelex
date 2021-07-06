@@ -24,8 +24,8 @@ defmodule Memex.My.Journal do
   end
 
   def tomorrow do
-    #{:ok, t} = Memex.My.current_time() |> DateTime.add(24*60*60, :second) |> find_entry() # add 24 hours to the current time
-    #{"", 0} = System.cmd("gedit", [t.data.filepath]) #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
+    {:ok, t} = Memex.My.current_time() |> DateTime.add(24*60*60, :second) |> find_entry() # add 24 hours to the current time
+    {"", 0} = System.cmd("gedit", [t.data.filepath]) #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
     :ok
   end
 
