@@ -23,10 +23,15 @@ defmodule Memex.Utils.FileIO do
     end
   end
 
-  def read_maplist(fp, [encrypted?: true, key: key, password: password]) when is_bitstring(fp) do
+  def read_maplist(fp, [encrypted?: true, key: key]) when is_bitstring(fp) do
     case File.read(fp) do
-      {:ok, ""}   -> [] # empty files == empty List
-      {:ok, data} -> data |> Jason.decode!() |> convert_to_structs()
+      {:ok, ""}   ->
+         [] # empty files == empty List
+      {:ok, data} ->
+         data
+         |> Memex.Utils.Encryption.decrypt(key)
+         |> Jason.decode!()
+         |> convert_to_structs()
     end
   end
 
@@ -36,14 +41,16 @@ defmodule Memex.Utils.FileIO do
   end
 
   def write_maplist(fp, data, [encrypted?: true, key: key]) when is_bitstring(fp) and is_list(data) do
-    write(fp, Jason.encode!(data))
+    encrypted_data =
+      data |> Jason.encode!() |> Memex.Utils.Encryption.encrypt(key)
+
+    write(fp, encrypted_data)
   end
 
   def write(fp, data) when is_bitstring(fp) and is_binary(data) do
     {:ok, file} = File.open(fp, [:write])
-    file
-    |> IO.binwrite(data)
-    |> File.close() # returns :ok
+    file |> IO.binwrite(data)
+    File.close(file) # returns :ok
   end
 
   # each entry in the maplist ought to have a Struct it can map to
@@ -59,6 +66,6 @@ defmodule Memex.Utils.FileIO do
 
   defp convert_to_keyword_list(map) do
     # https://stackoverflow.com/questions/54616306/convert-a-map-into-a-keyword-list-in-elixir
-    map |> Keyword.new(fn {k,v} -> {String.to_existing_atom(k),v} end)
+    map |> Keyword.new(fn {k,v} -> {String.to_atom(k),v} end) #TODO figure out how to use `to_existing_atom` here (maybe? Maybe not worth it? just don't blow up the atom table :D)
   end
 end
