@@ -13,8 +13,7 @@ defmodule Memex.My.Journal do
   @doc ~s(Open today's Journal entry.)
   def today() do
     {:ok, t} = Memex.My.current_time() |> find_entry()
-    {"", 0} = System.cmd("gedit", [t.data.filepath]) #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
-    :ok
+    open_entry(t)
   end
 
   def yesterday do
