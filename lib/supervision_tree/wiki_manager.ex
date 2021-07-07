@@ -5,7 +5,7 @@ defmodule Memex.Env.WikiManager do
 
 
   def start_link(params)  do
-    GenServer.start_link(__MODULE__, params, name: Memex.Env.WikiManager)
+    GenServer.start_link(__MODULE__, params, name: __MODULE__)
   end
 
   ##TODO this process should be backing up the wiki to disc (periodiclly?)

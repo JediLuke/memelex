@@ -17,11 +17,9 @@ defmodule Memex.Env.ExecutiveManager do
 
   @impl GenServer
   def handle_continue(:load_memex_from_disk, state) do
-
-
     Memex.Env.WikiManager.start_link(state)
+    Memex.Env.PasswordManager.start_link(state)
     {:noreply, state}
   end
-
 
 end
