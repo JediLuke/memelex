@@ -61,7 +61,23 @@ defmodule Memex.Utils.FileIO do
               struct_params =
                 map_with_string_keys |> convert_to_keyword_list()
               Kernel.struct!(struct_params[:module] |> String.to_existing_atom(), struct_params)
-         end)
+         end 
+         )
+    |> Enum.map(
+         fn
+           %Memex.TidBit{}  = t ->
+                # if the TidBit contains a Struct in it's data field, we want to reconstruct it here 
+                case t.data do
+                  %{"module" => m} ->
+                      new_data = Kernel.struct!(m |> String.to_existing_atom(), t.data |> convert_to_keyword_list())
+                      t |> Map.merge(%{data: new_data})
+                  _else ->
+                      t
+                end
+           %Memex.Password{} = p ->
+                p
+         end
+         )
   end
 
   defp convert_to_keyword_list(map) do
