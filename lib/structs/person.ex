@@ -5,6 +5,8 @@ defmodule Memex.Person do
 
   @enforce_keys [:uuid]
 
+  @derive Jason.Encoder
+
   defstruct [
 
       uuid:     nil,   # each tiddler has a UUID
