@@ -22,8 +22,8 @@ defmodule Memex.BootCheck do
 
     case probe(env) do
       :new_environment ->
-         start_new_memex(env)
-         {:noreply, state}
+         # changing this to raise because otherwise we might make some weird directories on peoples Windows boxes :D
+         raise "Could not detect a Memex directory: #{inspect env.memex_directory}"
       :existing_environment ->
          load_existing_memex(env)
          {:noreply, state}
