@@ -14,9 +14,13 @@ defmodule Memex.Utils.DBMaintenance do
            Memex.My.Wiki.update(tidbit, %{type: [t]})
          %Memex.TidBit{type: l} when is_list(l) ->
            :ok # do nothing
-         %Memex.TidBit{type: other} = tidbit ->
+         %Memex.TidBit{type: _other} = tidbit ->
            raise "A very weird type was discovered on the TidBit: #{inspect tidbit.title}"
        end)
+
+    # last check...
+    Memex.My.Wiki.list()
+    |> Enum.each(fn tidbit -> if not is_list(tidbit.type), do: raise "One TidBit is not a list type!" end)
   end
 
 end
