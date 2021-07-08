@@ -117,13 +117,31 @@ defmodule Memex.Env.WikiManager do
     end
   end
 
-  def handle_call({:find_tidbits, search_term}, _from, state) do
+  def handle_call({:find_tidbits, {:uuid, search_uuid}}, _from, state) do
+    tidbit = state.wiki |> Enum.find(:not_found, fn t -> t.uuid == search_uuid end)
+    if tidbit == :not_found do
+      {:reply, {:error, "could not find any TidBit with a this UUID"}, state}
+    else
+      {:reply, {:ok, tidbit}, state}
+    end
+  end
+
+  def handle_call({:find_tidbits, {:tagged, search_tag}}, _from, state) when is_binary(search_tag) do
+    tidbits = state.wiki |> Enum.filter(fn t -> t.tags |> Enum.member?(search_tag) end)
+    if tidbits == :not_found do
+      {:reply, {:error, "could not find any TidBit with a this UUID"}, state}
+    else
+      {:reply, {:ok, tidbits}, state}
+    end
+  end
+
+  def handle_call({:find_tidbits, search_term}, _from, state) when is_binary(search_term) do
     similarity_cutoff = 0.72
     same_title? =
       # take in a %TidBit{} and test if it's title is a lot like what we're looking for
       fn t -> String.jaro_distance(search_term, t.title) >= similarity_cutoff end
-    tidbits = state.wiki |> Enum.find(nil, same_title?)
-    if tidbits == nil do
+    tidbits = state.wiki |> Enum.find(:not_found, same_title?)
+    if tidbits == :not_found do
       {:reply, {:error, "could not find any TidBit with a title close to: `#{inspect search_term}`"}, state}
     else
       {:reply, {:ok, tidbits}, state}

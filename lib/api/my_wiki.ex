@@ -36,7 +36,17 @@ defmodule Memex.My.Wiki do
     list() |> Enum.map(& &1.tags) |> List.flatten() |> Enum.uniq()
   end
 
-  def find(search_term) do
+  def find(uuid: uuid) do
+    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, {:uuid, uuid}})
+    tidbit
+  end
+
+  def find(tagged: tag) when is_binary(tag) do
+    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, {:tagged, tag}})
+    tidbit
+  end
+
+  def find(search_term) when is_binary(search_term) do
     {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, search_term})
     tidbit
   end
