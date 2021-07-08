@@ -9,6 +9,8 @@ defmodule Memex.TidRef do
 
   @enforce_keys [:uuid, :title]
 
+  @derive Jason.Encoder
+
   defstruct [
 
       uuid:   nil,         # each tiddler has a UUID
