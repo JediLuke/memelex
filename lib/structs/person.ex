@@ -11,6 +11,7 @@ defmodule Memex.Person do
 
       uuid:     nil,   # each tiddler has a UUID
       name:     nil,   # The persons name, where the full name is an ordered-list of words e.g. ["Napoléon", "Bonaparte"]
+      nickname: nil,   # Same as above, list any nicknames
       dob:      nil,   # D.O.B. = Date of Birth. The day the person was born
       birthday: nil,   # The persons birthday
       contacts: [],    # a list of all the contacts I have for a person, e.g. [email: "mail@mail.co", phone: 123456]
