@@ -36,6 +36,11 @@ defmodule Memex.My.Wiki do
     list() |> Enum.map(& &1.tags) |> List.flatten() |> Enum.uniq()
   end
 
+  def find(search_term) do
+    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, search_term})
+    tidbit
+  end
+
   @doc ~s(Update a Tidbit.)
   def update(tidbit_being_updated, updates) do
     WikiManager |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
@@ -43,11 +48,6 @@ defmodule Memex.My.Wiki do
 
   def add_tag(tidbit, tag) when is_bitstring(tag) do
     WikiManager |> GenServer.call({:add_tag, tidbit, tag})
-  end
-
-  def find(search_term) do
-    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, search_term})
-    tidbit
   end
 
   @doc ~s(Create a link between two TidBits.)
@@ -65,9 +65,7 @@ defmodule Memex.My.Wiki do
     :ok
   end
 
-  def read_external_wiki(filepath) do #TODO WikiMap??
-    # _filepath = "/home/pi/memex/JediLuke/tidbit-db.json-backup"
-    Memex.Utils.FileIO.read_maplist(filepath)
+  def delete(tidbit) do
+    WikiManager |> GenServer.call({:delete_tidbit, tidbit})
   end
-  
 end

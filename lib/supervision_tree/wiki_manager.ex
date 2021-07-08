@@ -36,12 +36,19 @@ defmodule Memex.Env.WikiManager do
 
   def handle_call(:can_i_get_a_list_of_all_tidbits_plz, _from, state) do
     {:reply, {:ok, state.wiki}, state}
-  end
+  end 
 
   def handle_call({:new_tidbit, %Memex.TidBit{} = t}, _from, state) do
-    new_wiki = state.wiki ++ [t]
-    wiki_file(state) |> Utils.FileIO.write_maplist(new_wiki)
-    {:reply, {:ok, t}, %{state|wiki: new_wiki}}
+    title_already_exists? =
+      state.wiki |> Enum.any?(fn tidbit -> tidbit.title == t.title end)
+
+    if title_already_exists? do
+      {:reply, {:error, "this tidbit already exists"}, state}
+    else
+      new_wiki = state.wiki ++ [t]
+      wiki_file(state) |> Utils.FileIO.write_maplist(new_wiki)
+      {:reply, {:ok, t}, %{state|wiki: new_wiki}}
+    end
   end
 
   def handle_call(:whats_the_current_memex_directory?, _from, state) do
@@ -122,6 +129,13 @@ defmodule Memex.Env.WikiManager do
       {:reply, {:ok, tidbits}, state}
     end
   end
+
+  def handle_call({:delete_tidbit, %{uuid: uuid_to_be_deleted}}, _from, state) do
+    new_wiki = state.wiki |> Enum.filter(& &1.uuid != uuid_to_be_deleted)
+    wiki_file(state) |> Utils.FileIO.write_maplist(new_wiki)
+    {:reply, :ok, %{state|wiki: new_wiki}}
+  end
+
 
 
   defp wiki_file(%{memex_directory: dir}) do
