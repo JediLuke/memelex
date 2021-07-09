@@ -6,32 +6,33 @@ defmodule Memex.My.Journal do
   def now do
     now = Memex.My.current_time()
     {:ok, t} = now |> find_entry()
+    Logger.warn "#TODO we should be appending a timestamp here..."
     #TidBit.append(t, journal_timestamp(now)) #TODO and update modified time
-    open_entry(t)
+    open(t)
   end
 
   @doc ~s(Open today's Journal entry.)
   def today() do
     {:ok, t} = Memex.My.current_time() |> find_entry()
-    open_entry(t)
+    open(t)
   end
 
   def yesterday do
     {:ok, t} = find_relative_page_tidbit(-1) # negative values move backwards in time
-    open_entry(t)
+    open(t)
   end
 
   def tomorrow do
     {:ok, t} = find_relative_page_tidbit(1) # one page forward in the journal
-    open_entry(t)
+    open(t)
   end
 
   def open_relative_entry(x) when is_integer(x) do
     {:ok, t} = find_relative_page_tidbit(x)
-    open_entry(t)
+    open(t)
   end
 
-  @doc ~s(Open a Journal entry relative to today, e.g. open the entry for 3 days from now.)
+  @doc ~s(Open a Journal entry relative to today, e.g. open the entry for 3 days ago with `-3`.)
   def find_relative_page_tidbit(x) when is_integer(x) do
     one_day = 24*60*60 # number of seconds in 24 hours
     
@@ -126,12 +127,20 @@ defmodule Memex.My.Journal do
     journal_entry_file
   end
 
-  def open_entry(%{data: %{filepath: page}}) when is_bitstring(page) do
-    {"", 0} = System.cmd("gedit", [page]) #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
+  # this is here so that if we use something like Journal.find,
+  # which returns an ok tuple, we can pipe right into Journal.open
+  def open({:ok, params}) do
+    open(params)
+  end
+
+  def open(%{data: %{filepath: page}}) when is_bitstring(page) do
+    #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
+    #NOTE: Sometimes this happens, sometimes it doesnt...
+    {"", 0} = System.cmd("gedit", [page]) 
     :ok
   end
 
-  def open_entry(%{data: %{"filepath" => page}}) when is_bitstring(page) do
+  def open(%{data: %{"filepath" => page}}) when is_bitstring(page) do
     {"", 0} = System.cmd("gedit", [page]) #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
     :ok
   end
