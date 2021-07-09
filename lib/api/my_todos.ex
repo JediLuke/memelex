@@ -32,6 +32,11 @@ defmodule Memex.My.TODOs do
     new(%{title: title, tags: tlist})
   end
 
+  # I have gone to type this a few times, so just make it available and call new/1
+  def add(params) do
+    new(params)
+  end
+
   @doc ~s(Fetch the whole list of TODOs)
   def list do
 
