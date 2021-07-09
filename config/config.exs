@@ -35,3 +35,6 @@ config :memex,
     name: "JediLuke",
     memex_directory: "/home/pi/memex/JediLuke"
   }
+
+config :elixir,
+  :time_zone_database, Tzdata.TimeZoneDatabase

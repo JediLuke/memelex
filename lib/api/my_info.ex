@@ -1,19 +1,19 @@
 defmodule Memex.My do
   require Logger
 
+  #TODO so, this should be calling ExecMgr, which opens whoami.txt...
+
   def current_time do
-    Logger.warn "We aren't checking the TimeZone in the Memex!!"
-    #DateTime.now!("America/Chicago") #TODO update to elixir v1.12
-    DateTime.utc_now()
+    timezone() |> DateTime.now!()
   end
 
-  def nickname do #TODO this should go find it in a real TidBit!
-    "JediLuke"
+  def nickname do
+    "JediLuke" #TODO this should go find it in a real TidBit!
   end
 
-  #def timezone do
-  #  tx |> DateTime.now!()
-  #end
+  def timezone do
+    "America/Chicago" #TODO get timezone from Memex
+  end
 
   def find_info_tiddler do
     raise "the idea is, all my info is in one tiddler, which is a map"
