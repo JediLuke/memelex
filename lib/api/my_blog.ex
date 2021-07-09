@@ -8,13 +8,13 @@ defmodule Memex.My.Blog do
   def new_idea(%{tags: tlist} = params) when is_list(tlist) do
     validate_tag_list!(tlist)
     params
-    |> Map.merge(%{tags: tlist ++ ["my_blog", "idea"]})
+    |> Map.merge(%{tags: tlist ++ ["my_blog", "ideas"]})
     |> Memex.My.Wiki.new_tidbit()
   end
 
   def new_idea(params) when is_map(params) do
     params
-    |> Map.merge(%{tags: ["my_blog", "idea"]})
+    |> Map.merge(%{tags: ["my_blog", "ideas"]})
     |> Memex.My.Wiki.new_tidbit()
   end
 
@@ -28,7 +28,7 @@ defmodule Memex.My.Blog do
         fn(tidbit) ->
           tidbit.tags |> Enum.member?("my_blog")
             and
-          tidbit.tags |> Enum.member?("idea")
+          tidbit.tags |> Enum.member?("ideas")
         end)
   end
 
