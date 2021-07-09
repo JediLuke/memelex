@@ -7,6 +7,8 @@ defmodule Memex.My.TODOs do
     %{params|tags: [tag]} |> new()
   end
 
+  #TODO we need to incorporate something like priority, or due date
+
   def new(%{tags: tlist} = params) when is_list(tlist) do
     validate_tag_list!(tlist)
     params
@@ -36,13 +38,26 @@ defmodule Memex.My.TODOs do
     {:ok, tidbits} =
       WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
 
-    if tidbits == [] do
-      []
-    else
-      # this filtering function is used to find tidbits tagged with "#TODO"
-      only_todos = fn(tidbit) -> tidbit.tags |> Enum.member?("#TODO") end
-      tidbits |> Enum.filter(only_todos)
-    end
+
+    #TODO check this works even with an empty TidBit list
+    # this filtering function is used to find tidbits tagged with "#TODO"
+    only_todos = fn(tidbit) -> tidbit.tags |> Enum.member?("#TODO") end
+    tidbits |> Enum.filter(only_todos)
+  end
+
+  def random do
+    {:ok, tidbits} =
+      WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
+    
+    only_todos = fn(tidbit) -> tidbit.tags |> Enum.member?("#TODO") end
+    
+    tidbits
+    |> Enum.filter(only_todos)
+    |> Enum.random()
+  end
+
+  def mark_complete(%{uuid: uuid}) do
+    raise "can't mark TODOs as complete yet"
   end
   
   def validate_tag_list!([]) do
