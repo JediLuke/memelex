@@ -63,14 +63,15 @@ defmodule Memex.TidBit do
   @doc ~s(Creates a valid %TidBit{} - does NOT save it to disc!)
   def construct(params) when is_map(params) do
 
+    #TODO move this into its own function so WIkiManager can use it
     validated_params =
       params
       |> generate_uuid()
       |> title_is_valid!()
-      |> title_is_unique!()
       |> set_created_and_creator()
       |> set_modified_and_modifier()
       |> validate_type!()
+      |> enforce_type_field_is_a_list!()
       |> check_the_data_is_valid_for_the_given_type()
       |> validate_tags()
 
@@ -101,18 +102,6 @@ defmodule Memex.TidBit do
     raise "invalid or missing title"
   end
 
-  def title_is_unique!(%{title: t} = params) do
-    title_already_exists? =
-      Memex.My.Wiki.list()
-      |> Enum.any?(fn tidbit -> tidbit.title == t end)
-
-    if title_already_exists? do
-      raise "title already exists"
-    else
-      params
-    end
-  end
-
   def set_created_and_creator(params) do
     Map.merge(params, %{
       creator: "JediLuke", #TODO get from current environment
@@ -127,25 +116,33 @@ defmodule Memex.TidBit do
     })
   end
 
-  def validate_type!(%{type: {:external, :textfile}} = params) do #TODO check how this gets encoded & decoded when saving it to disc
+  def validate_type!(%{type: ["external", "textfile"]} = params) do
+    params
+  end
+
+  def validate_type!(%{type: {:external, :textfile}} = params) do
     # convert the tuple to a list, because JSON doesn't understand tuples
     params |> Map.merge(%{type: ["external", "textfile"]})
   end
 
-  def validate_type!(%{type: :text} = params) do 
-    params
+  def validate_type!(%{type: t} = params) when t in [:text, "text"] do 
+    params |> Map.merge(%{type: ["text"]})
   end
 
-  def validate_type!(%{type: :person} = params) do
-    params |> Map.merge(%{type: ["person"]})
-  end
-
-  def validate_type!(%{data: %Memex.Person{} = _p} = params) do
+  def validate_type!(%{type: p} = params) when p in [:person, "person"] do
     params |> Map.merge(%{type: ["person"]})
   end
 
   def validate_type!(params) do
-    params |> Map.merge(%{type: ["text"]}) # default to :text if type isn't provided
+    params |> Map.merge(%{type: ["text"]}) # default to simple text TidBit if type isn't provided
+  end
+
+  def enforce_type_field_is_a_list!(%{type: [t|_rest]} = params) when is_bitstring(t) do
+    params
+  end
+
+  def enforce_type_field_is_a_list!(%{type: _t}) do
+    raise "type field must be a list of strings"
   end
 
   def check_the_data_is_valid_for_the_given_type(%{type: ["external", "textfile"]} = params) do # external means, it's a file saved on the disc
@@ -194,7 +191,7 @@ defmodule Memex.TidBit do
     params
   end
 
-  def convert_to_keyword_list(map) do
+  defp convert_to_keyword_list(map) do
     # https://stackoverflow.com/questions/54616306/convert-a-map-into-a-keyword-list-in-elixir
     map |> Keyword.new(fn {k,v} -> {k,v} end) # keys are already atoms
   end
