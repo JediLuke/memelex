@@ -3,12 +3,13 @@ defmodule Memex.Password do
   A struct for passwords.
   """
 
-  @enforce_keys [:label, :password]
+  @enforce_keys [:uuid, :label, :password]
 
   @derive Jason.Encoder
 
   defstruct [
 
+      uuid:      nil,          # The UUID for this password
       label:     nil,          # How we describe this password, e.g. "DigitalOcean"
       username:  nil,          # The username associated with this password (if applicable)
       password:  nil,          # The password field goes in here
@@ -26,11 +27,16 @@ defmodule Memex.Password do
 
     validated_params =
       params
+      |> generate_uuid()
       |> label_is_valid!()
       |> password_is_valid!()
       |> validate_tags()
 
     Kernel.struct!(__MODULE__, validated_params |> convert_to_keyword_list())
+  end
+
+  def generate_uuid(params) do
+    params |> Map.merge(%{uuid: UUID.uuid4()})
   end
 
   def label_is_valid!(%{label: l} = params) when is_bitstring(l) do
