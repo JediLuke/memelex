@@ -5,6 +5,8 @@ defmodule Memex.Application do
 
   def start(_type, _args) do
 
+    IO.puts "Starting Memex application..."
+
     children = [
       Memex.BootCheck
     ]

@@ -16,8 +16,7 @@ defmodule Memex.BootCheck do
 
   @impl GenServer
   def handle_continue(:check_for_memex_environment, state) do
-
-    #Logger.debug "Checking for an existing Memex environment..."
+    
     env = Application.get_env(:memex, :environment)
 
     case probe(env) do
@@ -32,12 +31,13 @@ defmodule Memex.BootCheck do
     end
   end
 
-  def probe(%{name: name, memex_directory: dir} = env) when is_bitstring(name) and is_bitstring(dir) do
-    if File.exists?(dir) do
-      explore_memex_directory(env)
-    else
-      :new_environment
-    end
+  def probe(%{name: name, memex_directory: dir} = env)
+    when is_bitstring(name) and is_bitstring(dir) do
+      if File.exists?(dir) do
+        explore_memex_directory(env)
+      else
+        :new_environment
+      end
   end
 
   def probe(_invalid_env) do

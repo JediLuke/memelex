@@ -4,8 +4,8 @@ defmodule Memex.MixProject do
   def project do
     [
       app: :memex,
-      version: "0.1.0",
-      elixir: "~> 1.7",
+      version: "0.0.1-" <> "#{Mix.env()}-" <> git_commit_hash(),
+      elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -27,4 +27,10 @@ defmodule Memex.MixProject do
       {:tzdata, "~> 1.0.4"},
     ]
   end
+
+  def git_commit_hash() do
+    {sha_hash, 0} = System.cmd("git", ["rev-parse", "--short", "HEAD"])
+    sha_hash |> String.trim()
+  end
+
 end
