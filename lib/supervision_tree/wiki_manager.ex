@@ -55,6 +55,10 @@ defmodule Memex.Env.WikiManager do
     {:reply, {:ok, state.memex_directory}, state}
   end
 
+    def handle_call(:whats_the_current_backups_directory?, _from, state) do
+    {:reply, {:ok, state.backups_directory}, state}
+  end
+
   def handle_call(:whats_the_file_we_store_passwords_in_again?, _from, state) do
     {:reply, {:ok, "#{state.memex_directory}/passwords.txt"}, state}
   end

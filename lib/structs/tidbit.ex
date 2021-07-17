@@ -21,7 +21,7 @@ defmodule Memex.TidBit do
       creator:  nil,    # the name of the person who created ths TidBit
 
       type:      [],    # the content-type of a tidbit - a list of strings
-      tags:      [],    # a list of tags ssociated with a TidBit
+      tags:      [],    # a list of tags associated with a TidBit
       links:     [],    # a list of all the linked TidBits
       backlinks: [],    # a list of all the Tidbits which link to this one
 
