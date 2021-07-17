@@ -9,7 +9,8 @@ defmodule Memex.EnvironmentSupervisor do
   def init(env_map) do
 
     children = [
-      {Memex.Env.ExecutiveManager, env_map}
+      {Memex.Env.ExecutiveManager, env_map},
+      Memex.MoneyPenny
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
