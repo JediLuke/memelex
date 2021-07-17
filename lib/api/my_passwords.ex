@@ -25,4 +25,8 @@ defmodule Memex.My.Passwords do
     passwords
   end
 
+  def update(password, updates) do
+    GenServer.call(PasswordManager, {:update_password, password, updates})
+  end
+
 end

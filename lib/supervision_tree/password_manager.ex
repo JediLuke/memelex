@@ -50,8 +50,31 @@ defmodule Memex.Env.PasswordManager do
     end
   end
 
-  def handle_call({:update_password, password, updates}, _from, state) do
-    raise "Can't update a password yet!"
+  def handle_call({:update_password, password, updates}, _from, state) when is_struct(password) do
+
+    is_this_the_password_were_looking_for? =
+      fn(p) -> (p.label == password.label) and (p.uuid == password.uuid) end
+
+    password =
+      state.passwords |> Enum.find(:not_found, is_this_the_password_were_looking_for?)
+
+    if password == :not_found do
+      {:reply, {:error, "password not found"}, state}
+    else
+
+      updated_password = password |> Map.merge(updates) #TODO need more validation on these updates! Could overwrite any field here right now!
+
+      passwords_list_with_old_password_removed =
+        state.passwords |> Enum.reject(is_this_the_password_were_looking_for?)
+      
+      new_passwords_list =
+        passwords_list_with_old_password_removed ++ [updated_password]
+
+      passwords_file(state)
+      |> Utils.FileIO.write_maplist(new_passwords_list, encrypted?: true, key: secret_key())
+
+      {:reply, :ok, %{state|passwords: new_passwords_list |> redact_raw_passwords()}}
+    end
   end
 
   def handle_call({:delete_password, pword}, _from, state) do

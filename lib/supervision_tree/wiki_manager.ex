@@ -69,9 +69,9 @@ defmodule Memex.Env.WikiManager do
       fn(t) -> t.title == tidbit.title and t.uuid == tidbit.uuid end
     
     tidbit =
-      state.wiki |> Enum.find(is_this_the_tidbit_were_looking_for?)
+      state.wiki |> Enum.find(:not_found, is_this_the_tidbit_were_looking_for?)
 
-    if tidbit == [] do
+    if tidbit == :not_found do
       {:reply, {:error, "could not find a Tidbit with the title: #{inspect tidbit.title}"}, state}
     else
 
