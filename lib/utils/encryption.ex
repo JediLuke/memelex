@@ -14,6 +14,11 @@ defmodule Memex.Utils.Encryption do
 
   @iv_length 32
 
+  def generate_password(x) do
+    :crypto.strong_rand_bytes(x)
+    |> :base64.encode
+  end
+
   def generate_secret_key do
     :crypto.strong_rand_bytes(16)
     |> :base64.encode
