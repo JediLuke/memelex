@@ -4,6 +4,8 @@ defmodule Memex.Env.PasswordManager do
   alias Memex.Utils
 
 
+  @redacted "***********"
+
   def start_link(params)  do
     GenServer.start_link(__MODULE__, params, name: __MODULE__)
   end
@@ -16,113 +18,127 @@ defmodule Memex.Env.PasswordManager do
 
 
   def handle_continue(:open_passwords_file, state) do
+
     if not File.exists?(passwords_file(state)) do
       Logger.warn "could not find a Passwords file for this environment. Creating one now..."
       passwords_file(state)
       |> Utils.FileIO.write_maplist([], encrypted?: true, key: secret_key()) # write an empty list to the file
     end
 
-    password_list = fetch_passwords_list(state, secret_key())
+    init_state =
+      state
+      |> Map.merge(%{passwords: []})
+      |> refetch_passwords()
 
     Logger.info "PasswordManager successfully loaded passwords from disc."
-    {:noreply, state |> Map.merge(%{passwords: password_list})}
+    {:noreply, init_state}
   end
 
   def handle_call(:list_passwords, _from, state) do
     {:reply, {:ok, state.passwords}, state}
   end
 
-  def handle_call({:new_password, %Memex.Password{} = pword}, _from, state) do
-    :ok = write_new_password_to_disc(state, pword)
-    {:reply, :ok, %{state|passwords: fetch_passwords_list(state, secret_key())}} # just re-fetch the list for now...
+  def handle_call({:new_password, password}, _from, state) do
+    write_new_password({state, secret_key()}, password)
+    {:reply, :ok, state |> refetch_passwords()} # just re-fetch the list for now...
   end
 
-  def handle_call({:find_unredacted_password, search_term}, _from, state) do
-    similarity_cutoff = 0.72
-    same_label? =
-      fn p -> String.jaro_distance(search_term, p.label) >= similarity_cutoff end
-    password = state.passwords |> Enum.find(:no_password_found, same_label?)
-    if password == :no_password_found do
-      {:reply, {:error, "could not find any passwords with a label close to: `#{inspect search_term}`"}, state}
+  def handle_call({:find_unredacted_password, %Memex.Password{} = password}, _from, state) do
+    if password = password_exists?(password, state) do
+      {:reply, {:ok, find_unredacted(password, state)}, state}
     else
-      unredacted_password = find_unredacted(password, state)
-      {:reply, {:ok, unredacted_password}, state}
+      {:reply, {:error, "password not found"}, state}
     end
   end
 
   def handle_call({:update_password, password, updates}, _from, state) when is_struct(password) do
-
-    is_this_the_password_were_looking_for? =
-      fn(p) -> (p.label == password.label) and (p.uuid == password.uuid) end
-
-    password =
-      state.passwords |> Enum.find(:not_found, is_this_the_password_were_looking_for?)
-
-    if password == :not_found do
-      {:reply, {:error, "password not found"}, state}
+    if password = password_exists?(password, state) do
+      case overwrite_existing_password({state, secret_key()}, password, updates) do
+        :ok    -> {:reply, :ok, state |> refetch_passwords()}
+        :error -> {:reply, :error, state}
+      end
     else
-
-      updated_password = password |> Map.merge(updates) #TODO need more validation on these updates! Could overwrite any field here right now!
-
-      passwords_list_with_old_password_removed =
-        state.passwords |> Enum.reject(is_this_the_password_were_looking_for?)
-      
-      new_passwords_list =
-        passwords_list_with_old_password_removed ++ [updated_password]
-
-      passwords_file(state)
-      |> Utils.FileIO.write_maplist(new_passwords_list, encrypted?: true, key: secret_key())
-
-      {:reply, :ok, %{state|passwords: new_passwords_list |> redact_raw_passwords()}}
+      {:reply, {:error, "password not found"}, state}
     end
   end
+
+
+
+
+
+
 
   def handle_call({:delete_password, pword}, _from, state) do
     raise "Can't delete passwords yet"
   end
 
-  defp fetch_passwords_list(state, key) do
-    passwords_file(state)
-    |> Utils.FileIO.read_maplist(encrypted?: true, key: key)
-    |> redact_raw_passwords() # dont keep unencrypted passwords in memory...
-  end
-
-  # strip out the raw passwords the list, so only the labels & other data remain
-  # we don't want to keep unencrypted passwords in memory...
-  defp redact_raw_passwords(passwords_list) do
-    passwords_list
-    |> Enum.map(fn pword -> pword |> Map.replace!(:password, "***********") end)
-  end
-
-  defp find_unredacted(password, state) do
-    all_unredacted_passwords = 
-      passwords_file(state)
-      |> Utils.FileIO.read_maplist(encrypted?: true, key: secret_key())
-
-    all_unredacted_passwords
-    |> Enum.find({:error, "could not find password with title `#{password.label}` in the unredacted password list."},
-         fn p -> 
-           p.label == password.label
-         end)
-  end
-
-  defp write_new_password_to_disc(state, new_password) do
-    all_unredacted_passwords =
-      passwords_file(state)
-      |> Utils.FileIO.read_maplist(encrypted?: true, key: secret_key())
-    
-    new_passwords = all_unredacted_passwords ++ [new_password]
-
-    passwords_file(state)
-    |> Utils.FileIO.write_maplist(new_passwords, encrypted?: true, key: secret_key())
-  end
   
-  defp passwords_file(%{memex_directory: dir}) do
+  
+  def passwords_file(%{memex_directory: dir}) do
     "#{dir}/passwords.json"
   end
 
+  # returns false if it does not exist, returns the password if it does exist
+  def password_exists?(%{uuid: uuid, label: label}, %{passwords: passwords}) do
+    passwords |> Enum.find(false, & &1.uuid == uuid and &1.label == label)
+  end
+
+  def find_unredacted(%{uuid: uuid, label: label}, state) do
+    passwords_file(state)
+    |> Utils.FileIO.read_maplist(encrypted?: true, key: secret_key())
+    |> Enum.find(& &1.uuid == uuid and &1.label == label)
+  end
+
+
+  def write_new_password({state, key}, %Memex.Password{} = password) do
+    #NOTE - it's important here that we go and fetch the data directly from disc
+    #       and then overwrite that data - this way, we cant accidentally corrupt the
+    #       disc data by using the PasswordManager state (this actually happened...)
+    new_passwords_list =
+      passwords_file(state)
+      |> Utils.FileIO.read_maplist(encrypted?: true, key: secret_key())
+      |> Enum.concat([password])
+
+    passwords_file(state)
+    |> Utils.FileIO.write_maplist(new_passwords_list,
+                                  encrypted?: true, key: secret_key())
+  end
+
+  def overwrite_existing_password(_state, password, %{password: @redacted}) do
+    raise "we are attempting to overwrite a password with invalid data!! #{inspect password}"
+  end
+
+  def overwrite_existing_password({state, key}, %Memex.Password{label: label, uuid: uuid} = password, updates) do
+    #NOTE - it's important here that we go and fetch the data directly from disc
+    #       and then overwrite that data - this way, we cant accidentally corrupt the
+    #       disc data by using the PasswordManager state (this actually happened...)
+    new_passwords_list =
+      passwords_file(state)
+      |> Utils.FileIO.read_maplist(encrypted?: true, key: key)
+      |> Enum.reject(& &1.uuid == uuid and &1.label == label)
+      |> Enum.concat([password |> Map.merge(updates)]) #TODO this could still be more secure... we could try & use the pipeline in Password struct
+
+    passwords_file(state)
+    |> Utils.FileIO.write_maplist(new_passwords_list,
+                                  encrypted?: true, key: secret_key())
+  end
+
+
+
+  defp refetch_passwords(state) do
+    %{state|passwords: fetch_redacted_passwords_from_disc(state, secret_key())}
+  end
+
+  defp fetch_redacted_passwords_from_disc(state, key) do
+    passwords_file(state)
+    |> Utils.FileIO.read_maplist(encrypted?: true, key: key)
+    |> Enum.map(fn pword -> pword |> Map.replace!(:password, @redacted) end) # dont keep unencrypted passwords in memory...
+  end
+
+
+
   defp secret_key do
-    "I9AimO3sUrdq4TRqzIeqog=="
+    "I9AimO3sUrdq4TRqzIeqog==" #TODO - this will be totally different in test environment!!
     #"Luke" |> :base64.encode() #TODO get real key from ENV variable...
   end
 end

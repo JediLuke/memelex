@@ -1,12 +1,15 @@
 defmodule Memex.MixProject do
   use Mix.Project
 
+  @release "0.0.1"
+
   def project do
     [
       app: :memex,
-      version: "0.0.1-" <> "#{Mix.env()}-" <> git_commit_hash(),
+      version: @release <> "-#{Mix.env()}-" <> git_commit_hash(),
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
+      aliases: aliases(),
       deps: deps()
     ]
   end
@@ -16,6 +19,12 @@ defmodule Memex.MixProject do
     [
       extra_applications: [:logger],
       mod: {Memex.Application, []}
+    ]
+  end
+
+  defp aliases do
+    [
+      test: "test --no-start" #(2)
     ]
   end
 

@@ -1,16 +1,18 @@
 
 
 v = Mix.Project.config[:version]
-IO.inspect v, label: "Version under test"
+IO.inspect v, label: "\n\nVersion under test"
 
-#env = Application.get_env(:memex, :environment)
+env = Application.get_env(:memex, :environment)
+
+if env.memex_directory != "/home/pi/memex/_test" do
+  raise "invalid test Memex!!"
+end
 
 # pre-test setup
-#IO.puts "\nCreating new Memex environment..."
-#TODo I don't like this... I can just see myself accidentally deleting my Memex one day
-# at the very least I want backups working before I go too far down this path
-#System.cmd("rm", ["-rf", env[:memex_directory]])
-#System.cmd("mkdir", [env[:memex_directory]])
+IO.puts "re-creating test Memex environment..."
+System.cmd("rm", ["-rf", env[:memex_directory]])
+System.cmd("mkdir", [env[:memex_directory]])
 
 # The default Elixir behaviour is to start the application
 # before running all tests. In this case, we need to create
@@ -19,8 +21,12 @@ IO.inspect v, label: "Version under test"
 # https://virviil.github.io/2016/10/26/elixir-testing-without-starting-supervision-tree/
 # https://groups.google.com/g/elixir-lang-talk/c/YCWfXQMRL1Y/m/uWuu777cLO4J
 
-ExUnit.start()
+Application.ensure_all_started(:memex)
 
+#IDEA: use excluse: :test, include: first_pass or something
+ExUnit.start() #TODO here we should pass in flags, only run the "clean memex" tests, then next time, we can set up another environment, run those ones... 
+
+#TODO so what we need now, is to shut down the memex, & reboot it, to test that all works...
 
 # test cleanup
-#System.cmd("echo", ["hello"])
+System.cmd("echo", ["Tests complete."])
