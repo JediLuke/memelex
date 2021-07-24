@@ -10,7 +10,7 @@ defmodule Memex.EnvironmentSupervisor do
 
     children = [
       {Memex.Env.ExecutiveManager, env_map},
-      Memex.MoneyPenny
+      Memex.MoneyPenny # agents are started after the main Memex, since they need access to it
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
