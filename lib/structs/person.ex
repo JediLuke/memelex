@@ -9,33 +9,27 @@ defmodule Memex.Person do
 
   defstruct [
 
-      uuid:     nil,   # each tiddler has a UUID
-      name:     nil,   # The persons name, where the full name is an ordered-list of words e.g. ["Napoléon", "Bonaparte"]
-      nickname: nil,   # Same as above, list any nicknames
-      dob:      nil,   # D.O.B. = Date of Birth. The day the person was born
-      birthday: nil,   # The persons birthday
-      contacts: [],    # a list of all the contacts I have for a person, e.g. [email: "mail@mail.co", phone: 123456]
-      alive?:   nil,   # whether or not the person is currently alive
-      meta:     [],    # a field to add notes and any other metadata like maps - whatever really.
-      tags:     [],    # similar to TidBits, people can have tags.
-      links:    [],
-      backlinks: [],
+      uuid:          nil,   # we require UUIDs for precision when pattern-matching
+      name:          nil,   # The persons name, where the full name is an ordered-list of words e.g. ["Napoléon", "Bonaparte"]
+      nickname:      nil,   # Same as above, list any nicknames
+      birthday:      nil,   # The persons birthday
+      birth_year:    nil,   # The year the person was born
+      date_of_birth: nil,   # I know it's a bit redundant but why not
+      contacts:      %{},   # a list of all the contacts I have for a person, e.g. %{email: "mail@mail.co", phone: 123456}
+      alive?:        nil,   # whether or not the person is currently alive
+
       module: __MODULE__ # this allows us to reconstruct the correct Elixir struct from the JSON text files
   ]
 
   def construct(params) when is_map(params) do
     valid_params = validate(params)
-    Kernel.struct!(__MODULE__, valid_params |> convert_to_keyword_list())
+    Kernel.struct(__MODULE__, valid_params |> convert_to_keyword_list())
   end
 
   def validate(params) when is_map(params) do
     params
-    |> generate_uuid()
+    |> Memex.Utils.ToolBag.generate_uuid()
     |> validate_name!()
-  end 
-
-  def generate_uuid(params) do
-    params |> Map.merge(%{uuid: UUID.uuid4()})
   end
 
   def validate_name!(%{name: [n|_rest]} = params) when is_bitstring(n) do
