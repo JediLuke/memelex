@@ -35,9 +35,14 @@ defmodule Memex.Env.ExecutiveManager do
   @impl GenServer
   def handle_cast(:reload_the_custom_environment_elixir_modules, state) do
     plugin_file = state.memex_directory <> "/my_customizations.ex"
-    IEx.Helpers.c plugin_file
-    {:ok, custom_module} = Memex.Environment.Customizations.on_boot()
-    {:noreply, state |> Map.merge(%{ex_module: custom_module})} # this environment's custom Elixir module
+    if File.exists?(plugin_file) do
+      IEx.Helpers.c plugin_file
+      {:ok, custom_module} = Memex.Environment.Customizations.on_boot()
+      {:noreply, state |> Map.merge(%{ex_module: custom_module})} # this environment's custom Elixir module
+    else
+      Logger.warn "No Customizations found for this environment..."
+      {:noreply, state}
+    end
   end
 
 
