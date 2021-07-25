@@ -24,8 +24,24 @@ defmodule Memex.Agents.BackupManager do
 
     GenServer.cast(self(), :perform_backups_status_check)
 
-    {:ok, init_state}
+    {:ok, init_state, {:continue, :create_backups_record}}
   end
+
+  def handle_continue(:create_backups_record, state) do
+    # first, make a new backups record, if there isn't one already in existence
+    if new_backup_file_creation_required?() do
+      Logger.warn "could not find a BackupRecord file for this environment. Creating one now..."
+      {:ok, file} = File.open(Memex.Utils.Backups.backup_records_file(), [:write])
+      IO.binwrite(file, [] |> Jason.encode!)
+      File.close(file)
+    end
+    {:noreply, state}
+  end
+
+  def new_backup_file_creation_required? do
+    not File.exists?(Memex.Utils.Backups.backup_records_file())
+  end
+
 
   def handle_cast(:perform_backups_status_check, state) do
     case Memex.Utils.Backups.fetch_last_backup() do
@@ -39,8 +55,7 @@ defmodule Memex.Agents.BackupManager do
   end
 
   def handle_info(:commence_backup_procedures, state) do
-    #TODO BackupManager might need to talk to all other Agents which read/write from disk, and ask them not to do it until the backup is complete...
-    IO.puts "LaLaLa backups manmager SHOULD BE IN CHARGE HERE@@@!!!"
+    Logger.info "#{__MODULE__} commencing backup procedures..."
     Memex.Utils.Backups.perform_backup_procedure()
     {:noreply, state}
   end

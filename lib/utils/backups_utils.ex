@@ -33,6 +33,10 @@ defmodule Memex.Utils.Backups do
       |> Path.join("/#{Memex.Facts.GregorianCalendar.month_name(now.month)}")
       |> Path.join("/backup#{this_backup.version}")
 
+    if File.exists?(this_backup_dir <> "/backup_record.json") do
+      raise "attempting to overwrite an existing backup!"
+    end
+
     File.mkdir_p(this_backup_dir)
     System.cmd("cp", ["-r", memex_directory, this_backup_dir])
 
@@ -59,19 +63,17 @@ defmodule Memex.Utils.Backups do
   end
 
   def fetch_backup_records do
-
-    if not able_to_find_any_backups_file? do
-      Logger.warn "could not find a BackupRecord file for this environment. Creating one now..."
-      {:ok, file} = File.open(backup_records_file(), [:write])
-      IO.binwrite(file, [] |> Jason.encode!)
-      File.close(file)
-    end
-  
     backup_records_file()
     |> Memex.Utils.FileIO.read_maplist()
-    |> Enum.sort({:asc, DateTime})
+    |> sort_records(:descending_chronologically)
   end
 
+  def sort_records(records_list, :descending_chronologically) do
+    records_list
+    |> Enum.sort(fn(a,b) -> a.timepoint >= b.timepoint end)
+  end
+
+  # save a file with a single %BackupRecord within each backup we make
   def save_backup_metadata(backup_record, backup_dir) do
     backup_dir <> "/backup_record.json"
     |> Memex.Utils.FileIO.write_maplist([backup_record])
@@ -84,10 +86,6 @@ defmodule Memex.Utils.Backups do
 
     backup_records_file()
     |> Memex.Utils.FileIO.write_maplist(new_backups_record)
-  end
-
-  def able_to_find_any_backups_file? do
-    File.exists?(backup_records_file())
   end
 
   def backup_records_file do
