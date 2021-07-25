@@ -10,7 +10,7 @@ defmodule Memex.MoneyPenny do
 
     children = [
       {DynamicSupervisor, strategy: :one_for_one, name: Agent.DynamicSupervisor},
-      Memex.Agents.BackupAgent,
+      Memex.Agents.BackupManager,
       Memex.Agents.StrategicAdvisor
     ]
 

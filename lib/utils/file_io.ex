@@ -101,6 +101,8 @@ defmodule Memex.Utils.FileIO do
                 end
            %Memex.Password{} = p ->
                 p
+           %Memex.BackupRecord{} = r ->
+                r
          end
          )
   end
