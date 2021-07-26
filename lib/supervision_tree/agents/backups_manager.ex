@@ -3,6 +3,8 @@ defmodule Memex.Agents.BackupManager do
   require Logger
   alias Memex.Utils
 
+  @backup_status_check_period :timer.minutes(125)
+  @autobackup_period_hours 24 # take auto backups daily 
 
   def start_link(params)  do
     GenServer.start_link(__MODULE__, params, name: __MODULE__)
@@ -22,13 +24,12 @@ defmodule Memex.Agents.BackupManager do
       ]
     }
 
-    GenServer.cast(self(), :perform_backups_status_check)
+    Process.send_after(self(), :perform_periodic_check, :timer.minutes(1))
 
     {:ok, init_state, {:continue, :create_backups_record}}
   end
 
   def handle_continue(:create_backups_record, state) do
-    # first, make a new backups record, if there isn't one already in existence
     if new_backup_file_creation_required?() do
       Logger.warn "could not find a BackupRecord file for this environment. Creating one now..."
       {:ok, file} = File.open(Memex.Utils.Backups.backup_records_file(), [:write])
@@ -38,36 +39,35 @@ defmodule Memex.Agents.BackupManager do
     {:noreply, state}
   end
 
-  def new_backup_file_creation_required? do
-    not File.exists?(Memex.Utils.Backups.backup_records_file())
-  end
-
-
-  def handle_cast(:perform_backups_status_check, state) do
-    case Memex.Utils.Backups.fetch_last_backup() do
-      :no_backups_found ->
-         schedule(:commence_backup_procedures, :one_hour_from_now)
-         {:noreply, state}
-      last_backup = %Memex.BackupRecord{} ->
-         analyze_last_backup(last_backup)
-         {:noreply, state}
-    end
-  end
-
-  def handle_info(:commence_backup_procedures, state) do
+  def handle_cast(:commence_backup_procedures, state) do
     Logger.info "#{__MODULE__} commencing backup procedures..."
     Memex.Utils.Backups.perform_backup_procedure()
     {:noreply, state}
   end
 
-  def analyze_last_backup(b) do
-    IO.inspect b, label: "WE FOUND A BACKUP TO ANALYZE"
+  def handle_info(:perform_periodic_check, state) do
+    Logger.info "#{__MODULE__} performing periodic check..."
+    case Memex.Utils.Backups.fetch_last_backup() do
+      :no_backups_found ->
+         GenServer.cast(self(), :commence_backup_procedures)
+         Process.send_after(self(), :perform_periodic_check, @default_period)
+         {:noreply, state}
+      last_backup = %Memex.BackupRecord{} ->
+         if last_backup |> is_older_than_cutoff?() do
+           GenServer.cast(self(), :commence_backup_procedures)
+         end
+         Process.send_after(self(), :perform_periodic_check, @default_period)
+         {:noreply, state}
+    end
   end
 
-  def schedule(:commence_backup_procedures, :one_hour_from_now) do
-    #raise "not working yet"
-    IO.puts "THIS SHOULD SCHEDULE ONE HOUR FORM NOW ANOTHER BACKPPPP"
-    #Process.send_after(self(), :commence_backup_procedures, :timer.hour(1)) # or whatever...
+  def new_backup_file_creation_required? do
+    not File.exists?(Memex.Utils.Backups.backup_records_file())
   end
 
+  def is_older_than_cutoff?(%{timepoint: unix_time}) when is_integer(unix_time) do
+    {:ok, last_backup_time} = DateTime.from_unix(unix_time)
+    cutoff = Memex.My.current_time() |> Timex.shift(hours: -1*@autobackup_period_hours)
+    last_backup_time |> Timex.before?(cutoff) 
+  end
 end

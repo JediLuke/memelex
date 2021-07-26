@@ -7,7 +7,7 @@ defmodule Memex do
 
   def backup do
     Logger.info "triggering immediate backup..."
-    send(Memex.Agents.BackupManager, :commence_backup_procedures)
+    GenServer.cast(Memex.Agents.BackupManager, :commence_backup_procedures)
   end
 
 end
