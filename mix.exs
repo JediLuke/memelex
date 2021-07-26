@@ -33,7 +33,7 @@ defmodule Memex.MixProject do
     [
       {:jason, "~> 1.2"},
       {:elixir_uuid, "~> 1.2"},
-      {:tzdata, "~> 1.0.4"},
+      {:timex, "~> 3.7.5"},
     ]
   end
 
