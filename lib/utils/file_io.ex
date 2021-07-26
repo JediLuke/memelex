@@ -75,7 +75,7 @@ defmodule Memex.Utils.FileIO do
   def write(filepath, data) when is_bitstring(filepath) and is_binary(data) do
     {:ok, file} = File.open(filepath, [:write])
     file |> IO.binwrite(data)
-    File.close(file) # returns :ok
+    :ok = File.close(file)
   end
 
   # each entry in the maplist ought to have a Struct it can map to
