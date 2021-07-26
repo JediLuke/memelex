@@ -7,4 +7,6 @@ defmodule Memex.TidBitTest do
     assert is_struct(t)
   end
 
+  # test adding a tag which is a map
+
 end
