@@ -14,6 +14,40 @@ defmodule Memex.My.Wiki do
     |> new_tidbit()
   end
 
+  def new_text_snippet(params) do
+    uuid = UUID.uuid4()
+
+    new_snippet_filepath =
+      Memex.Utils.ToolBag.memex_directory()
+      |> Path.join("/text_snippets")
+      |> Path.join("/#{uuid}.txt")
+
+    snippet =
+      case params[:data] do
+        t when is_bitstring(t) -> t
+        _otherwise -> ""
+      end
+
+    if File.exists?(new_snippet_filepath) do
+        raise "we're trying to overwrite an existing text-snippet!!"
+    else
+        Memex.Utils.FileIO.write(new_snippet_filepath, snippet)
+    end
+
+    {"", 0} = System.cmd("gedit", [new_snippet_filepath])
+
+    params
+    |> Map.merge(%{uuid: uuid, type: :text_snippet, data: %{filename: "#{uuid}.txt"}})
+    |> Memex.TidBit.construct()
+    |> new_tidbit()
+  end
+
+  def open_text_snippet(%{type: ["text_snippet"], data: %{"filename" => filename}}) do
+    snippet = Memex.Utils.ToolBag.text_snippets_directory() <> "/#{filename}"
+    {"", 0} = System.cmd("gedit", [snippet])
+    :ok
+  end
+
   def home do
     raise "this returns all the Tidbits on the home carousel"
   end
@@ -36,7 +70,7 @@ defmodule Memex.My.Wiki do
     list() |> Enum.map(& &1.tags) |> List.flatten() |> Enum.uniq()
   end
 
-  def find(uuid: uuid) do
+  def find(%{uuid: uuid}) do
     {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, {:uuid, uuid}})
     tidbit
   end
@@ -48,6 +82,13 @@ defmodule Memex.My.Wiki do
 
   def find(search_term) when is_binary(search_term) do
     {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, search_term})
+    tidbit
+  end
+
+  #TODO
+  def find(search_term, opts) when is_binary(search_term) and is_list(opts) do
+    raise "this one isnt working yet"
+    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, search_term, opts})
     tidbit
   end
 

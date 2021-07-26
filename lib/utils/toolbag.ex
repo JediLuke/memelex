@@ -18,5 +18,8 @@ defmodule Memex.Utils.ToolBag do
     dir
   end
 
+  def text_snippets_directory do
+    memex_directory() <> "/text_snippets"
+  end
 
 end

@@ -59,7 +59,6 @@ defmodule Memex.TidBit do
     Memex.My.Wiki.add_tag(tidbit, tag)
   end
 
-
   @doc ~s(Creates a valid %TidBit{} - does NOT save it to disc!)
   def construct(params) when is_map(params) do
 
@@ -75,7 +74,7 @@ defmodule Memex.TidBit do
       |> check_the_data_is_valid_for_the_given_type()
       |> validate_tags()
 
-    Kernel.struct!(__MODULE__, validated_params |> convert_to_keyword_list())
+    Kernel.struct(__MODULE__, validated_params |> convert_to_keyword_list())
   end
 
   def construct(title) when is_bitstring(title) do
@@ -133,6 +132,14 @@ defmodule Memex.TidBit do
     params |> Map.merge(%{type: ["person"]})
   end
 
+  def validate_type!(%{type: :text_snippet} = params) do # text files managed by the Memex
+    params |> Map.merge(%{type: ["text_snippet"]})
+  end
+
+  def validate_type!(%{type: unknown}) do
+    raise "attempting to create a new TidBit with unknown type: #{inspect unknown}"
+  end
+
   def validate_type!(params) do
     params |> Map.merge(%{type: ["text"]}) # default to simple text TidBit if type isn't provided
   end
@@ -145,11 +152,20 @@ defmodule Memex.TidBit do
     raise "type field must be a list of strings"
   end
 
+  def check_the_data_is_valid_for_the_given_type(%{type: ["text_snippet"], data: %{filename: filename}} = params) do
+    filepath = Memex.Utils.ToolBag.memex_directory() <> "/text_snippets/#{filename}"
+    if File.exists?(filepath) do
+      params |> Map.merge(%{data: %{"filename" => filename}})
+    else
+      raise "could not find a text snippet file located at: #{inspect filepath}"
+    end
+  end
+
   def check_the_data_is_valid_for_the_given_type(%{type: ["external", "textfile"]} = params) do # external means, it's a file saved on the disc
     case params.data do
       {:filepath, fp} when is_bitstring(fp) ->
           if File.exists?(fp) do
-               params |> Map.merge(%{data: %{filepath: fp}})
+               params |> Map.merge(%{data: %{"filepath" => fp}})
           else
                raise "the filepath appears valid, but could not file a file at: #{inspect fp}"
           end

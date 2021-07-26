@@ -19,6 +19,7 @@ defmodule Memex.Env.ExecutiveManager do
   def handle_continue(:load_memex_from_disk, state) do
     Memex.Env.WikiManager.start_link(state)
     Memex.Env.PasswordManager.start_link(state)
+    make_environment_directories(state)
     GenServer.cast(self(), :reload_the_custom_environment_elixir_modules)
     {:noreply, state}
   end
@@ -45,5 +46,9 @@ defmodule Memex.Env.ExecutiveManager do
     end
   end
 
+  def make_environment_directories(%{memex_directory: dir}) do
+    :ok = File.mkdir_p(dir <> "/images")
+    :ok = File.mkdir_p(dir <> "/text_snippets")
+  end
 
 end
