@@ -3,7 +3,7 @@ defmodule Memex.Agents.BackupManager do
   require Logger
   alias Memex.Utils
 
-  @backup_status_check_period :timer.minutes(125)
+  @status_check_period :timer.minutes(125)
   @autobackup_period_hours 24 # take auto backups daily 
 
   def start_link(params)  do
@@ -50,13 +50,13 @@ defmodule Memex.Agents.BackupManager do
     case Memex.Utils.Backups.fetch_last_backup() do
       :no_backups_found ->
          GenServer.cast(self(), :commence_backup_procedures)
-         Process.send_after(self(), :perform_periodic_check, @default_period)
+         Process.send_after(self(), :perform_periodic_check, @status_check_period)
          {:noreply, state}
       last_backup = %Memex.BackupRecord{} ->
          if last_backup |> is_older_than_cutoff?() do
            GenServer.cast(self(), :commence_backup_procedures)
          end
-         Process.send_after(self(), :perform_periodic_check, @default_period)
+         Process.send_after(self(), :perform_periodic_check, @status_check_period)
          {:noreply, state}
     end
   end
