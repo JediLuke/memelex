@@ -3,7 +3,11 @@ defmodule Memex.My.People do
 
   def new(params) do
     new_person = params |> Memex.Person.construct()
-    Memex.My.Wiki.new_tidbit(%{type: :person, data: new_person})
+    Memex.My.Wiki.new_tidbit(params |> Map.merge(%{type: :person, data: new_person}))
+  end
+
+  def add(params) do
+    new(params)
   end
 
   @doc ~s(Fetch the whole list of TODOs)
