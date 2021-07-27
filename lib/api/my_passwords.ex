@@ -13,10 +13,11 @@ defmodule Memex.My.Passwords do
 
   def create(params) do
     new_password = Memex.Password.construct(params)
-    GenServer.call(PasswordManager, {:new_password, new_password})
+    {:ok, password} = GenServer.call(PasswordManager, {:new_password, new_password})
+    password
   end
 
-
+  # we have to pass in a real struct, to get the unredacted password ;)
   def find(%Memex.Password{} = password) do
     case GenServer.call(PasswordManager, {:find_unredacted_password, password}) do
       {:ok, %Memex.Password{} = unredacted_password} ->
@@ -29,13 +30,23 @@ defmodule Memex.My.Passwords do
   # search through the labels
   def find(search_term) when is_binary(search_term) do
     password =
-      list |> Enum.find(:not_found,
-                        & String.jaro_distance(&1.label, search_term) > @simularity_cutoff)
+      list()
+      |> Enum.find(:not_found,
+                   & String.jaro_distance(&1.label, search_term) > @simularity_cutoff)
 
     if password == :not_found do
       :not_found
     else
       find(password)
+    end
+  end
+
+  def find(params) do
+    case GenServer.call(PasswordManager, {:find_password, params}) do
+      {:ok, %Memex.Password{} = password} ->
+          password
+      {:error, "password not found"} ->
+          :not_found
     end
   end
 
@@ -46,6 +57,10 @@ defmodule Memex.My.Passwords do
 
   def update(password, updates) do
     GenServer.call(PasswordManager, {:update_password, password, updates})
+  end
+
+  def delete(%Memex.Password{uuid: uuid} = password) do
+    GenServer.call(PasswordManager, {:delete_password, password})
   end
 
 end

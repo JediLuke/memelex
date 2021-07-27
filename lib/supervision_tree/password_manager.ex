@@ -39,8 +39,16 @@ defmodule Memex.Env.PasswordManager do
   end
 
   def handle_call({:new_password, password}, _from, state) do
-    write_new_password({state, secret_key()}, password)
-    {:reply, :ok, state |> refetch_passwords()} # just re-fetch the list for now...
+    write_new_password({state, secret_key()}, password) #TODO we should check that we're not about to overwrite a password with exact same label
+    {:reply, {:ok, password}, state |> refetch_passwords()} # just re-fetch the list for now...
+  end
+
+  def handle_call({:find_password, params}, _from, state) do
+    if password = password_exists?(params, state) do
+      {:reply, {:ok, password}, state}
+    else
+      {:reply, {:error, "password not found"}, state}
+    end
   end
 
   def handle_call({:find_unredacted_password, %Memex.Password{} = password}, _from, state) do
@@ -62,27 +70,21 @@ defmodule Memex.Env.PasswordManager do
     end
   end
 
-
-
-
-
-
-
-  def handle_call({:delete_password, pword}, _from, state) do
-    raise "Can't delete passwords yet"
+  def handle_call({:delete_password, password}, _from, state) do
+    delete_password({state, secret_key()}, password)
+    {:reply, :ok, state |> refetch_passwords()}
   end
-
-  
   
   def passwords_file(%{memex_directory: dir}) do
     "#{dir}/passwords.json"
   end
 
   # returns false if it does not exist, returns the password if it does exist
-  def password_exists?(%{uuid: uuid, label: label}, %{passwords: passwords}) do
-    passwords |> Enum.find(false, & &1.uuid == uuid and &1.label == label)
+  def password_exists?(%{uuid: uuid}, %{passwords: passwords}) do
+    passwords |> Enum.find(false, & &1.uuid == uuid)
   end
 
+  #TODO move this to using the {state, key} pattern
   def find_unredacted(%{uuid: uuid, label: label}, state) do
     passwords_file(state)
     |> Utils.FileIO.read_maplist(encrypted?: true, key: secret_key())
@@ -96,12 +98,12 @@ defmodule Memex.Env.PasswordManager do
     #       disc data by using the PasswordManager state (this actually happened...)
     new_passwords_list =
       passwords_file(state)
-      |> Utils.FileIO.read_maplist(encrypted?: true, key: secret_key())
+      |> Utils.FileIO.read_maplist(encrypted?: true, key: key)
       |> Enum.concat([password])
 
     passwords_file(state)
     |> Utils.FileIO.write_maplist(new_passwords_list,
-                                  encrypted?: true, key: secret_key())
+                                  encrypted?: true, key: key)
   end
 
   def overwrite_existing_password(_state, password, %{password: @redacted}) do
@@ -109,21 +111,35 @@ defmodule Memex.Env.PasswordManager do
   end
 
   def overwrite_existing_password({state, key}, %Memex.Password{label: label, uuid: uuid} = password, updates) do
+
     #NOTE - it's important here that we go and fetch the data directly from disc
     #       and then overwrite that data - this way, we cant accidentally corrupt the
     #       disc data by using the PasswordManager state (this actually happened...)
+    new_password =
+      password
+      |> find_unredacted(state)
+      |> Map.merge(updates) #TODO this could still be more secure... we could try & use the pipeline in Password struct
+
     new_passwords_list =
       passwords_file(state)
       |> Utils.FileIO.read_maplist(encrypted?: true, key: key)
       |> Enum.reject(& &1.uuid == uuid and &1.label == label)
-      |> Enum.concat([password |> Map.merge(updates)]) #TODO this could still be more secure... we could try & use the pipeline in Password struct
+      |> Enum.concat([new_password]) 
 
     passwords_file(state)
     |> Utils.FileIO.write_maplist(new_passwords_list,
-                                  encrypted?: true, key: secret_key())
+                                  encrypted?: true, key: key)
   end
 
+  def delete_password({state, key}, %{uuid: uuid, label: label}) do
+    new_passwords_list =
+      passwords_file(state)
+      |> Utils.FileIO.read_maplist(encrypted?: true, key: key)
+      |> Enum.reject(& &1.uuid == uuid and &1.label == label)
 
+    passwords_file(state)
+    |> Utils.FileIO.write_maplist(new_passwords_list, encrypted?: true, key: key)
+  end
 
   defp refetch_passwords(state) do
     %{state|passwords: fetch_redacted_passwords_from_disc(state, secret_key())}
