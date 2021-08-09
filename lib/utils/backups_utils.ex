@@ -6,8 +6,15 @@ defmodule Memex.Utils.Backups do
   alias Memex.Utils.StringifyDateTimes
   require Logger
 
+  def perform_backup_procedure() do
+    if File.exists?(backups_directory()) do
+      perform_backup_procedure(:all_systems_go)
+    else
+      {:error, "could not find the backups directory"}
+    end
+  end
 
-  def perform_backup_procedure do
+  def perform_backup_procedure(:all_systems_go) do
     now = Memex.My.current_time()
 
     memex_directory =
@@ -46,7 +53,7 @@ defmodule Memex.Utils.Backups do
     Memex.Utils.Backups.append_to_record(this_backup)
     
     IO.puts "backup complete."
-    :ok
+    :backup_successful
   end
 
   def perform_backup_procedure(:cloud) do

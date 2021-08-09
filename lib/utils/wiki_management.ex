@@ -17,38 +17,8 @@ defmodule Memex.Utils.WikiManagement do
     end
   end
 
-  def find(%{state: state, search_term: %{uuid: search_uuid}}) do
-    tidbit = state.wiki |> Enum.find(:not_found, fn t -> t.uuid == search_uuid end)
-    if tidbit == :not_found do
-      {:error, "could not find any TidBit with a this UUID"}
-    else
-      {:ok, tidbit}
-    end
-  end
-
-  def find(%{state: state, search_term: %{tags: [search_tag]}}) when is_binary(search_tag) do
-    tidbits = state.wiki |> Enum.filter(fn t -> t.tags |> Enum.member?(search_tag) end)
-    if tidbits == [] do
-      {:error, "could not find any TidBit with a this UUID"}
-    else
-      {:ok, tidbits}
-    end
-  end
-
-  def find(%{state: state, search_term: search_term}) when is_binary(search_term) do
-    same_title? =
-      fn t ->
-        String.jaro_distance(search_term, t.title) >= @similarity_cutoff
-      end
-    
-    tidbits =
-      state.wiki |> Enum.find(:not_found, same_title?)
-    
-    if tidbits == :not_found do
-      {:error, "could not find any TidBit with a title close to: `#{inspect search_term}`"}
-    else
-      {:ok, tidbits}
-    end
+  def find(%{state: %{wiki: wiki}, search_term: params})do
+    wiki |> Memex.Utils.Search.tidbits(params)
   end
 
   def add_tag(%{tag: tag, state: state, tidbit: tidbit})

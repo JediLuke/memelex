@@ -9,6 +9,7 @@ defmodule Memex.EnvironmentSupervisor do
   def init(env_map) do
 
     children = [
+      {Task.Supervisor, name: Memex.Env.TaskSupervisor},
       {Memex.Env.ExecutiveManager, env_map},
       Memex.MoneyPenny # agents are started after the main Memex, since they need access to it
     ]

@@ -41,8 +41,13 @@ defmodule Memex.Agents.BackupManager do
 
   def handle_cast(:commence_backup_procedures, state) do
     Logger.info "#{__MODULE__} commencing backup procedures..."
-    Memex.Utils.Backups.perform_backup_procedure()
-    {:noreply, state}
+    case Memex.Utils.Backups.perform_backup_procedure() do
+      :backup_successful ->
+         {:noreply, state}
+      {:error, reason} ->
+         Logger.error "#{__MODULE__} could not perform backup, #{inspect reason}"
+         {:noreply, state}
+    end
   end
 
   def handle_info(:perform_periodic_check, state) do

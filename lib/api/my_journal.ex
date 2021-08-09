@@ -51,6 +51,8 @@ defmodule Memex.My.Journal do
     {:ok, tidbits} =
       WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
 
+    IO.inspect tidbits
+
     # look for todays journal entry in the Wiki
     # e.g. tagged "my_journal" & title is "Journal of JediLuke ~ Wednesday 29th of June, 2021")
     find_todays_journal_entry =
@@ -70,12 +72,13 @@ defmodule Memex.My.Journal do
   def new_journal_tidbit(datetime) do
     new_title = journal_page_title(datetime)
     Logger.info "creating new Journal entry `#{new_title}`..."
-    Memex.My.Wiki.new_tidbit(%{
+    Memex.TidBit.construct(%{
       title: new_title,
       type: {:external, :textfile},
       tags: ["my_journal"],
       data: {:filepath, journal_entry_filepath(datetime)}
     })
+    |> Memex.My.Wiki.new_tidbit()
   end
 
   @doc ~s(Contruct a title string for my Journal for a given datetime.)
@@ -125,16 +128,11 @@ defmodule Memex.My.Journal do
     open(params)
   end
 
+  #NOTE: Filter on both atom and String keys here (why?)
   def open(%{data: %{filepath: page}}) when is_bitstring(page) do
-    #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
-    #NOTE: Sometimes this happens, sometimes it doesnt...
-    {"", 0} = System.cmd("gedit", [page]) 
-    :ok
+    Memex.Utils.ToolBag.open_external_textfile(page)
   end
-
   def open(%{data: %{"filepath" => page}}) when is_bitstring(page) do
-    {"", 0} = System.cmd("gedit", [page]) #TODO need to do this in a different process?? This has the issue of locking up my IEx shell while gedit is open (encourages me to save & close the journal I guess...)
-    :ok
+    Memex.Utils.ToolBag.open_external_textfile(page)
   end
-
 end

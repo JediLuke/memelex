@@ -8,44 +8,15 @@ defmodule Memex.My.Wiki do
     WikiManager |> GenServer.call({:new_tidbit, t})
   end
 
-  def new_tidbit(params) do
-    params
-    |> Memex.TidBit.construct()
-    |> new_tidbit()
-  end
+  def new_linked_tidbit(%{} = tidbit, params) do
+    {:ok, new_tidbit} = 
+      params
+      |> Memex.TidBit.construct()
+      |> new_tidbit()
 
-  def new_text_snippet(params) do
-    uuid = UUID.uuid4()
+    link(tidbit, new_tidbit)
 
-    new_snippet_filepath =
-      Memex.Utils.ToolBag.memex_directory()
-      |> Path.join("/text_snippets")
-      |> Path.join("/#{uuid}.txt")
-
-    snippet =
-      case params[:data] do
-        t when is_bitstring(t) -> t
-        _otherwise -> ""
-      end
-
-    if File.exists?(new_snippet_filepath) do
-        raise "we're trying to overwrite an existing text-snippet!!"
-    else
-        Memex.Utils.FileIO.write(new_snippet_filepath, snippet)
-    end
-
-    {"", 0} = System.cmd("gedit", [new_snippet_filepath])
-
-    params
-    |> Map.merge(%{uuid: uuid, type: :text_snippet, data: %{filename: "#{uuid}.txt"}})
-    |> Memex.TidBit.construct()
-    |> new_tidbit()
-  end
-
-  def open_text_snippet(%{type: ["text_snippet"], data: %{"filename" => filename}}) do
-    snippet = Memex.Utils.ToolBag.text_snippets_directory() <> "/#{filename}"
-    {"", 0} = System.cmd("gedit", [snippet])
-    :ok
+    {:ok, new_tidbit}
   end
 
   def home do
@@ -62,39 +33,44 @@ defmodule Memex.My.Wiki do
     tidbits
   end
 
-  def list(:types) do
-    list() |> Enum.map(& &1.type) |> Enum.uniq()
+  def list(params) do
+    {:ok, tidbits} = WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
+    tidbits |> Enum.filter(&Memex.Utils.Search.typed_and_tagged?(&1, params))
   end
 
-  def list(:tags) do
-    list() |> Enum.map(& &1.tags) |> List.flatten() |> Enum.uniq()
+  def list(:external) do
+    list() |> Enum.filter(& &1.type |> Enum.member?("external"))
+  end 
+
+  @doc """
+  Used to get a unique list of one of the Wiki's sub fields,
+  e.g. list(:tags) or list(:type)
+  """ 
+  def list(wiki_field) when is_atom(wiki_field) do
+    list() |> Enum.map(& Map.get(&1, wiki_field)) |> Enum.uniq()
   end
 
-  def find(%{uuid: uuid}) do
-    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, {:uuid, uuid}})
-    tidbit
-  end
-
-  def find(tagged: tag) when is_binary(tag) do
-    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, {:tagged, tag}})
-    tidbit
-  end
-
-  def find(search_term) when is_binary(search_term) do
+  def find(search_term) do
     {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, search_term})
     tidbit
   end
 
-  #TODO
-  def find(search_term, opts) when is_binary(search_term) and is_list(opts) do
-    raise "this one isnt working yet"
+  def find(search_term, opts) when is_list(opts) do
     {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, search_term, opts})
     tidbit
+  end
+
+  def open(params) do
+    find(params) |> Memex.Utils.ToolBag.open_external_textfile()
   end
 
   @doc ~s(Update a Tidbit.)
   def update(tidbit_being_updated, updates) do
     WikiManager |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
+  end
+
+  def tag(tidbit, tag) do
+    add_tag(tidbit, tag)
   end
 
   def add_tag(tidbit, tag) when is_bitstring(tag) do

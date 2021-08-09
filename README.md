@@ -62,11 +62,21 @@ TiddlyWiki!) we simply save them as text files to disc.
 Right now, there is no "story river" as you might be used to in the
 TiddlyWIki UI.
 
-## Memex Agents
+## Using the API modules
 
-## Using the `my_customizations.ex` module
+  The entire point of an API module is to make a user-friendly interface around
+  day to day tasks like manipulating TidBits & their labels. So when we have any
+  function like:
+  > Memex.My.Appointments.new()
+  > Memex.My.Snippets.new()
+  or
+  > Memex.My.TODOs.new()
 
-ALthough the original idea was that each person would have their own copy of the
+  They all have this siilar interface which is usually just "add this tag"
+
+## Using the `my_customizations.ex` module in your Memex
+
+Although the original idea was that each person would have their own copy of the
 Memex repo & simply update it themselves (and I actually think this is something
 every serious user of the Memex needs to do!) there comes a point where (at least
 for me, as the main developer) there are some things so specific to an individual
@@ -85,3 +95,33 @@ like in here.
 
 Note that this module needs to be git-tracked _seperately_, so it's really not ideal
 having it out - we should try to minimize the things in here.
+
+There's some stuff which just doesn't fit into the standard API - for example,
+I have a module called `Memex.My.Work`, and whilst (sadly) we all have to work,
+what that looks like (and the secrets/conveniences) people need will differ.
+
+### Reloading the `my_customizations.ex` file
+
+```
+iex> Memex.reload_customizations()
+```
+
+## Memex Agents
+
+Agents are processes continuously running. Unlike the rest of the Memex, which
+is a glorified wrapper around reads/writes to text files (thus, not pro-active),
+Agents are always running in a loop (as they are all GenServers) so they can
+be working on things in the background, without requiring user intervention.
+
+## Troubleshooting
+
+### Using `kiex` and `kerl` to get the correct Elixir versions.
+
+Inside the `~/workbench/tools/kerl` directory, run:
+
+```
+pi@raspberrypi:~/workbench/tools/kerl $ ./kerl list installations
+24.0.3 /home/pi/kerl/24.0.3
+pi@raspberrypi:~/workbench/tools/kerl $ . /home/pi/kerl/24.0.3/activate
+```
+

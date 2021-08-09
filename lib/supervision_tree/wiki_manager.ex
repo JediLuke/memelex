@@ -79,9 +79,10 @@ defmodule Memex.Env.WikiManager do
   end
 
   def handle_call({:delete_tidbit, %{uuid: uuid_to_be_deleted}}, _from, state) do
-    new_wiki = state.wiki |> Enum.filter(& &1.uuid != uuid_to_be_deleted)
-    wiki_file(state) |> Utils.FileIO.write_maplist(new_wiki)
-    {:reply, :ok, %{state|wiki: new_wiki}}
+    raise "cant delete until you stop writing from memory to disk! re-read, update - then refresh"
+    #new_wiki = state.wiki |> Enum.filter(& &1.uuid != uuid_to_be_deleted)
+    #wiki_file(state) |> Utils.FileIO.write_maplist(new_wiki)
+    #{:reply, :ok, %{state|wiki: new_wiki}}
   end
 
 
