@@ -17,8 +17,9 @@ defmodule Memex.Agents.StrategicAdvisor do
 
   @impl GenServer
   def handle_continue(:boot_sequence, state) do
-    IO.inspect state, label: "STRATEGY received"
+    IO.inspect state, label: "STRATEGY AGENT received"
     {:noreply, state}
   end
+
 
 end

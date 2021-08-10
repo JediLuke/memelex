@@ -51,8 +51,6 @@ defmodule Memex.My.Journal do
     {:ok, tidbits} =
       WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
 
-    IO.inspect tidbits
-
     # look for todays journal entry in the Wiki
     # e.g. tagged "my_journal" & title is "Journal of JediLuke ~ Wednesday 29th of June, 2021")
     find_todays_journal_entry =

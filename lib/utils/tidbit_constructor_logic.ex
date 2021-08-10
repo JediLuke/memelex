@@ -74,6 +74,10 @@ defmodule Memex.Utils.TidBits.ConstructorLogic do
     params |> Map.merge(%{type: ["text"]})
   end
 
+  def validate_type!(%{type: [t]} = params) when t in [:text, "text"] do # also allow a single-item list
+    params |> Map.merge(%{type: ["text"]})
+  end
+
   def validate_type!(%{type: {:external, :textfile}} = params) do
     params
     |> Map.merge(%{type: ["external", "textfile"]}) # convert the tuple to a list, because JSON doesn't understand tuples
@@ -221,7 +225,7 @@ defmodule Memex.Utils.TidBits.ConstructorLogic do
     params |> Map.merge(%{tags: [tag]})
   end
 
-  def apply_tags(params, taglist) do
+  def apply_tags(params, taglist) when is_list(taglist) do
     params |> recursively_merge_tags(taglist)
   end
 
@@ -236,10 +240,10 @@ defmodule Memex.Utils.TidBits.ConstructorLogic do
   defp recursively_merge_tags(params, []), do: params # base case
 
   defp recursively_merge_tags(%{tags: tlist} = params, [tag|rest]) do
-    recursively_merge_tags(params |> Map.merge(%{tags: [tag]}), rest)
+    recursively_merge_tags(params |> Map.merge(%{tags: tlist ++ [tag]}), rest)
   end
 
-  defp recursively_merge_tags(params, taglist) do
+  defp recursively_merge_tags(params, taglist) when is_list(taglist) and length(taglist) >= 1 do
     recursively_merge_tags(params |> Map.merge(%{tags: []}), taglist)
   end
 end

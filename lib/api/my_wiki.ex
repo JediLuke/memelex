@@ -3,9 +3,24 @@ defmodule Memex.My.Wiki do
   W.I.K.I. = What I Know is...
   """
   alias Memex.Env.WikiManager
+  alias Memex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
+
+  def new(params) do
+    params
+    |> TidBitUtils.sanitize_conveniences()
+    |> Memex.TidBit.construct()
+    |> Memex.My.Wiki.new_tidbit()
+  end
 
   def new_tidbit(%Memex.TidBit{} = t) do
     WikiManager |> GenServer.call({:new_tidbit, t})
+  end
+
+  def new_tidbit(params) do
+    params
+    |> TidBitUtils.sanitize_conveniences()
+    |> Memex.TidBit.construct()
+    |> new_tidbit()
   end
 
   def new_linked_tidbit(%{} = tidbit, params) do
@@ -33,30 +48,35 @@ defmodule Memex.My.Wiki do
     tidbits
   end
 
-  def list(params) do
-    {:ok, tidbits} = WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
-    tidbits |> Enum.filter(&Memex.Utils.Search.typed_and_tagged?(&1, params))
-  end
-
   def list(:external) do
     list() |> Enum.filter(& &1.type |> Enum.member?("external"))
-  end 
+  end
 
   @doc """
   Used to get a unique list of one of the Wiki's sub fields,
   e.g. list(:tags) or list(:type)
   """ 
   def list(wiki_field) when is_atom(wiki_field) do
-    list() |> Enum.map(& Map.get(&1, wiki_field)) |> Enum.uniq()
+    list() |> Enum.map(& Map.get(&1, wiki_field)) |> List.flatten() |> Enum.uniq()
+  end
+
+  def list(map) when is_map(map) do
+    keyword_params = Memex.Utils.MiscElixir.convert_map_to_keyword_list(map)
+    list(keyword_params)
+  end
+
+  def list(params) when is_list(params) do
+    {:ok, tidbits} = WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
+    tidbits |> Enum.filter(&Memex.Utils.Search.typed_and_tagged?(&1, params))
   end
 
   def find(search_term) do
-    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, search_term})
+    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbit, search_term})
     tidbit
   end
 
   def find(search_term, opts) when is_list(opts) do
-    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbits, search_term, opts})
+    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbit, search_term, opts})
     tidbit
   end
 
@@ -74,7 +94,7 @@ defmodule Memex.My.Wiki do
   end
 
   def add_tag(tidbit, tag) when is_bitstring(tag) do
-    WikiManager |> GenServer.call({:add_tag, tidbit, tag})
+    update(tidbit, %{add_tag: tag})
   end
 
   @doc ~s(Create a link between two TidBits.)

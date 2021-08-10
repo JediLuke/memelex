@@ -17,10 +17,6 @@ defmodule Memex.Utils.WikiManagement do
     end
   end
 
-  def find(%{state: %{wiki: wiki}, search_term: params})do
-    wiki |> Memex.Utils.Search.tidbits(params)
-  end
-
   def add_tag(%{tag: tag, state: state, tidbit: tidbit})
     when is_bitstring(tag) do
     

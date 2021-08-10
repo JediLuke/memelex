@@ -3,8 +3,8 @@ defmodule Memex.Utils.Search do
   
   @similarity_cutoff 0.72
 
-  def tidbits(wiki, %{uuid: search_uuid}) do
-    
+  #NOTE - singular TidBit
+  def tidbit(wiki, %{uuid: search_uuid}) do
     search_fn = fn tidbit -> tidbit.uuid == search_uuid end
     
     wiki
@@ -15,35 +15,31 @@ defmodule Memex.Utils.Search do
     end
   end
 
-  def tidbits(wiki, map) when is_map(map) do
-    raise "no maps, only keyword lists"
-  end
-
-  def tidbits(wiki, search_term) when is_binary(search_term) do
-    search_fn = fn tidbit -> String.jaro_distance(search_term, tidbit.title) >= @similarity_cutoff end
-    
-    wiki
-    |> Enum.find(:not_found, search_fn) 
-    |> case do
-         :not_found -> {:error, "could not find any TidBit with a title similar to: #{inspect search_term}"}
-            results -> {:ok, results}
-    end
-  end
-
   def tidbits(_wiki, []) do
     {:error, "no search params passed"}
   end
 
-  def tidbits(wiki, search_params) when is_list(search_params) and length(search_params) >= 1 do
+  def tidbits(wiki, map) when is_map(map) do
+    keyword_params = Memex.Utils.MiscElixir.convert_map_to_keyword_list(map)
+    tidbits(wiki, keyword_params)
+  end
 
-    search_fn = fn tidbit -> typed_and_tagged?(tidbit, search_params) end
-    
-    wiki
-    |> Enum.find(:not_found, search_fn) 
-    |> case do
-         :not_found -> {:error, "could not find any TidBit with params: #{inspect search_params}"}
-            results -> {:ok, results}
-    end
+  def tidbits(wiki, search_term) when is_binary(search_term) do
+    results = 
+      wiki
+      |> Enum.filter(
+           fn tidbit -> String.jaro_distance(search_term, tidbit.title) >= @similarity_cutoff end)
+
+    {:ok, results} 
+  end
+
+  def tidbits(wiki, search_params) when is_list(search_params) and length(search_params) >= 1 do
+    results = 
+      wiki
+      |> Enum.filter(
+           fn tidbit -> typed_and_tagged?(tidbit, search_params) end)
+
+    {:ok, results} 
   end
 
   def typed_and_tagged?(_tidbit, []) do
@@ -59,7 +55,7 @@ defmodule Memex.Utils.Search do
   end
 
   # all tidbits that aren't tagged
-  def typed_and_tagged?(tidbit, [{:tags, []} |rest]) do
+  def typed_and_tagged?(tidbit, [empty_tagslist |rest]) when empty_tagslist in [{:tags, []}, [tags: []]] do
     if tidbit.tags == [] do
       typed_and_tagged?(tidbit, rest)
     else
@@ -68,6 +64,22 @@ defmodule Memex.Utils.Search do
   end
 
   def typed_and_tagged?(tidbit, [{param, test_list} |rest]) when is_list(test_list) and length(test_list) >= 1 do
+    if Map.get(tidbit, param) |> recurse_contains_all?(test_list) do
+      typed_and_tagged?(tidbit, rest)
+    else
+      false
+    end
+  end
+
+  def typed_and_tagged?(tidbit, [[param, test_list] |rest]) when is_list(test_list) and length(test_list) >= 1 do
+    if Map.get(tidbit, param) |> recurse_contains_all?(test_list) do
+      typed_and_tagged?(tidbit, rest)
+    else
+      false
+    end
+  end
+
+  def typed_and_tagged?(tidbit, [[param, test_list] |rest]) when is_list(test_list) and length(test_list) >= 1 do
     if Map.get(tidbit, param) |> recurse_contains_all?(test_list) do
       typed_and_tagged?(tidbit, rest)
     else

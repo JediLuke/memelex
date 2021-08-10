@@ -8,7 +8,7 @@ defmodule Memex.Agents.FinancialAdvisor do
   # tax?
   # insurance planning?
   # budgeting?
-  # investments?Leah  
+  # investments?
 
   # for starters, needs to keep track of my bills... (& then pay them!) - and also needs to track receipts!
 

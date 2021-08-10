@@ -141,6 +141,10 @@ defmodule Memex.Env.PasswordManager do
     |> Utils.FileIO.write_maplist(new_passwords_list, encrypted?: true, key: key)
   end
 
+  def reencrypt_with_new_secret_key do
+    raise "not possible yet" #TODO
+  end
+
   defp refetch_passwords(state) do
     %{state|passwords: fetch_redacted_passwords_from_disc(state, secret_key())}
   end
@@ -151,10 +155,10 @@ defmodule Memex.Env.PasswordManager do
     |> Enum.map(fn pword -> pword |> Map.replace!(:password, @redacted) end) # dont keep unencrypted passwords in memory...
   end
 
-
-
   defp secret_key do
-    "I9AimO3sUrdq4TRqzIeqog==" #TODO - this will be totally different in test environment!!
-    #"Luke" |> :base64.encode() #TODO get real key from ENV variable...
+    case System.get_env("MEMEX_PASSWORD_KEY") do
+      nil -> raise "need to set `MEMEX_PASSWORD_KEY` as environment variable"
+      pass -> pass
+    end
   end
 end
