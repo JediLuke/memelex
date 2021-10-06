@@ -17,7 +17,7 @@ defmodule Memex.Utils.WikiManagement do
     end
   end
 
-  def add_tag(%{tag: tag, state: state, tidbit: tidbit})
+  def add_tag(%{tag: tag, state: state, tidbit: %Memex.TidBit{} = tidbit})
     when is_bitstring(tag) do
     
       is_this_the_tidbit_were_looking_for? =

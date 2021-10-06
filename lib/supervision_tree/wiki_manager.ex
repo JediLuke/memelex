@@ -47,9 +47,9 @@ defmodule Memex.Env.WikiManager do
 
   # fetches exactly 1 TidBit
   def handle_call({:find_tidbit, params}, _from, state) do
-    Memex.Utils.Search.tidbits(state.wiki, params)
+    Memex.Utils.Search.tidbit(state.wiki, params)
     |> case do
-      {:ok, [%Memex.TidBit{} = result]} ->
+      {:ok, %Memex.TidBit{} = result} ->
         {:reply, {:ok, result}, state}
       {:ok, results} when is_list(results) and length(results) >= 1 ->
         {:reply, {:error, "more than 1 TidBit found for this query"}, state}

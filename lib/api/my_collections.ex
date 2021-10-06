@@ -3,6 +3,23 @@ defmodule Memex.My.Collections do
   Collections is an API around the concept of ordered-groups
   of TidBits, e.g. books - a list of chapters, which are in
   turn lists of pages - this is a collection of collections.
+
+  The first thing to note is that a Collection is itself a TidBit.
+  There's nothing inherintly special about collections, they holding
+  a piece of data just like any other - the only thing that's special
+  about them is that this piece of data refers to an ordered arrangement
+  of other TidBits.
+
+  One example of a Collection is a book - a book is a collection of Chapters,
+  with a title and a few other pieces of data. There is a logical ordering
+  to what goes in a book.
+
+  The "artfacts from Africa" and "photographs from summer vacation in Majorca"
+  are also valid examples of collections.
+
+  In the Memex, we represent Collections as list of lists - they can beheirarchical
+  trees, but they can't be cyclical - that would be a graph, which is something
+  different from a Collection - the ordering of a collection is important.
   """
   alias Memex.Env.WikiManager
   alias Memex.Utils.TidBits.ConstructorLogic, as: TidBitUtils

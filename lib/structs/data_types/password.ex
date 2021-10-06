@@ -9,11 +9,14 @@ defmodule Memex.Password do
 
   defstruct [
 
+      #TODO change label to title, should just be all the same...
+
       uuid:      nil,          # we require UUIDs for precision when pattern-matching
       label:     nil,          # How we describe this password, e.g. "DigitalOcean"
       username:  nil,          # The username associated with this password (if applicable)
       password:  nil,          # The password field goes in here
       url:       nil,          # The URL where this password can be used (if applicable)
+      meta:      [],           # Just a place you can store metadata
 
       module:    __MODULE__    # this allows us to reconstruct the correct Elixir struct from the JSON text files
   ]

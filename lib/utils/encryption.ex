@@ -39,6 +39,16 @@ defmodule Memex.Utils.Encryption do
     |> :base64.encode
   end
 
+  def encrypt_file(path, key) do
+    if File.dir?(path) do
+      :skip
+    else
+      {:ok, data} = File.read(path)
+      encrypted_data = encrypt(data, key)
+      Memex.Utils.FileIO.write(path, encrypted_data)
+    end
+  end
+
   def decrypt(ciphertext, key) do
     secret_key = :base64.decode(key)
     encrypted_msg = :base64.decode(ciphertext)
