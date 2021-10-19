@@ -17,7 +17,7 @@ defmodule Memex.Env.WikiManager do
   def handle_continue(:load_wiki_from_disk, state) do
     # make new wiki file if one doesn't exist
     if not File.exists?(wiki_file(state)) do
-      Logger.warn "could not find a Wiki file for this environment. Creating one now..."
+      Logger.warn "Could not find a Wiki file for this environment. Creating one now..."
       {:ok, file} = File.open(wiki_file(state), [:write])
       IO.binwrite(file, [] |> Jason.encode!)
       File.close(file)

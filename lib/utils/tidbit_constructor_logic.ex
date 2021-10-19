@@ -158,7 +158,7 @@ defmodule Memex.Utils.TidBits.ConstructorLogic do
     if File.exists?(filepath) do
       params |> Map.merge(%{data: %{"filename" => filename}})
     else
-      raise "could not find a text snippet file located at: #{inspect filepath}"
+      raise "Could not find a text snippet file located at: #{inspect filepath}"
     end
   end
 

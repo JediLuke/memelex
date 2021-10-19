@@ -24,8 +24,7 @@ defmodule Memex.My.Snippets do
   
   def open(%{type: ["text_snippet"], data: %{"filename" => filename}}) do
     snippet = Memex.Utils.ToolBag.text_snippets_directory() <> "/#{filename}"
-    {"", 0} = System.cmd("gedit", [snippet])
-    :ok
+    Memex.Utils.ToolBag.open_external_textfile(snippet)
   end
 
 

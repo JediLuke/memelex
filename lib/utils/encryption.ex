@@ -15,7 +15,7 @@ defmodule Memex.Utils.Encryption do
   @iv_length 32
 
   def generate_password do
-    generate_password(9)
+    generate_password(12)
   end
 
   def generate_password(x) do
@@ -24,8 +24,27 @@ defmodule Memex.Utils.Encryption do
   end
 
   def generate_secret_key do
-    :crypto.strong_rand_bytes(16)
-    |> :base64.encode
+    generate_password(30)
+  end
+
+  def encrypt_file(path, key) do
+    if File.dir?(path) do
+      :skip
+    else
+      {:ok, data} = File.read(path)
+      encrypted_data = encrypt(data, key)
+      Memex.Utils.FileIO.write(path, encrypted_data)
+    end
+  end
+
+  def decrypt_file(path, key) do
+    if File.dir?(path) do
+      :skip
+    else
+      {:ok, data} = File.read(path)
+      decrypted_data = decrypt(data, key)
+      Memex.Utils.FileIO.write(path, decrypted_data)
+    end
   end
 
   def encrypt(plaintext, key) do
@@ -37,16 +56,6 @@ defmodule Memex.Utils.Encryption do
 
     iv <> ciphertag <> ciphertext
     |> :base64.encode
-  end
-
-  def encrypt_file(path, key) do
-    if File.dir?(path) do
-      :skip
-    else
-      {:ok, data} = File.read(path)
-      encrypted_data = encrypt(data, key)
-      Memex.Utils.FileIO.write(path, encrypted_data)
-    end
   end
 
   def decrypt(ciphertext, key) do

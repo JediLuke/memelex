@@ -10,7 +10,7 @@ defmodule Memex.Utils.Backups do
     if File.exists?(backups_directory()) do
       perform_backup_procedure(:all_systems_go)
     else
-      {:error, "could not find the backups directory"}
+      {:error, "Could not find the backups directory"}
     end
   end
 

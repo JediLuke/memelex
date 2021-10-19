@@ -99,6 +99,7 @@ defmodule Memex.Utils.FileIO do
                   _else ->
                       t
                 end
+           #TODO probably should be ONLY TidBits, dont have multiple types of struct in the Memex
            %Memex.Password{} = p ->
                 p
            %Memex.BackupRecord{} = r ->

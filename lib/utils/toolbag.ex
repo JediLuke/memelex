@@ -23,9 +23,9 @@ defmodule Memex.Utils.ToolBag do
   end
 
   def open_external_textfile(filepath) when is_bitstring(filepath) do
-    open_text_editor_cmd = "gedit"
+    # run this in a separate process so we never lock the IEx console
     {:ok, _pid} = Task.Supervisor.start_child(Memex.Env.TaskSupervisor, fn ->
-      {"", 0} = System.cmd(open_text_editor_cmd, [filepath])
+      {"", 0} = System.cmd(open_text_editor_cmd(), [filepath])
       :ok
     end)
     :ok
@@ -33,6 +33,10 @@ defmodule Memex.Utils.ToolBag do
 
   def open_external_textfile(%{type: ["external", "textfile"], data: %{"filepath" => fp}}) do
     open_external_textfile(fp)
+  end
+
+  def open_text_editor_cmd do
+    Application.get_env(:memex, :text_editor_shell_command)
   end
 
 end

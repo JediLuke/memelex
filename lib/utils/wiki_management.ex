@@ -27,7 +27,7 @@ defmodule Memex.Utils.WikiManagement do
         state.wiki |> Enum.find(is_this_the_tidbit_were_looking_for?)
 
       if tidbit == [] do
-        {:error, "could not find a Tidbit with the title: #{inspect tidbit.title}"}
+        {:error, "Could not find a Tidbit with the title: #{inspect tidbit.title}"}
       else
         updated_tidbit =
           tidbit
@@ -57,7 +57,7 @@ defmodule Memex.Utils.WikiManagement do
       state.wiki |> Enum.find(:not_found, is_this_the_tidbit_were_looking_for?)
 
     if tidbit == :not_found do
-      {:error, "could not find a Tidbit with the title: #{inspect tidbit.title}"}
+      {:error, "Could not find a Tidbit with the title: #{inspect tidbit.title}"}
     else
 
       updated_tidbit =

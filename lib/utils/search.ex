@@ -10,7 +10,7 @@ defmodule Memex.Utils.Search do
     wiki
     |> Enum.find(:not_found, search_fn) 
     |> case do
-         :not_found -> {:error, "could not find any TidBit with a this UUID"}
+         :not_found -> {:error, "Could not find any TidBit with a this UUID"}
             results -> {:ok, results}
     end
   end

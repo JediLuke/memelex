@@ -3,35 +3,43 @@ defmodule Memex.Env.PasswordManager do
   require Logger
   alias Memex.Utils
 
-
-  @redacted "***********"
+  @redacted "***********" # this is the string we replace passwords with, so tht we don't keep real passwords in memory unencrypted
 
   def start_link(params)  do
     GenServer.start_link(__MODULE__, params, name: __MODULE__)
   end
-
 
   def init(env) do
     Logger.info "#{__MODULE__} initializing..."
     {:ok, env, {:continue, :open_passwords_file}}
   end
 
-
   def handle_continue(:open_passwords_file, state) do
+    if key_exists_as_env_variable?() do
+      init_state = load_init_state_from_passwords_file(state)
+      {:noreply, init_state}
+    else
+      Logger.error """
+      The mandatory environment variable `MEMEX_PASSWORD_KEY` could not be found.
 
-    if not File.exists?(passwords_file(state)) do
-      Logger.warn "could not find a Passwords file for this environment. Creating one now..."
-      passwords_file(state)
-      |> Utils.FileIO.write_maplist([], encrypted?: true, key: secret_key()) # write an empty list to the file
+      Without this environment variable, the Memex is not able to manage
+      passwords. To generate a password key, you can create a random string
+      with the following Elixir code:
+
+      :crypto.strong_rand_bytes(30) |> Base.encode64()
+
+      Then, save it as an environment variable. In bash, the following
+      command will set the environment variable:
+
+      export MEMEX_PASSWORD_KEY=the_randomly_generated_password
+
+      Once this environment variable has been set, you must restart the
+      Memex for it to take effect. Until then, functionality which utilizes
+      passwords will fail.
+      """
+
+      {:stop, :normal, state}
     end
-
-    init_state =
-      state
-      |> Map.merge(%{passwords: []})
-      |> refetch_passwords()
-
-    Logger.info "PasswordManager successfully loaded passwords from disc."
-    {:noreply, init_state}
   end
 
   def handle_call(:list_passwords, _from, state) do
@@ -40,7 +48,7 @@ defmodule Memex.Env.PasswordManager do
 
   def handle_call({:new_password, password}, _from, state) do
     write_new_password({state, secret_key()}, password) #TODO we should check that we're not about to overwrite a password with exact same label
-    {:reply, {:ok, password}, state |> refetch_passwords()} # just re-fetch the list for now...
+    {:reply, {:ok, password}, state |> refetch_passwords_redacted()} # just re-fetch the list for now...
   end
 
   def handle_call({:find_password, params}, _from, state) do
@@ -62,7 +70,7 @@ defmodule Memex.Env.PasswordManager do
   def handle_call({:update_password, password, updates}, _from, state) when is_struct(password) do
     if password = password_exists?(password, state) do
       case overwrite_existing_password({state, secret_key()}, password, updates) do
-        :ok    -> {:reply, :ok, state |> refetch_passwords()}
+        :ok    -> {:reply, :ok, state |> refetch_passwords_redacted()}
         :error -> {:reply, :error, state}
       end
     else
@@ -72,9 +80,31 @@ defmodule Memex.Env.PasswordManager do
 
   def handle_call({:delete_password, password}, _from, state) do
     delete_password({state, secret_key()}, password)
-    {:reply, :ok, state |> refetch_passwords()}
+    {:reply, :ok, state |> refetch_passwords_redacted()}
   end
   
+  def load_init_state_from_passwords_file(state) do
+    if not File.exists?(passwords_file(state)) do
+      Logger.warn "Could not find a Passwords file for this environment. Creating one now..."
+      passwords_file(state)
+      |> Utils.FileIO.write_maplist([], encrypted?: true, key: secret_key()) # write an empty list to the file
+    end
+
+    init_state =
+      state |> refetch_passwords_redacted()
+
+    Logger.info "PasswordManager successfully loaded passwords from disc." 
+
+    init_state
+  end
+
+  def key_exists_as_env_variable? do
+    case System.get_env("MEMEX_PASSWORD_KEY") do
+      nil -> false
+      _otherwise -> true
+    end
+  end
+
   def passwords_file(%{memex_directory: dir}) do
     "#{dir}/passwords.json"
   end
@@ -145,8 +175,8 @@ defmodule Memex.Env.PasswordManager do
     raise "not possible yet" #TODO
   end
 
-  defp refetch_passwords(state) do
-    %{state|passwords: fetch_redacted_passwords_from_disc(state, secret_key())}
+  defp refetch_passwords_redacted(state) do
+    fetch_redacted_passwords_from_disc(state, secret_key())
   end
 
   defp fetch_redacted_passwords_from_disc(state, key) do

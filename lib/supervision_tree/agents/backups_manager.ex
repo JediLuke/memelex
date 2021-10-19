@@ -31,7 +31,7 @@ defmodule Memex.Agents.BackupManager do
 
   def handle_continue(:create_backups_record, state) do
     if new_backup_file_creation_required?() do
-      Logger.warn "could not find a BackupRecord file for this environment. Creating one now..."
+      Logger.warn "Could not find a BackupRecord file for this environment. Creating one now..."
       {:ok, file} = File.open(Memex.Utils.Backups.backup_records_file(), [:write])
       IO.binwrite(file, [] |> Jason.encode!)
       File.close(file)
