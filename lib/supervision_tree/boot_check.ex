@@ -9,7 +9,14 @@ defmodule Memex.BootCheck do
   @impl GenServer
   def init(_params) do
     Logger.info "#{__MODULE__} initializing..."
-    {:ok, %{}, {:continue, :check_for_memex_environment}}
+
+    case Application.get_env(:memelex, :active?) do
+      false ->
+        Logger.warn "Memelex is inactive -- not starting the Memex."
+        {:ok, %{}}
+      _otherwise ->
+        {:ok, %{}, {:continue, :check_for_memex_environment}}
+    end
   end
 
   @impl GenServer
