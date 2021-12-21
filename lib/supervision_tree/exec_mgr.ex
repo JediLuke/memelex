@@ -38,11 +38,11 @@ defmodule Memex.Env.ExecutiveManager do
     plugin_file = state.memex_directory <> "/my_customizations.ex"
     if File.exists?(plugin_file) do
       IEx.Helpers.c plugin_file
-      {:ok, custom_menu} = Memex.Environment.Customizations.custom_menu() #NOTE: This module is/must be defined in the `my_customizations.ex` file, which is what we're reloading
+      custom_menu = Memex.Environment.Customizations.custom_menu() #NOTE: This module is/must be defined in the `my_customizations.ex` file, which is what we're reloading
       {:reply, {:ok, custom_menu}, state}
     else
       Logger.warn "No Customizations found for this environment..."
-      {:noreply, state}
+      {:reply, {:error, "No Customizations found for this environment."}, state}
     end
   end
 
