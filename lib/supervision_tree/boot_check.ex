@@ -10,9 +10,10 @@ defmodule Memex.BootCheck do
   def init(_params) do
     Logger.info "#{__MODULE__} initializing..."
 
+    #REMINDER: By default, Flamelex boots with the memelex config [active?: false]
     case Application.get_env(:memelex, :active?) do
       false ->
-        Logger.warn "Memelex is inactive -- not starting the Memex."
+        Logger.warn "Memelex booted into mode: `:inactive` -- not starting the Memex."
         {:ok, %{}}
       _otherwise ->
         {:ok, %{}, {:continue, :check_for_memex_environment}}

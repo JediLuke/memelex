@@ -60,8 +60,8 @@ defmodule Memex.TidBit do
     Memex.My.Wiki.find(search_term)
   end
 
-  def open(%{type: ["external"|_rest]} =  tidbit) do
-    # opens external tidbits with Gedit 
+  def open(%{type: ["external"|_rest]} = tidbit) do
+    Memex.Utils.ToolBag.open_external_textfile(tidbit)
   end
 
   def link(base_node, link_node) do
