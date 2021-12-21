@@ -61,6 +61,7 @@ defmodule Memex.Agents.BackupManager do
          if last_backup |> is_older_than_cutoff?() do
            GenServer.cast(self(), :commence_backup_procedures)
          end
+         Logger.info "#{__MODULE__} the most recent backup is less than #{@autobackup_period_hours} old. No new backups made."
          Process.send_after(self(), :perform_periodic_check, @status_check_period)
          {:noreply, state}
     end

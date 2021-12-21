@@ -1,4 +1,5 @@
 defmodule Memex.Utils.FileIO do
+  require Logger
 
 
   ## Maps
@@ -44,10 +45,21 @@ defmodule Memex.Utils.FileIO do
       {:ok, ""} ->
          [] # empty files == empty List
       {:ok, data} ->
-         data
-         |> Memex.Utils.Encryption.decrypt(key)
-         |> Jason.decode!()
-         |> convert_to_structs()
+        case Memex.Utils.Encryption.decrypt(data, key) do
+          :error ->
+              Logger.warn "Fetch passwords failed!"
+              []
+          data when is_bitstring(data) ->
+              Jason.decode!(data)
+              |> convert_to_structs()
+          # _empty_list = [] ->
+          #     []
+          # [_map = %{}|_rest] = maplist ->
+          #     # a list of at least one map
+          #     maplist
+          #     |> Jason.decode!()
+          #     |> convert_to_structs()
+        end
       {:error, reason} ->
          context = %{reason: reason, filepath: filepath}
          {:error, context}

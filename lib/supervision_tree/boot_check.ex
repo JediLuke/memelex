@@ -1,7 +1,6 @@
 defmodule Memex.BootCheck do
   use GenServer
   require Logger
-  alias Memex.Utils
  
   def start_link(params)  do
     GenServer.start_link(__MODULE__, params, name: __MODULE__)
@@ -15,7 +14,7 @@ defmodule Memex.BootCheck do
 
   @impl GenServer
   def handle_continue(:check_for_memex_environment, state) do
-    env = Application.get_env(:memex, :environment)
+    env = Application.get_env(:memelex, :environment)
     probe(env)
     {:noreply, state}
   end
@@ -29,8 +28,8 @@ defmodule Memex.BootCheck do
         stop_boot("""
         The Memex directory defined in `config.exs` does not exist.
     
-        The directory #{inspect dir} does not exist. Please create it
-        before running the Memex. For example, on Linux:
+        The directory #{inspect dir} does not exist. Please
+        create it before running the Memex. For example, on Linux:
 
           mkdir -p #{dir}
 
@@ -51,7 +50,7 @@ defmodule Memex.BootCheck do
     of the memex to be `JediLuke` (my GitHub name), you would have
     a config like this:
 
-    config :memex,
+    config :memelex,
       environment: %{
         name: "JediLuke",
         memex_directory: "~/memex/JediLuke",
@@ -76,9 +75,23 @@ defmodule Memex.BootCheck do
   end
 
   def stop_boot(msg) do
-    Logger.error msg
+    Logger.error(msg)
     # Exit in a separate process, so we don't get a warning in console
     # about not having correct return for handle_continue/2
     spawn(fn -> System.stop(1) end)
   end
+
+  # defp create_new_memex_environment() do
+  #   Logger.debug "creating a new Memex environment..."
+
+  #   ##TODO ideally I would like to get the User to input a name
+  #   #      here, unfortunately, that was tricker than I would like...
+
+  #   new_env_map  = %{"name" => "my_env"}
+  #   new_env_file = "./environments/#{new_env_map["name"]}.memex-env"
+
+  #   Utils.FileIO.writemap(new_env_file, new_env_map)
+  #   Logger.info "Loading `#{new_env_map["name"]}` environment..."
+  #   :ok
+  # end
 end

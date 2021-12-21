@@ -11,13 +11,19 @@ defmodule Memex.Env.PasswordManager do
 
   def init(env) do
     Logger.info "#{__MODULE__} initializing..."
-    {:ok, env, {:continue, :open_passwords_file}}
+    {:ok, Map.merge(env, %{passwords: %{}}), {:continue, :open_passwords_file}}
   end
 
   def handle_continue(:open_passwords_file, state) do
+    # IO.puts "1111111"
+    #TODO if key doesn't exist as a variable, AND there is no passwords file ->
+    #       this might be a new memex, or one without password functionality.
+    #       We could just log something & go inactive, or even shut-down.
     if key_exists_as_env_variable?() do
-      init_state = load_init_state_from_passwords_file(state)
-      {:noreply, init_state}
+      # IO.puts "222222222222"
+      passwords = load_init_state_from_passwords_file(state)
+      # |> IO.inspect(label: "LLLL")
+      {:noreply, %{state|passwords: passwords}}
     else
       Logger.error """
       The mandatory environment variable `MEMEX_PASSWORD_KEY` could not be found.
@@ -43,6 +49,7 @@ defmodule Memex.Env.PasswordManager do
   end
 
   def handle_call(:list_passwords, _from, state) do
+    # IO.puts "INSIDE LIST"
     {:reply, {:ok, state.passwords}, state}
   end
 
@@ -93,7 +100,7 @@ defmodule Memex.Env.PasswordManager do
     init_state =
       state |> refetch_passwords_redacted()
 
-    Logger.info "PasswordManager successfully loaded passwords from disc." 
+    Logger.info "PasswordManager successfully loaded passwords from disc."  #TODO this should say how many passwords we got
 
     init_state
   end
@@ -180,12 +187,22 @@ defmodule Memex.Env.PasswordManager do
   end
 
   defp fetch_redacted_passwords_from_disc(state, key) do
-    passwords_file(state)
-    |> Utils.FileIO.read_maplist(encrypted?: true, key: key)
-    |> Enum.map(fn pword -> pword |> Map.replace!(:password, @redacted) end) # dont keep unencrypted passwords in memory...
+    fetch_passwords =
+      passwords_file(state)
+      |> Utils.FileIO.read_maplist(encrypted?: true, key: key)
+      # |> Enum.map(fn pword -> pword |> Map.replace!(:password, @redacted) end) # dont keep unencrypted passwords in memory...
+
+    case fetch_passwords do
+      :error ->
+        Logger.warn "Fetch passwords failed!"
+        []
+      passwords when is_list(passwords) ->
+        passwords
+        |> Enum.map(fn pword -> pword |> Map.replace!(:password, @redacted) end) # dont keep unencrypted passwords in memory...
+    end
   end
 
-  defp secret_key do
+  def secret_key do
     case System.get_env("MEMEX_PASSWORD_KEY") do
       nil -> raise "need to set `MEMEX_PASSWORD_KEY` as environment variable"
       pass -> pass

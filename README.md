@@ -1,8 +1,11 @@
-# Memex
+# Memelex
 
 A personal knowledge-base, written in Elixir.
 
 ## What is a Memex?
+
+**Introducing Memelex (Denver Elixir meetup, December 2021)**
+https://www.youtube.com/watch?v=ahyH5EqSDwk
 
 Memex is the name of the hypothetical electromechanical device that
 Vannevar Bush described in his 1945 article "As We May Think". Bush
@@ -66,28 +69,33 @@ In the documentation, the `Memex` is one's personal collection of data.
 The memex uses local storage (i.e. your hard-disc) to persist data.
 When Memex boots, it looks in it's configuration for a directory to use,
 the `memex_directory`. This directory must be made manually before we can
-use the Memex. You can set this in the `dev.exs`config file, because we
+use the Memex. You can set this in the `config.exs`config file, because we
 will be running Memex in `:dev` mode.
 
 We also may optionally declare a backups directory. Backups are taken
 periodically just incase we accidentally corrupt or otherwise break the
-Memex database. This is also declared in the `dev.exs` config file.
+Memex database. This is also declared in the `config.exs` config file.
+It is recommended to store backups on an external drive.
 
 For example:
 
 Make the directories
 ```
 mkdir -p /home/pi/memex/JediLuke
-mkdir -p /home/pi/memex/backups/JediLuke
+mkdir -p /Volumes/Samsung\ USB/memex_backups/
 ```
 
-Then the `dev.exs` file would look like this:
+Note that this example is a bit mixed up, MacOS uses `Volumes` for external
+drives, but linux uses `/home/pi` as it's root directory... it's an example,
+you're supposed to read it not just copy-paste!
+
+Then the `config.exs` file would look like this:
 ```
-config :memex,
+config :memelex,
   environment: %{
     name: "JediLuke",
     memex_directory: "/home/pi/memex/JediLuke",
-    backups_directory: "/home/pi/memex/backups/JediLuke"
+    backups_directory: "/Volumes/Samsung\ USB/memex_backups/"
   }
 ```
 
@@ -124,7 +132,7 @@ Whatever text editor you use, you need to configure it in the `config.exs`
 file:
 
 ```
-config :memex,
+config :memelex,
   text_editor_shell_command: "gedit" # e.g. gedit ~/some_notes.txt
 ```
 
@@ -138,6 +146,13 @@ To generate a good password, use the following Elixir code:
 
 ```
 :crypto.strong_rand_bytes(30) |> :base64.encode
+```
+
+Or, if you can open Memex:
+
+```
+Memex.Utils.Encryption.generate_password
+Memex.Utils.Encryption.generate_secret_key
 ```
 
 Then (assuming you are using bash shell, other shells will have different
@@ -157,7 +172,7 @@ be limited.
 
 ## Running the Memex
 
-Assuming you have created the memex directory and updated your `dev.exs`
+Assuming you have created the memex directory and updated your `config.exs`
 file - we start the memex as a typical Elixir application, in `dev` mode,
 opening up an IEx console (which is how we primarily interact with the Memex).
 

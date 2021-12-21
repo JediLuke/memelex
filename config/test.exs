@@ -1,7 +1,7 @@
 import Config
 
-config :memex,
+config :memelex,
   environment: %{
-    name: "Tel'aran'rhiod", # https://wot.fandom.com/wiki/Tel%27aran%27rhiod
+    name: "Telaranrhiod", # https://wot.fandom.com/wiki/Tel%27aran%27rhiod
     memex_directory: "~/memex/test"
   }

@@ -11,6 +11,7 @@ defmodule Memex.Utils.WikiManagement do
     if title_already_exists? do
       {:error, "this tidbit already exists"}
     else
+      #TODO here we dont want to just use what's in memory, we want to re-read from disk!
       new_wiki = state.wiki ++ [t]
       wiki_file(state) |> Memex.Utils.FileIO.write_maplist(new_wiki)
       {:ok, new_wiki}

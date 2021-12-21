@@ -25,7 +25,6 @@ defmodule Memex.Utils.StringifyDateTimes do
     "#{day_of_the_month}-#{day_of_the_week_abbreviation}"
   end
 
-  @doc ~s(Return a string containing the day of the month in long-form.)
   def format(datetime, "day_xx_of_month") do
     day_of_the_week  = datetime |> format(extract: "day_of_the_week")
     month_name       = datetime |> format(extract: "month_name")
@@ -35,7 +34,6 @@ defmodule Memex.Utils.StringifyDateTimes do
     "#{day_of_the_week} #{day_of_the_month} of #{month_name}"
   end
 
-  @doc ~s(Return a string containing the day of the month in long-form.)
   def format(%{year: year}, "year_as_XXXX") when is_integer(year) do
     year |> Integer.to_string()
   end

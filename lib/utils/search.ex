@@ -1,10 +1,10 @@
 defmodule Memex.Utils.Search do
   require Logger
   
-  @similarity_cutoff 0.72
+  @similarity_cutoff 0.5
 
   #NOTE - singular TidBit
-  def tidbit(wiki, %{uuid: search_uuid}) do
+  def one_tidbit(wiki, %{uuid: search_uuid}) do
     search_fn = fn tidbit -> tidbit.uuid == search_uuid end
     
     wiki
@@ -13,6 +13,22 @@ defmodule Memex.Utils.Search do
          :not_found -> {:error, "Could not find any TidBit with a this UUID"}
             results -> {:ok, results}
     end
+  end
+
+  def one_tidbit(wiki, search_term) when is_binary(search_term) do
+    results = 
+      wiki
+      |> Enum.filter(
+           fn tidbit -> String.jaro_distance(search_term, tidbit.title) >= @similarity_cutoff end)
+
+    # just return the first one I guess
+    #TODO can probably use List.first or something better here
+    if results == [] do
+      {:error, "Unable to find TidBit."}
+    else
+      {:ok, hd(results)}
+    end
+    
   end
 
   def tidbits(_wiki, []) do

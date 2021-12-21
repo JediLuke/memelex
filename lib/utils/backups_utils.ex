@@ -3,22 +3,30 @@ defmodule Memex.Utils.Backups do
   Utilities for managing Memex backups.
   """
   alias Memex.Env.WikiManager
-  alias Memex.Utils.StringifyDateTimes
   require Logger
 
   def perform_backup_procedure() do
-    if File.exists?(backups_directory()) do
-      perform_backup_procedure(:all_systems_go)
-    else
-      {:error, "Could not find the backups directory"}
-    end
+    # pre-flight check
+    with {:ok, backups_dir} <- GenServer.call(WikiManager, :whats_the_current_backups_directory?),
+                       true <- File.exists?(backups_dir)
+              do
+                perform_backup_procedure(:all_systems_go, backups_dir)
+              else
+                error -> 
+                  {:error, "Could not find the backups directory"}
+              end 
+    # if File.exists?(backups_directory()) do
+    #   perform_backup_procedure(:all_systems_go, backups_directory)
+    # else
+    #   {:error, "Could not find the backups directory"}
+    # end
   end
 
-  def perform_backup_procedure(:all_systems_go) do
+  def perform_backup_procedure(:all_systems_go, backups_dir) do
     now = Memex.My.current_time()
 
     memex_directory =
-      Memex.Utils.ToolBag.memex_directory() #TODO this is probably a hell dumb way of doing this...
+      Memex.Utils.ToolBag.memex_directory() #TODO this is probably a hell-dumb way of doing this...
 
     this_backup =
       case fetch_backup_records() do
@@ -33,12 +41,11 @@ defmodule Memex.Utils.Backups do
                    })
       end
     
-    this_backup_dir =
-      backups_directory()
-      |> Path.join("/backups")
-      |> Path.join("/#{now.year |> Integer.to_string()}")
-      |> Path.join("/#{Memex.Facts.GregorianCalendar.month_name(now.month)}")
-      |> Path.join("/backup#{this_backup.version}")
+    this_backup_dir = backups_dir
+    |> Path.join("/backups")
+    |> Path.join("/#{now.year |> Integer.to_string()}")
+    |> Path.join("/#{Memex.Facts.GregorianCalendar.month_name(now.month)}")
+    |> Path.join("/backup#{this_backup.version}")
 
     if File.exists?(this_backup_dir <> "/backup_record.json") do
       raise "attempting to overwrite an existing backup!"
@@ -57,7 +64,8 @@ defmodule Memex.Utils.Backups do
   end
 
   def perform_backup_procedure(:cloud) do
-    raise "can't back up to the could yet"
+    #TODO do a GitHub backup
+    raise "can't back up to the cloud yet"
   end
 
   def fetch_last_backup do
@@ -100,14 +108,19 @@ defmodule Memex.Utils.Backups do
     dir <> "/backups.json"
   end
 
-  def backups_directory do
-    {:ok, dir} = WikiManager |> GenServer.call(:whats_the_current_backups_directory?)
-    if not is_bitstring(dir) do #TODO check here that we do have a backup sdirectory (better than this!)
-      raise "looks like there's no backups directory"
-    else
-      dir
-    end
-  end
+  # def backups_directory do
+  #   {:ok, dir} = WikiManager |> GenServer.call(:whats_the_current_backups_directory?)
+  #   if not is_bitstring(dir) do #TODO check here that we do have a backup sdirectory (better than this!)
+  #     raise "looks like there's no backups directory"
+  #   else
+  #     dir
+  #   end
+
+  #   case GenServer.call(WikiManager, :whats_the_current_backups_directory?) do
+  #     {:ok, dir} when is_bitstring(dir) -> dir
+  #     {:error, _reason} ->
+  #   end
+  # end
 
   defp increment_version(x) when is_bitstring(x) do
     add_one = fn(a) -> a + 1 end

@@ -1,6 +1,22 @@
 defmodule Memex.My.TODOs do
   alias Memex.Env.WikiManager
 
+
+  # This function should return some helpful advice for the user on how
+  # to make a new TODO
+  def new do
+    ~s(To add a new TODO, all you need to provide is a titleHere's how to make a new TODO:
+
+       Memex.My.TODOs.new "Mow the lawn"
+
+       There are more ways to make TODOs. Check out #{__MODULE__} for more
+       information.)
+  end
+
+  def new(title, data) when is_bitstring(title) do
+    new(%{title: title, data: data})
+  end
+
   # we override here to allow a user to just type in a single
   # string, and we will accept it and turn it into a list
   def new(%{tags: tag} = params) when is_bitstring(tag) do

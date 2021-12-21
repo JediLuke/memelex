@@ -54,8 +54,8 @@ defmodule Memex.Utils.TidBits.ConstructorLogic do
 
   def set_created_and_creator(params) do
     Map.merge(params, %{
-      creator: "JediLuke", #TODO get from current environment
-      created: DateTime.utc_now() #TODO use unix time here
+      creator: Application.get_env(:memelex, :environment).name,
+      created: DateTime.utc_now() |> to_string() #TODO use unix time here?
     })
   end
 

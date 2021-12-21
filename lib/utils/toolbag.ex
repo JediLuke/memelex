@@ -36,7 +36,16 @@ defmodule Memex.Utils.ToolBag do
   end
 
   def open_text_editor_cmd do
-    Application.get_env(:memex, :text_editor_shell_command)
+    Application.get_env(:memelex, :text_editor_shell_command)
+  end
+
+  def open_vs_code(filepath) do
+    # run this in a separate process so we never lock the IEx console
+    {:ok, _pid} = Task.Supervisor.start_child(Memex.Env.TaskSupervisor, fn ->
+      {"", 0} = System.cmd("code", [filepath])
+      :ok
+    end)
+    :ok
   end
 
 end

@@ -14,9 +14,8 @@ defmodule Memex.TidRef do
   defstruct [
 
       uuid:         nil,         # each tiddler has a UUID
-      module:       nil,         # will be either TidBit or TidLink
       description:  nil,         # usually the title/label of the Tidex
-      module:       __MODULE__   # this allows us to reconstruct the correct Elixir struct from the JSON text files
+      module:       __MODULE__   # this allows us to reconstruct the correct Elixir struct from the JSON text files. Will be either TidBit or TidLink
   ]
 
 

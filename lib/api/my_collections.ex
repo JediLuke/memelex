@@ -47,4 +47,16 @@ defmodule Memex.My.Collections do
   def recursively_create_list([tidbit|rest], tidrefs) do
     recursively_create_list(rest, tidrefs ++ [tidbit |> Memex.TidBit.construct_reference()])
   end
+
+  #NOTE - ok so, we could just do Collections as heirarchies of tags...
+
+
+  # ok so - collections, are tags, are tidbits. When you open the TidBit
+  # for a tag (all tags are TidBits) if you call My.Collections(tag) it
+  # will attempt to list & order all the TidBits it finds:
+
+
+
+  # https://tiddlywiki.narkive.com/mCC7sDrU/tw-tw5-question-about-tocs-trees-and-hierarchies-using-fields
+
 end

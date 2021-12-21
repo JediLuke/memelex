@@ -47,7 +47,7 @@ defmodule Memex.Env.WikiManager do
 
   # fetches exactly 1 TidBit
   def handle_call({:find_tidbit, params}, _from, state) do
-    Memex.Utils.Search.tidbit(state.wiki, params)
+    Memex.Utils.Search.one_tidbit(state.wiki, params)
     |> case do
       {:ok, %Memex.TidBit{} = result} ->
         {:reply, {:ok, result}, state}
@@ -97,8 +97,12 @@ defmodule Memex.Env.WikiManager do
     {:reply, {:ok, state.memex_directory}, state}
   end
 
+  def handle_call(:whats_the_current_backups_directory?, _from, %{backups_directory: dir} = state) do
+    {:reply, {:ok, dir}, state}
+  end
+
   def handle_call(:whats_the_current_backups_directory?, _from, state) do
-    {:reply, {:ok, state.backups_directory}, state}
+    {:reply, {:error, "No Backups directory found."}, state}
   end
 
   def handle_call(:whats_the_file_we_store_passwords_in_again?, _from, state) do

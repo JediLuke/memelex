@@ -29,9 +29,4 @@ defmodule Memex.My.Projects do
     )
   end
 
-  def open_code() do
-    {"", 0} = System.cmd("code", ["/home/pi/workbench/drabardi/"])
-  end
-
-
 end

@@ -4,17 +4,39 @@ defmodule Memex.My.Wiki do
   """
   alias Memex.Env.WikiManager
   alias Memex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
+  require Logger
 
   def new(params) do
     params
-    |> TidBitUtils.sanitize_conveniences()
+    # |> TidBitUtils.sanitize_conveniences()
     |> Memex.TidBit.construct()
-    |> Memex.My.Wiki.new_tidbit()
+    |> __MODULE__.new_tidbit()
   end
 
+  # def new(param_one, param_two) do
+  #   Logger.warn "Here, we should be enabling things like:
+
+  #       Memex.new 'Hippy string title', tags: 'blah', 'nlajh'
+    
+  #   But right now, who knows!"
+  #   params
+  #   # |> TidBitUtils.sanitize_conveniences()
+  #   |> Memex.TidBit.construct()
+  #   |> __MODULE__.new_tidbit()
+  # end
+
+  #TODO there's a bug making new TidBits
+  #     they get saved with a ~U[2021-11-09 02:45:44.567300Z] as "created",
+  #     it needs to be a saved string timestamp
   def new_tidbit(%Memex.TidBit{} = t) do
     WikiManager |> GenServer.call({:new_tidbit, t})
   end
+
+
+  #TODO TEMPORARILY - for the DEMO - I'm putting this here, but it should be deleted
+  # def new_tidbit(p) do
+  #   new(p)
+  # end
 
   def new_tidbit(params) do
     params
@@ -42,6 +64,11 @@ defmodule Memex.My.Wiki do
     raise "this is the auto-generated / pre-compiled / whatever, recommended tidBit feed"
   end
 
+  def random do
+    # fetch a random TidBit
+    list() |> Enum.random()
+  end
+
   @doc ~s(Return a list containing every single TidBit.)
   def list do
     {:ok, tidbits} = WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
@@ -56,6 +83,11 @@ defmodule Memex.My.Wiki do
   Used to get a unique list of one of the Wiki's sub fields,
   e.g. list(:tags) or list(:type)
   """ 
+
+  def list(search_term) when is_binary(search_term) do
+    WikiManager |> GenServer.call({:list_tidbits, search_term})
+  end
+
   def list(wiki_field) when is_atom(wiki_field) do
     list() |> Enum.map(& Map.get(&1, wiki_field)) |> List.flatten() |> Enum.uniq()
   end
@@ -68,6 +100,11 @@ defmodule Memex.My.Wiki do
   def list(params) when is_list(params) do
     {:ok, tidbits} = WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
     tidbits |> Enum.filter(&Memex.Utils.Search.typed_and_tagged?(&1, params))
+  end
+
+  # always return multi-tidbit answer to a tags query
+  def find(%{tags: _t} = search_term) do
+    WikiManager |> GenServer.call({:list_tidbits, search_term})
   end
 
   def find(search_term) do

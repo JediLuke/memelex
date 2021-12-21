@@ -5,7 +5,7 @@ defmodule Memex.MixProject do
 
   def project do
     [
-      app: :memex,
+      app: :memelex,
       version: @release <> "-#{Mix.env()}-" <> git_commit_hash(),
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,

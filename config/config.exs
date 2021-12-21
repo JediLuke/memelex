@@ -8,14 +8,15 @@ config :logger,
   :console,
      format: "[$level] $message $metadata\n" # I like to remove the newline, which is there by default
 
-config :memex,
-  text_editor_shell_command: "subl"
+config :memelex,
+  text_editor_shell_command: "gedit"
 
-config :memex,
+
+config :memelex,
   environment: %{
-    name: "JediLuke",
-    memex_directory: "/Users/luke/memex/JediLuke",
-    backups_directory: "/Users/luke/memex/backups/JediLuke"
+    name: "Telaranrhiod",
+    memex_directory: "/Users/luke/memex/Telaranrhiod",
+    # backups_directory: "/Volumes/Samsung\ USB/memex_backups/"
   }
 
 

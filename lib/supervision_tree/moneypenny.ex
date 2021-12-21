@@ -6,13 +6,11 @@ defmodule Memex.MoneyPenny do
   end
 
   @impl true
-  def init(env_map) do
+  def init(_params) do
 
     children = [
       {DynamicSupervisor, strategy: :one_for_one, name: Agent.DynamicSupervisor},
-      Memex.Agents.BackupManager,
-      Memex.Agents.StrategicAdvisor,
-      Memex.Agents.FinancialAdvisor
+      Memex.Agents.BackupManager
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

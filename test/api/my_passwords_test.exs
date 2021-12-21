@@ -18,8 +18,8 @@ defmodule Memex.My.PasswordsTest do
     assert p2.password == "testpass_the_second"
 
     # shut down the memex & reboot it
-    Application.stop(:memex)
-    Application.ensure_all_started(:memex)
+    Application.stop(:memelex)
+    Application.ensure_all_started(:memelex)
 
     :timer.sleep(:timer.seconds(1))
 
