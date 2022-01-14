@@ -1,4 +1,4 @@
-defmodule Memex.Utils.DBMaintenance do
+defmodule Memelex.Utils.DBMaintenance do
 
   @doc """
   This cleaner function goes through and convert TidBits which
@@ -8,18 +8,18 @@ defmodule Memex.Utils.DBMaintenance do
   out using lists for types, so some TidBits just had strings as the type.
   """
   def listify_types do
-    Memex.My.Wiki.list()
+    Memelex.My.Wiki.list()
     |> Enum.each(fn 
-         %Memex.TidBit{type: t} = tidbit when is_bitstring(t) ->
-           Memex.My.Wiki.update(tidbit, %{type: [t]})
-         %Memex.TidBit{type: l} when is_list(l) ->
+         %Memelex.TidBit{type: t} = tidbit when is_bitstring(t) ->
+           Memelex.My.Wiki.update(tidbit, %{type: [t]})
+         %Memelex.TidBit{type: l} when is_list(l) ->
            :ok # do nothing
-         %Memex.TidBit{type: _other} = tidbit ->
+         %Memelex.TidBit{type: _other} = tidbit ->
            raise "A very weird type was discovered on the TidBit: #{inspect tidbit.title}"
        end)
 
     # last check...
-    Memex.My.Wiki.list()
+    Memelex.My.Wiki.list()
     |> Enum.each(fn tidbit -> if not is_list(tidbit.type), do: raise "One TidBit is not a list type!" end)
   end
 

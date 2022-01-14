@@ -1,4 +1,4 @@
-defmodule Memex.Utils.ToolBag do
+defmodule Memelex.Utils.ToolBag do
   @moduledoc """
   A general-purpose module for general-purpose functions.
   """
@@ -14,7 +14,7 @@ defmodule Memex.Utils.ToolBag do
 
   def memex_directory do
     {:ok, dir} =
-       Memex.Env.WikiManager |> GenServer.call(:whats_the_current_memex_directory?)
+       Memelex.Env.WikiManager |> GenServer.call(:whats_the_current_memex_directory?)
     dir
   end
 
@@ -24,7 +24,7 @@ defmodule Memex.Utils.ToolBag do
 
   def open_external_textfile(filepath) when is_bitstring(filepath) do
     # run this in a separate process so we never lock the IEx console
-    {:ok, _pid} = Task.Supervisor.start_child(Memex.Env.TaskSupervisor, fn ->
+    {:ok, _pid} = Task.Supervisor.start_child(Memelex.Env.TaskSupervisor, fn ->
       {"", 0} = System.cmd(open_text_editor_cmd(), [filepath])
       :ok
     end)
@@ -41,7 +41,7 @@ defmodule Memex.Utils.ToolBag do
 
   def open_vs_code(filepath) do
     # run this in a separate process so we never lock the IEx console
-    {:ok, _pid} = Task.Supervisor.start_child(Memex.Env.TaskSupervisor, fn ->
+    {:ok, _pid} = Task.Supervisor.start_child(Memelex.Env.TaskSupervisor, fn ->
       {"", 0} = System.cmd("code", [filepath])
       :ok
     end)

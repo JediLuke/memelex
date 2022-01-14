@@ -1,7 +1,7 @@
-defmodule Memex.Utils.Search do
+defmodule Memelex.Utils.Search do
   require Logger
   
-  @similarity_cutoff 0.5
+  @similarity_cutoff 0.6
 
   #NOTE - singular TidBit
   def one_tidbit(wiki, %{uuid: search_uuid}) do
@@ -28,6 +28,21 @@ defmodule Memex.Utils.Search do
     else
       {:ok, hd(results)}
     end
+  end
+
+  def one_tidbit(wiki, {:exact, search_term}) when is_binary(search_term) do
+    results = 
+      wiki
+      |> Enum.filter(
+           fn tidbit -> search_term == tidbit.title end)
+
+    # just return the first one I guess
+    #TODO can probably use List.first or something better here
+    if results == [] do
+      {:error, "Unable to find TidBit."}
+    else
+      {:ok, hd(results)}
+    end
     
   end
 
@@ -36,7 +51,7 @@ defmodule Memex.Utils.Search do
   end
 
   def tidbits(wiki, map) when is_map(map) do
-    keyword_params = Memex.Utils.MiscElixir.convert_map_to_keyword_list(map)
+    keyword_params = Memelex.Utils.MiscElixir.convert_map_to_keyword_list(map)
     tidbits(wiki, keyword_params)
   end
 

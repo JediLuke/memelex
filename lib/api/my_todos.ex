@@ -1,5 +1,5 @@
-defmodule Memex.My.TODOs do
-  alias Memex.Env.WikiManager
+defmodule Memelex.My.TODOs do
+  alias Memelex.Env.WikiManager
 
 
   # This function should return some helpful advice for the user on how
@@ -7,7 +7,7 @@ defmodule Memex.My.TODOs do
   def new do
     ~s(To add a new TODO, all you need to provide is a titleHere's how to make a new TODO:
 
-       Memex.My.TODOs.new "Mow the lawn"
+       Memelex.My.TODOs.new "Mow the lawn"
 
        There are more ways to make TODOs. Check out #{__MODULE__} for more
        information.)
@@ -29,7 +29,7 @@ defmodule Memex.My.TODOs do
     validate_tag_list!(tlist)
     params
     |> Map.merge(%{tags: tlist ++ ["#TODO"]})
-    |> Memex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new_tidbit()
   end
 
   # this is a nice convenience function, make a TODO in one line
@@ -40,7 +40,7 @@ defmodule Memex.My.TODOs do
   def new(params) do
     params
     |> Map.merge(%{tags: ["#TODO"]})
-    |> Memex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new_tidbit()
   end
 
   # more convenient to use keyword lists on the CLI

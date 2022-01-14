@@ -1,20 +1,20 @@
-defmodule Memex.My.PasswordsTest do
+defmodule Memelex.My.PasswordsTest do
   use ExUnit.Case
 
   test "consecutive functionality of major functions" do
 
-    assert Memex.My.Passwords.list == []
+    assert Memelex.My.Passwords.list == []
 
-    Memex.My.Passwords.new %{label: "TestLabel", password: "testpass"}
+    Memelex.My.Passwords.new %{label: "TestLabel", password: "testpass"}
 
-    assert Memex.My.Passwords.list |> Enum.count() == 1
-    assert hd(Memex.My.Passwords.list).label == "TestLabel"
+    assert Memelex.My.Passwords.list |> Enum.count() == 1
+    assert hd(Memelex.My.Passwords.list).label == "TestLabel"
 
-    p = Memex.My.Passwords.find "TestLabel"
+    p = Memelex.My.Passwords.find "TestLabel"
     assert p.password == "testpass"
 
-    :ok = Memex.My.Passwords.update(p, %{password: "testpass_the_second"})
-    p2 = Memex.My.Passwords.find "TestLabel"
+    :ok = Memelex.My.Passwords.update(p, %{password: "testpass_the_second"})
+    p2 = Memelex.My.Passwords.find "TestLabel"
     assert p2.password == "testpass_the_second"
 
     # shut down the memex & reboot it
@@ -23,7 +23,7 @@ defmodule Memex.My.PasswordsTest do
 
     :timer.sleep(:timer.seconds(1))
 
-    p3 = Memex.My.Passwords.find "TestLabel"
+    p3 = Memelex.My.Passwords.find "TestLabel"
     assert p3.password == "testpass_the_second" # it should have the most updated version, recovered from disc
 
   end

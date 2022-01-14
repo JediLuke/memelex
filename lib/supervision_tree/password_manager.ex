@@ -1,7 +1,7 @@
-defmodule Memex.Env.PasswordManager do
+defmodule Memelex.Env.PasswordManager do
   use GenServer
   require Logger
-  alias Memex.Utils
+  alias Memelex.Utils
 
   @redacted "***********" # this is the string we replace passwords with, so tht we don't keep real passwords in memory unencrypted
 
@@ -66,7 +66,7 @@ defmodule Memex.Env.PasswordManager do
     end
   end
 
-  def handle_call({:find_unredacted_password, %Memex.Password{} = password}, _from, state) do
+  def handle_call({:find_unredacted_password, %Memelex.Password{} = password}, _from, state) do
     if password = password_exists?(password, state) do
       {:reply, {:ok, find_unredacted(password, state)}, state}
     else
@@ -129,7 +129,7 @@ defmodule Memex.Env.PasswordManager do
   end
 
 
-  def write_new_password({state, key}, %Memex.Password{} = password) do
+  def write_new_password({state, key}, %Memelex.Password{} = password) do
     #NOTE - it's important here that we go and fetch the data directly from disc
     #       and then overwrite that data - this way, we cant accidentally corrupt the
     #       disc data by using the PasswordManager state (this actually happened...)
@@ -147,7 +147,7 @@ defmodule Memex.Env.PasswordManager do
     raise "we are attempting to overwrite a password with invalid data!! #{inspect password}"
   end
 
-  def overwrite_existing_password({state, key}, %Memex.Password{label: label, uuid: uuid} = password, updates) do
+  def overwrite_existing_password({state, key}, %Memelex.Password{label: label, uuid: uuid} = password, updates) do
 
     #NOTE - it's important here that we go and fetch the data directly from disc
     #       and then overwrite that data - this way, we cant accidentally corrupt the

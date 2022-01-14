@@ -1,4 +1,4 @@
-defmodule Memex.Utils.Sync do
+defmodule Memelex.Utils.Sync do
   @moduledoc """
   Sync the Memex across multiple devices.
   """
@@ -7,13 +7,13 @@ defmodule Memex.Utils.Sync do
   def push do
 
     # copy the Memex
-    memex_dir = Memex.Utils.ToolBag.memex_directory()
+    memex_dir = Memelex.Utils.ToolBag.memex_directory()
     dir_name = memex_dir |> Path.basename()
     {:ok, files_and_dirs} = File.cp_r(memex_dir, memex_dir <> "/../#{dir_name}_sync")
 
     # encrypt each file in the `sync` directory
     for filepath <- files_and_dirs do
-      Memex.Utils.Encryption.encrypt_file(filepath, secret_key())
+      Memelex.Utils.Encryption.encrypt_file(filepath, secret_key())
     end
     
     # commit any changes to the repo
@@ -26,7 +26,7 @@ defmodule Memex.Utils.Sync do
   def pull_in do
 
     # copy the encrypted files in the git repo into the Memex directory
-    memex_dir = Memex.Utils.ToolBag.memex_directory()
+    memex_dir = Memelex.Utils.ToolBag.memex_directory()
     dir_name = memex_dir |> Path.basename()
     {:ok, files_and_dirs} = File.cp_r(memex_dir <> "/../#{dir_name}_sync", memex_dir)
 
@@ -39,7 +39,7 @@ defmodule Memex.Utils.Sync do
 
     # decrypt all the files in the Memex directory
     for filepath <- files_and_dirs do
-      Memex.Utils.Encryption.decrypt_file(filepath, secret_key())
+      Memelex.Utils.Encryption.decrypt_file(filepath, secret_key())
     end
     
   end

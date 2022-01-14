@@ -1,4 +1,4 @@
-defmodule Memex.Utils.Validation do
+defmodule Memelex.Utils.Validation do
       
   def validate_tag_list!([]) do
     true

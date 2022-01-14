@@ -1,4 +1,4 @@
-defmodule Memex.My.Collections do
+defmodule Memelex.My.Collections do
   @moduledoc """
   Collections is an API around the concept of ordered-groups
   of TidBits, e.g. books - a list of chapters, which are in
@@ -21,16 +21,16 @@ defmodule Memex.My.Collections do
   trees, but they can't be cyclical - that would be a graph, which is something
   different from a Collection - the ordering of a collection is important.
   """
-  alias Memex.Env.WikiManager
-  alias Memex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
+  alias Memelex.Env.WikiManager
+  alias Memelex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
   @snippets_tag "my_snippets"
 
   def form_new(params, tidbits) when is_list(tidbits) do
     params
     |> TidBitUtils.sanitize_conveniences()
     |> Map.merge(%{type: ["collection"], data: tidbits |> create_tidref_list()})
-    |> Memex.TidBit.construct()
-    |> Memex.My.Wiki.new_tidbit()
+    |> Memelex.TidBit.construct()
+    |> Memelex.My.Wiki.new_tidbit()
   end
 
   # appends a tidbit to a collection
@@ -45,7 +45,7 @@ defmodule Memex.My.Collections do
   def recursively_create_list([], tidrefs), do: tidrefs
 
   def recursively_create_list([tidbit|rest], tidrefs) do
-    recursively_create_list(rest, tidrefs ++ [tidbit |> Memex.TidBit.construct_reference()])
+    recursively_create_list(rest, tidrefs ++ [tidbit |> Memelex.TidBit.construct_reference()])
   end
 
   #NOTE - ok so, we could just do Collections as heirarchies of tags...

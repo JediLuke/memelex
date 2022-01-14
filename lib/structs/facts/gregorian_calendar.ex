@@ -1,4 +1,4 @@
-defmodule Memex.Facts.GregorianCalendar do
+defmodule Memelex.Facts.GregorianCalendar do
 
   @months [
       :january,

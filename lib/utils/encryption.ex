@@ -1,4 +1,4 @@
-defmodule Memex.Utils.Encryption do
+defmodule Memelex.Utils.Encryption do
   @moduledoc """
   Helpers for using Crypto.
 
@@ -38,7 +38,7 @@ defmodule Memex.Utils.Encryption do
     else
       {:ok, data} = File.read(path)
       encrypted_data = encrypt(data, key)
-      Memex.Utils.FileIO.write(path, encrypted_data)
+      Memelex.Utils.FileIO.write(path, encrypted_data)
     end
   end
 
@@ -48,7 +48,7 @@ defmodule Memex.Utils.Encryption do
     else
       {:ok, data} = File.read(path)
       decrypted_data = decrypt(data, key)
-      Memex.Utils.FileIO.write(path, decrypted_data)
+      Memelex.Utils.FileIO.write(path, decrypted_data)
     end
   end
 

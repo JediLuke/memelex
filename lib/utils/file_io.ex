@@ -1,4 +1,4 @@
-defmodule Memex.Utils.FileIO do
+defmodule Memelex.Utils.FileIO do
   require Logger
 
 
@@ -45,7 +45,7 @@ defmodule Memex.Utils.FileIO do
       {:ok, ""} ->
          [] # empty files == empty List
       {:ok, data} ->
-        case Memex.Utils.Encryption.decrypt(data, key) do
+        case Memelex.Utils.Encryption.decrypt(data, key) do
           :error ->
               Logger.warn "Fetch passwords failed!"
               []
@@ -75,7 +75,7 @@ defmodule Memex.Utils.FileIO do
   def write_maplist(filepath, data, [encrypted?: true, key: key])
     when is_bitstring(filepath) and is_list(data) do
       encrypted_data =
-        data |> Jason.encode!() |> Memex.Utils.Encryption.encrypt(key)
+        data |> Jason.encode!() |> Memelex.Utils.Encryption.encrypt(key)
 
       write(filepath, encrypted_data)
   end
@@ -102,7 +102,7 @@ defmodule Memex.Utils.FileIO do
          )
     |> Enum.map(
          fn
-           %Memex.TidBit{}  = t ->
+           %Memelex.TidBit{}  = t ->
                 # if the TidBit contains a Struct in it's data field, we want to reconstruct it here 
                 case t.data do
                   %{"module" => m} ->
@@ -112,9 +112,9 @@ defmodule Memex.Utils.FileIO do
                       t
                 end
            #TODO probably should be ONLY TidBits, dont have multiple types of struct in the Memex
-           %Memex.Password{} = p ->
+           %Memelex.Password{} = p ->
                 p
-           %Memex.BackupRecord{} = r ->
+           %Memelex.BackupRecord{} = r ->
                 r
          end
          )

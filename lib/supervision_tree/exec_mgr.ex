@@ -1,4 +1,4 @@
-defmodule Memex.Env.ExecutiveManager do
+defmodule Memelex.Env.ExecutiveManager do
   use GenServer
   require Logger
 
@@ -18,8 +18,8 @@ defmodule Memex.Env.ExecutiveManager do
   @impl GenServer
   def handle_continue(:load_memex_from_disk, state) do
     #TODO put these under another Supervisor
-    Memex.Env.WikiManager.start_link(state)
-    Memex.Env.PasswordManager.start_link(state)
+    Memelex.Env.WikiManager.start_link(state)
+    Memelex.Env.PasswordManager.start_link(state)
     make_environment_directories(state)
     GenServer.cast(self(), :reload_the_custom_environment_elixir_modules)
     {:noreply, state}
@@ -38,7 +38,7 @@ defmodule Memex.Env.ExecutiveManager do
     plugin_file = state.memex_directory <> "/my_customizations.ex"
     if File.exists?(plugin_file) do
       IEx.Helpers.c plugin_file
-      custom_menu = Memex.Environment.Customizations.custom_menu() #NOTE: This module is/must be defined in the `my_customizations.ex` file, which is what we're reloading
+      custom_menu = Memelex.Environment.Customizations.custom_menu() #NOTE: This module is/must be defined in the `my_customizations.ex` file, which is what we're reloading
       {:reply, {:ok, custom_menu}, state}
     else
       Logger.warn "No Customizations found for this environment..."
@@ -57,7 +57,7 @@ defmodule Memex.Env.ExecutiveManager do
     plugin_file = state.memex_directory <> "/my_customizations.ex"
     if File.exists?(plugin_file) do
       IEx.Helpers.c plugin_file
-      {:ok, custom_module} = Memex.Environment.Customizations.on_boot() #NOTE: This module is/must be defined in the `my_customizations.ex` file, which is what we're reloading
+      {:ok, custom_module} = Memelex.Environment.Customizations.on_boot() #NOTE: This module is/must be defined in the `my_customizations.ex` file, which is what we're reloading
       {:noreply, state |> Map.merge(%{ex_module: custom_module})} # this environment's custom Elixir module
     else
       Logger.warn "No Customizations found for this environment..."

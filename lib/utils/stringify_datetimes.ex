@@ -1,4 +1,4 @@
-defmodule Memex.Utils.StringifyDateTimes do
+defmodule Memelex.Utils.StringifyDateTimes do
 
 
   @doc """
@@ -19,7 +19,7 @@ defmodule Memex.Utils.StringifyDateTimes do
       datetime
       |> DateTime.to_date()
       |> Date.day_of_week()
-      |> Memex.Facts.GregorianCalendar.day_name()
+      |> Memelex.Facts.GregorianCalendar.day_name()
       |> String.split_at(3)
 
     "#{day_of_the_month}-#{day_of_the_week_abbreviation}"
@@ -42,11 +42,11 @@ defmodule Memex.Utils.StringifyDateTimes do
     datetime
     |> DateTime.to_date()
     |> Date.day_of_week()
-    |> Memex.Facts.GregorianCalendar.day_name()
+    |> Memelex.Facts.GregorianCalendar.day_name()
   end
 
   def format(datetime, extract: "month_name") do
-    datetime.month |> Memex.Facts.GregorianCalendar.month_name() # e.g. July or August
+    datetime.month |> Memelex.Facts.GregorianCalendar.month_name() # e.g. July or August
   end
 
   def format(datetime, extract: "day_of_the_month") do

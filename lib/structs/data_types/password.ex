@@ -1,4 +1,4 @@
-defmodule Memex.Password do
+defmodule Memelex.Password do
   @moduledoc """
   A struct for passwords.
   """
@@ -22,14 +22,14 @@ defmodule Memex.Password do
   ]
 
   def generate do
-    Memex.Utils.Encryption.generate_password(20)
+    Memelex.Utils.Encryption.generate_password(20)
   end
   
   def construct(params) when is_map(params) do
 
     validated_params =
       params
-      |> Memex.Utils.ToolBag.generate_uuid()
+      |> Memelex.Utils.ToolBag.generate_uuid()
       |> label_is_valid!()
       |> password_is_valid!()
 

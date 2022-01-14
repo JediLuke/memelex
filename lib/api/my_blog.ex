@@ -1,5 +1,5 @@
-defmodule Memex.My.Blog do
-  alias Memex.Env.WikiManager
+defmodule Memelex.My.Blog do
+  alias Memelex.Env.WikiManager
 
   def new_idea(title) when is_bitstring(title) do
     new_idea(%{title: title})
@@ -9,13 +9,13 @@ defmodule Memex.My.Blog do
     validate_tag_list!(tlist)
     params
     |> Map.merge(%{tags: tlist ++ ["my_blog", "ideas"]})
-    |> Memex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new_tidbit()
   end
 
   def new_idea(params) when is_map(params) do
     params
     |> Map.merge(%{tags: ["my_blog", "ideas"]})
-    |> Memex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new_tidbit()
   end
 
   @doc ~s(Fetch the whole list of TODOs)

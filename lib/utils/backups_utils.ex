@@ -1,8 +1,8 @@
-defmodule Memex.Utils.Backups do
+defmodule Memelex.Utils.Backups do
   @moduledoc """
   Utilities for managing Memex backups.
   """
-  alias Memex.Env.WikiManager
+  alias Memelex.Env.WikiManager
   require Logger
 
   def perform_backup_procedure() do
@@ -23,19 +23,19 @@ defmodule Memex.Utils.Backups do
   end
 
   def perform_backup_procedure(:all_systems_go, backups_dir) do
-    now = Memex.My.current_time()
+    now = Memelex.My.current_time()
 
     memex_directory =
-      Memex.Utils.ToolBag.memex_directory() #TODO this is probably a hell-dumb way of doing this...
+      Memelex.Utils.ToolBag.memex_directory() #TODO this is probably a hell-dumb way of doing this...
 
     this_backup =
       case fetch_backup_records() do
-             [] -> Memex.BackupRecord.construct(%{
+             [] -> Memelex.BackupRecord.construct(%{
                      version: "1",
                      date: now
                    })
         records -> last_backup = hd(records)
-                   Memex.BackupRecord.construct(%{
+                   Memelex.BackupRecord.construct(%{
                      version: last_backup.version |> increment_version(),
                      date: now
                    })
@@ -44,7 +44,7 @@ defmodule Memex.Utils.Backups do
     this_backup_dir = backups_dir
     |> Path.join("/backups")
     |> Path.join("/#{now.year |> Integer.to_string()}")
-    |> Path.join("/#{Memex.Facts.GregorianCalendar.month_name(now.month)}")
+    |> Path.join("/#{Memelex.Facts.GregorianCalendar.month_name(now.month)}")
     |> Path.join("/backup#{this_backup.version}")
 
     if File.exists?(this_backup_dir <> "/backup_record.json") do
@@ -56,8 +56,8 @@ defmodule Memex.Utils.Backups do
 
     #TODO hash the backup & save it in the BackupRecord
 
-    Memex.Utils.Backups.save_backup_metadata(this_backup, this_backup_dir)
-    Memex.Utils.Backups.append_to_record(this_backup)
+    Memelex.Utils.Backups.save_backup_metadata(this_backup, this_backup_dir)
+    Memelex.Utils.Backups.append_to_record(this_backup)
     
     IO.puts "backup complete."
     :backup_successful
@@ -79,7 +79,7 @@ defmodule Memex.Utils.Backups do
 
   def fetch_backup_records do
     backup_records_file()
-    |> Memex.Utils.FileIO.read_maplist()
+    |> Memelex.Utils.FileIO.read_maplist()
     |> sort_records(:descending_chronologically)
   end
 
@@ -91,7 +91,7 @@ defmodule Memex.Utils.Backups do
   # save a file with a single %BackupRecord within each backup we make
   def save_backup_metadata(backup_record, backup_dir) do
     backup_dir <> "/backup_record.json"
-    |> Memex.Utils.FileIO.write_maplist([backup_record])
+    |> Memelex.Utils.FileIO.write_maplist([backup_record])
   end
 
   def append_to_record(backup_record) do
@@ -100,7 +100,7 @@ defmodule Memex.Utils.Backups do
       |> Enum.concat([backup_record])
 
     backup_records_file()
-    |> Memex.Utils.FileIO.write_maplist(new_backups_record)
+    |> Memelex.Utils.FileIO.write_maplist(new_backups_record)
   end
 
   def backup_records_file do

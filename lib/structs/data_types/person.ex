@@ -1,4 +1,4 @@
-defmodule Memex.Person do
+defmodule Memelex.Person do
   @moduledoc """
   A struct for people.
   """
@@ -28,7 +28,7 @@ defmodule Memex.Person do
 
   def validate(params) when is_map(params) do
     params
-    |> Memex.Utils.ToolBag.generate_uuid()
+    |> Memelex.Utils.ToolBag.generate_uuid()
     |> validate_name!()
   end
 

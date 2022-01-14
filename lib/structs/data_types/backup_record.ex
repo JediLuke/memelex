@@ -1,4 +1,4 @@
-defmodule Memex.BackupRecord do
+defmodule Memelex.BackupRecord do
 
   @enforce_keys [:uuid, :timepoint, :version]
 
@@ -21,8 +21,8 @@ defmodule Memex.BackupRecord do
     
     valid_params = 
       params
-      |> Map.merge(%{timepoint: Memex.My.current_time() |> DateTime.to_unix()})
-      |> Memex.Utils.ToolBag.generate_uuid()
+      |> Map.merge(%{timepoint: Memelex.My.current_time() |> DateTime.to_unix()})
+      |> Memelex.Utils.ToolBag.generate_uuid()
 
     Kernel.struct(__MODULE__, valid_params |> convert_to_keyword_list())
   end

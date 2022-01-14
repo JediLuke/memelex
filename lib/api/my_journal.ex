@@ -1,12 +1,12 @@
-defmodule Memex.My.Journal do
-  alias Memex.Env.WikiManager
-  alias Memex.Facts.GregorianCalendar
-  alias Memex.Utils.StringifyDateTimes
+defmodule Memelex.My.Journal do
+  alias Memelex.Env.WikiManager
+  alias Memelex.Facts.GregorianCalendar
+  alias Memelex.Utils.StringifyDateTimes
   require Logger
 
   @doc ~s(Opens today's Journal entry, with a fresh timestamp appended.)
   def now do
-    now = Memex.My.current_time()
+    now = Memelex.My.current_time()
     {:ok, t} = now |> find_entry()
     Logger.warn "#TODO we should be appending a timestamp here..."
     #TidBit.append(t, journal_timestamp(now)) #TODO and update modified time
@@ -15,7 +15,7 @@ defmodule Memex.My.Journal do
 
   @doc ~s(Open today's Journal entry.)
   def today() do
-    {:ok, t} = Memex.My.current_time() |> find_entry()
+    {:ok, t} = Memelex.My.current_time() |> find_entry()
     open(t)
   end
 
@@ -38,7 +38,7 @@ defmodule Memex.My.Journal do
   def find_relative_page_tidbit(x) when is_integer(x) do
     one_day = 24*60*60 # number of seconds in 24 hours
     
-    Memex.My.current_time()
+    Memelex.My.current_time()
     |> DateTime.add(x*one_day, :second)
     |> find_entry()
   end
@@ -59,7 +59,7 @@ defmodule Memex.My.Journal do
       end
 
     case tidbits |> Enum.filter(find_todays_journal_entry) do
-      [todays_tidbit = %Memex.TidBit{}] ->
+      [todays_tidbit = %Memelex.TidBit{}] ->
         {:ok, todays_tidbit}
       _else ->
         new_journal_tidbit(datetime)
@@ -70,13 +70,13 @@ defmodule Memex.My.Journal do
   def new_journal_tidbit(datetime) do
     new_title = journal_page_title(datetime)
     Logger.info "creating new Journal entry `#{new_title}`..."
-    Memex.TidBit.construct(%{
+    Memelex.TidBit.construct(%{
       title: new_title,
       type: {:external, :textfile},
       tags: ["my_journal"],
       data: {:filepath, journal_entry_filepath(datetime)}
     })
-    |> Memex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new_tidbit()
   end
 
   @doc ~s(Contruct a title string for my Journal for a given datetime.)
@@ -86,7 +86,7 @@ defmodule Memex.My.Journal do
     year =
       datetime |> StringifyDateTimes.format("year_as_XXXX")
 
-    "Journal of #{Memex.My.nickname()} ~ #{day_and_month}, #{year}"
+    "Journal of #{Memelex.My.nickname()} ~ #{day_and_month}, #{year}"
   end
 
 
@@ -95,7 +95,7 @@ defmodule Memex.My.Journal do
 
     # we save Journal files in a structure, `memex/environment/journal/year/month/xx-day.txt`
     journal_directory =
-      Memex.Utils.ToolBag.memex_directory()
+      Memelex.Utils.ToolBag.memex_directory()
       |> Path.join("/journal")
       |> Path.join("/#{datetime.year |> Integer.to_string()}")
       |> Path.join("/#{datetime.month |> GregorianCalendar.month_name()}")
@@ -128,9 +128,9 @@ defmodule Memex.My.Journal do
 
   #NOTE: Filter on both atom and String keys here (why?)
   def open(%{data: %{filepath: page}}) when is_bitstring(page) do
-    Memex.Utils.ToolBag.open_external_textfile(page)
+    Memelex.Utils.ToolBag.open_external_textfile(page)
   end
   def open(%{data: %{"filepath" => page}}) when is_bitstring(page) do
-    Memex.Utils.ToolBag.open_external_textfile(page)
+    Memelex.Utils.ToolBag.open_external_textfile(page)
   end
 end

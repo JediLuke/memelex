@@ -1,4 +1,4 @@
-defmodule Memex.MixProject do
+defmodule Memelex.MixProject do
   use Mix.Project
 
   @release "0.0.1"
@@ -18,7 +18,7 @@ defmodule Memex.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {Memex.Application, []}
+      mod: {Memelex.Application, []}
     ]
   end
 

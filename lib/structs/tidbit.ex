@@ -1,4 +1,4 @@
-defmodule Memex.TidBit do
+defmodule Memelex.TidBit do
   @moduledoc """
   modelled after the `tiddler` of TiddlyWiki.
 
@@ -44,28 +44,32 @@ defmodule Memex.TidBit do
 
   @doc ~s(This is here for the sake of the nice API: TidBit.new/1)
   def new(params) do
-    Memex.My.Wiki.new_tidbit(params)
+    Memelex.My.Wiki.new_tidbit(params)
   end
 
   @doc ~s(This is here for the sake of the nice API: TidBit.update/2)
   def update(tidbit, params) do
-    Memex.My.Wiki.update(tidbit, params)
+    Memelex.My.Wiki.update(tidbit, params)
   end
 
   def list do
-    Memex.My.Wiki.list()
+    Memelex.My.Wiki.list()
   end
 
   def find(search_term) do
-    Memex.My.Wiki.find(search_term)
+    Memelex.My.Wiki.find(search_term)
+  end
+
+  def find(exact: search_term) do
+    Memelex.My.Wiki.find(exact: search_term)
   end
 
   def open(%{type: ["external"|_rest]} = tidbit) do
-    Memex.Utils.ToolBag.open_external_textfile(tidbit)
+    Memelex.Utils.ToolBag.open_external_textfile(tidbit)
   end
 
   def link(base_node, link_node) do
-    Memex.My.Wiki.link(base_node, link_node)
+    Memelex.My.Wiki.link(base_node, link_node)
   end
 
   def tag(tidbit, tag) do
@@ -73,11 +77,11 @@ defmodule Memex.TidBit do
   end
 
   def add_tag(tidbit, tag) do
-    Memex.My.Wiki.add_tag(tidbit, tag)
+    Memelex.My.Wiki.add_tag(tidbit, tag)
   end
 
   def construct(params) do
-    Memex.Utils.TidBits.ConstructorLogic.construct(params)
+    Memelex.Utils.TidBits.ConstructorLogic.construct(params)
   end
 
   @doc ~s(When we need to reference a TidBit e.g. a list of TidBits, use this function to get the reference.)

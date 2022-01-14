@@ -1,19 +1,19 @@
-defmodule Memex.My.Docs do
-  alias Memex.Env.WikiManager
+defmodule Memelex.My.Docs do
+  alias Memelex.Env.WikiManager
 
   @tag "my_docs"
 
   def new(%{tags: tlist} = params) when is_list(tlist) do
-    Memex.Utils.Validation.validate_tag_list!(tlist)
+    Memelex.Utils.Validation.validate_tag_list!(tlist)
     params
     |> Map.merge(%{tags: tlist ++ [@tag]})
-    |> Memex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new_tidbit()
   end
 
   def new(params) when is_map(params) do
     params
     |> Map.merge(%{tags: [@tag]})
-    |> Memex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new_tidbit()
   end
 
   @doc ~s(Fetch the whole list of TODOs)

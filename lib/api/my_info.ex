@@ -1,4 +1,4 @@
-defmodule Memex.My do
+defmodule Memelex.My do
   require Logger
 
   #TODO so, this should be calling ExecMgr, which opens whoami.txt...
@@ -21,6 +21,6 @@ defmodule Memex.My do
 
   @doc ~s|A nice API, My.todos()|
   def todos do
-    Memex.My.TODOs.list()
+    Memelex.My.TODOs.list()
   end
 end

@@ -1,6 +1,6 @@
-defmodule Memex.Utils.TidBits.ConstructorLogic do
+defmodule Memelex.Utils.TidBits.ConstructorLogic do
   require Logger
-  alias Memex.Utils.MiscElixir
+  alias Memelex.Utils.MiscElixir
 
 
   @doc ~s(Creates a valid %TidBit{} - does NOT save it to disc!)
@@ -10,7 +10,7 @@ defmodule Memex.Utils.TidBits.ConstructorLogic do
       |> sanitize_conveniences()
       |> sanitize_and_validate()
 
-    Kernel.struct(Memex.TidBit, valid_params |> MiscElixir.convert_map_to_keyword_list())
+    Kernel.struct(Memelex.TidBit, valid_params |> MiscElixir.convert_map_to_keyword_list())
   end
 
   @doc ~s(Make a nice interface to construct, so we dont always have to make everything a map, we can just pass in a string as a title)
@@ -125,15 +125,15 @@ defmodule Memex.Utils.TidBits.ConstructorLogic do
 
   def create_new_text_snippet_file(%{uuid: uuid, title: title, data: snippet} = params) when is_bitstring(snippet) do
     new_snippet_filepath =
-      Memex.Utils.ToolBag.memex_directory()
+      Memelex.Utils.ToolBag.memex_directory()
       |> Path.join("/text_snippets")
       |> Path.join("/#{uuid}.txt")
 
     if File.exists?(new_snippet_filepath) do
         raise "we're trying to overwrite an existing text-snippet!!"
     else
-      Memex.Utils.FileIO.write(new_snippet_filepath, title <> "\n\n" <> snippet)
-      Memex.Utils.ToolBag.open_external_textfile(new_snippet_filepath)
+      Memelex.Utils.FileIO.write(new_snippet_filepath, title <> "\n\n" <> snippet)
+      Memelex.Utils.ToolBag.open_external_textfile(new_snippet_filepath)
 
       params
       |> Map.merge(%{data: {:filepath, new_snippet_filepath}})
@@ -154,7 +154,7 @@ defmodule Memex.Utils.TidBits.ConstructorLogic do
   end
 
   def check_the_data_is_valid_for_the_given_type(%{type: ["text_snippet"], data: %{filename: filename}} = params) do
-    filepath = Memex.Utils.ToolBag.memex_directory() <> "/text_snippets/#{filename}"
+    filepath = Memelex.Utils.ToolBag.memex_directory() <> "/text_snippets/#{filename}"
     if File.exists?(filepath) do
       params |> Map.merge(%{data: %{"filename" => filename}})
     else
@@ -177,7 +177,7 @@ defmodule Memex.Utils.TidBits.ConstructorLogic do
 
   def check_the_data_is_valid_for_the_given_type(%{type: ["person"]} = params) do
     case params.data do
-      %Memex.Person{} ->
+      %Memelex.Person{} ->
          params
       _else ->
          raise "when adding a new person to the Wiki, the data field must be a %Person{} struct"

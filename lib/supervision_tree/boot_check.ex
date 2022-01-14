@@ -1,4 +1,4 @@
-defmodule Memex.BootCheck do
+defmodule Memelex.BootCheck do
   use GenServer
   require Logger
  
@@ -13,7 +13,7 @@ defmodule Memex.BootCheck do
     #REMINDER: By default, Flamelex boots with the memelex config [active?: false]
     case Application.get_env(:memelex, :active?) do
       false ->
-        Logger.warn "Memelex booted into mode: `:inactive` -- not starting the Memex."
+        Logger.warn "Memelex booted into mode: `:inactive` -- not starting the Memelex."
         {:ok, %{}}
       _otherwise ->
         {:ok, %{}, {:continue, :check_for_memex_environment}}
@@ -37,7 +37,7 @@ defmodule Memex.BootCheck do
         The Memex directory defined in `config.exs` does not exist.
     
         The directory #{inspect dir} does not exist. Please
-        create it before running the Memex. For example, on Linux:
+        create it before running the Memelex. For example, on Linux:
 
           mkdir -p #{dir}
 
@@ -74,12 +74,12 @@ defmodule Memex.BootCheck do
   #   Logger.info "No `#{env.name}` Memex environment detected."
   #   Logger.info "Creating new memex directory: #{env.memex_directory}..."
   #   :ok = File.mkdir_p!(env.memex_directory)
-  #   Memex.EnvironmentSupervisor.start_link(env)
+  #   Memelex.EnvironmentSupervisor.start_link(env)
   # end
 
   def load_existing_memex(env) do
     Logger.info "Detected `#{env.name}` environment..."
-    Memex.EnvironmentSupervisor.start_link(env)
+    Memelex.EnvironmentSupervisor.start_link(env)
   end
 
   def stop_boot(msg) do

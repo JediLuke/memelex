@@ -1,4 +1,4 @@
-defmodule Memex.MoneyPenny do
+defmodule Memelex.MoneyPenny do
   use Supervisor
 
   def start_link(params) do
@@ -10,7 +10,7 @@ defmodule Memex.MoneyPenny do
 
     children = [
       {DynamicSupervisor, strategy: :one_for_one, name: Agent.DynamicSupervisor},
-      Memex.Agents.BackupManager
+      Memelex.Agents.BackupManager
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

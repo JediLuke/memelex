@@ -1,7 +1,7 @@
-defmodule Memex.Agents.StrategicAdvisor do
+defmodule Memelex.Agents.StrategicAdvisor do
   use GenServer
   require Logger
-  alias Memex.Utils
+  alias Memelex.Utils
  
  
   def start_link(params)  do

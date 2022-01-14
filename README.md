@@ -151,8 +151,8 @@ To generate a good password, use the following Elixir code:
 Or, if you can open Memex:
 
 ```
-Memex.Utils.Encryption.generate_password
-Memex.Utils.Encryption.generate_secret_key
+Memelex.Utils.Encryption.generate_password
+Memelex.Utils.Encryption.generate_secret_key
 ```
 
 Then (assuming you are using bash shell, other shells will have different
@@ -201,12 +201,12 @@ The entire point of an API module is to make a user-friendly interface around
 day to day tasks like manipulating TidBits & their labels. So when we have any
 function like:
 
-> Memex.My.Appointments.new()
-> Memex.My.Snippets.new()
+> Memelex.My.Appointments.new()
+> Memelex.My.Snippets.new()
 
 or
 
-> Memex.My.TODOs.new()
+> Memelex.My.TODOs.new()
 
 They all have this siilar interface which is usually just "add this tag"
 
@@ -235,7 +235,7 @@ consider this file as a piece of data in your personal Memex, and not code
 that has been comitted to the `Memelex` project repo.
 
 There's some stuff which just doesn't fit into the standard API - for example,
-I have a module called `Memex.My.Work`, and whilst (sadly) we all have to work,
+I have a module called `Memelex.My.Work`, and whilst (sadly) we all have to work,
 what that looks like (and the secrets/conveniences) people need will differ.
 So this is another good example of something would would fit best inside
 the `my_customizations.ex` file.
@@ -246,7 +246,7 @@ If you change the code in the `my_customizations.ex` file, you can reload
 it without restarting the Memex using the following function call:
 
 ```
-iex> Memex.reload_customizations()
+iex> Memelex.reload_customizations()
 ```
 
 ### How to backup the Memex
@@ -294,7 +294,7 @@ data to use.
 With Memelex running, go to the IEx console and run the following function:
 
 ```
-Memex.Utils.Sync.pull_in()
+Memelex.Utils.Sync.pull_in()
 ```
 
 This will copy & decrypt all the files inside the git repo into your local

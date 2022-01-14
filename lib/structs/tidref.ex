@@ -1,4 +1,4 @@
-defmodule Memex.TidRef do
+defmodule Memelex.TidRef do
   @moduledoc """
   A struct for holding references to TidBits/TidLinks.
 

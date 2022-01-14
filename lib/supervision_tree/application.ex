@@ -1,4 +1,4 @@
-defmodule Memex.Application do
+defmodule Memelex.Application do
   @moduledoc false
   use Application
 
@@ -8,11 +8,11 @@ defmodule Memex.Application do
     IO.puts "Starting Memex application..."
 
     children = [
-      Memex.BootCheck
+      Memelex.BootCheck
     ]
 
     opts = [
-      name: Memex.TopSupervisor,
+      name: Memelex.TopSupervisor,
       strategy: :one_for_one
     ]
 

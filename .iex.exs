@@ -2,9 +2,9 @@
 
 IEx.configure(default_prompt: "memex>", continuation_prompt: "...>")
 
-alias Memex.My
-alias Memex.My.Journal
-alias Memex.My.Wiki
-alias Memex.My.TODOs
-alias Memex.My.Passwords
-alias Memex.TidBit
+alias Memelex.My
+alias Memelex.My.Journal
+alias Memelex.My.Wiki
+alias Memelex.My.TODOs
+alias Memelex.My.Passwords
+alias Memelex.TidBit

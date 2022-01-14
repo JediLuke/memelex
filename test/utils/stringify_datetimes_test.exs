@@ -1,8 +1,8 @@
-defmodule Memex.Utils.StringifyDateTimesTest do
-  alias Memex.Utils.StringifyDateTimes
+defmodule Memelex.Utils.StringifyDateTimesTest do
+  alias Memelex.Utils.StringifyDateTimes
   use ExUnit.Case
 
-  @saturday_24th_July "2021-07-24T19:15:37.292416-05:00" # Memex.My.current_time |> DateTime.to_iso8601()
+  @saturday_24th_July "2021-07-24T19:15:37.292416-05:00" # Memelex.My.current_time |> DateTime.to_iso8601()
 
   setup do
     {:ok, test_datetime, _offset} = @saturday_24th_July |> DateTime.from_iso8601()

@@ -1,4 +1,4 @@
-defmodule Memex.Utils.MiscElixir do
+defmodule Memelex.Utils.MiscElixir do
 
 
   def convert_map_to_keyword_list(map) when is_map(map) do

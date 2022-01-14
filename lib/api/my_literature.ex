@@ -1,21 +1,21 @@
-defmodule Memex.My.Literature do
-  alias Memex.Env.WikiManager
+defmodule Memelex.My.Literature do
+  alias Memelex.Env.WikiManager
 
   def new_idea(title) when is_bitstring(title) do
     new_idea(%{title: title})
   end
 
   def new_idea(%{tags: tlist} = params) when is_list(tlist) do
-    Memex.Utils.Tags.validate_tag_list!(tlist)
+    Memelex.Utils.Tags.validate_tag_list!(tlist)
     params
     |> Map.merge(%{tags: tlist ++ ["my_literature", "ideas"]})
-    |> Memex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new_tidbit()
   end
 
   def new_idea(params) when is_map(params) do
     params
     |> Map.merge(%{tags: ["my_literature", "ideas"]})
-    |> Memex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new_tidbit()
   end
 
   def ideas do

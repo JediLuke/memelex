@@ -1,4 +1,4 @@
-defmodule Memex.Utils.WikiManagement do
+defmodule Memelex.Utils.WikiManagement do
 
 
   @similarity_cutoff 0.72
@@ -13,12 +13,12 @@ defmodule Memex.Utils.WikiManagement do
     else
       #TODO here we dont want to just use what's in memory, we want to re-read from disk!
       new_wiki = state.wiki ++ [t]
-      wiki_file(state) |> Memex.Utils.FileIO.write_maplist(new_wiki)
+      wiki_file(state) |> Memelex.Utils.FileIO.write_maplist(new_wiki)
       {:ok, new_wiki}
     end
   end
 
-  def add_tag(%{tag: tag, state: state, tidbit: %Memex.TidBit{} = tidbit})
+  def add_tag(%{tag: tag, state: state, tidbit: %Memelex.TidBit{} = tidbit})
     when is_bitstring(tag) do
     
       is_this_the_tidbit_were_looking_for? =
@@ -42,7 +42,7 @@ defmodule Memex.Utils.WikiManagement do
           wiki_with_old_entry_removed ++ [updated_tidbit]
 
         #TODO this seems to be working, but better to just overwrite the file again & refresh
-        wiki_file(state) |> Memex.Utils.FileIO.write_maplist(new_wiki)
+        wiki_file(state) |> Memelex.Utils.FileIO.write_maplist(new_wiki)
 
         {:ok, updated_tidbit, %{state|wiki: new_wiki}}
       end
@@ -72,7 +72,7 @@ defmodule Memex.Utils.WikiManagement do
       new_wiki =
         wiki_with_old_entry_removed ++ [updated_tidbit]
 
-      wiki_file(state) |> Memex.Utils.FileIO.write_maplist(new_wiki)
+      wiki_file(state) |> Memelex.Utils.FileIO.write_maplist(new_wiki)
 
       {:ok, updated_tidbit, new_wiki}
     end

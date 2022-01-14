@@ -1,7 +1,7 @@
-defmodule Memex.Agents.FinancialAdvisor do
+defmodule Memelex.Agents.FinancialAdvisor do
   use GenServer
   require Logger
-  alias Memex.Utils
+  alias Memelex.Utils
  
 
   # starts up, in turn, a process which does accounting?
@@ -43,7 +43,7 @@ defmodule Memex.Agents.FinancialAdvisor do
 
   def handle_cast(:process_accounts_payable, state) do
     # find my list of bills in the Memex
-    bills = Memex.My.Wiki.find(%{tags: ["my_bills"]})
+    bills = Memelex.My.Wiki.find(%{tags: ["my_bills"]})
     IO.inspect bills, label: "FINANCE GUY FOUND THESE BILLS"
     {:noreply, state}
   end

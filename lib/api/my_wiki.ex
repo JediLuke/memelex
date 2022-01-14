@@ -1,34 +1,34 @@
-defmodule Memex.My.Wiki do
+defmodule Memelex.My.Wiki do
   @moduledoc """
   W.I.K.I. = What I Know is...
   """
-  alias Memex.Env.WikiManager
-  alias Memex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
+  alias Memelex.Env.WikiManager
+  alias Memelex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
   require Logger
 
   def new(params) do
     params
     # |> TidBitUtils.sanitize_conveniences()
-    |> Memex.TidBit.construct()
+    |> Memelex.TidBit.construct()
     |> __MODULE__.new_tidbit()
   end
 
   # def new(param_one, param_two) do
   #   Logger.warn "Here, we should be enabling things like:
 
-  #       Memex.new 'Hippy string title', tags: 'blah', 'nlajh'
+  #       Memelex.new 'Hippy string title', tags: 'blah', 'nlajh'
     
   #   But right now, who knows!"
   #   params
   #   # |> TidBitUtils.sanitize_conveniences()
-  #   |> Memex.TidBit.construct()
+  #   |> Memelex.TidBit.construct()
   #   |> __MODULE__.new_tidbit()
   # end
 
   #TODO there's a bug making new TidBits
   #     they get saved with a ~U[2021-11-09 02:45:44.567300Z] as "created",
   #     it needs to be a saved string timestamp
-  def new_tidbit(%Memex.TidBit{} = t) do
+  def new_tidbit(%Memelex.TidBit{} = t) do
     WikiManager |> GenServer.call({:new_tidbit, t})
   end
 
@@ -41,14 +41,14 @@ defmodule Memex.My.Wiki do
   def new_tidbit(params) do
     params
     |> TidBitUtils.sanitize_conveniences()
-    |> Memex.TidBit.construct()
+    |> Memelex.TidBit.construct()
     |> new_tidbit()
   end
 
   def new_linked_tidbit(%{} = tidbit, params) do
     {:ok, new_tidbit} = 
       params
-      |> Memex.TidBit.construct()
+      |> Memelex.TidBit.construct()
       |> new_tidbit()
 
     link(tidbit, new_tidbit)
@@ -93,13 +93,13 @@ defmodule Memex.My.Wiki do
   end
 
   def list(map) when is_map(map) do
-    keyword_params = Memex.Utils.MiscElixir.convert_map_to_keyword_list(map)
+    keyword_params = Memelex.Utils.MiscElixir.convert_map_to_keyword_list(map)
     list(keyword_params)
   end
 
   def list(params) when is_list(params) do
     {:ok, tidbits} = WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
-    tidbits |> Enum.filter(&Memex.Utils.Search.typed_and_tagged?(&1, params))
+    tidbits |> Enum.filter(&Memelex.Utils.Search.typed_and_tagged?(&1, params))
   end
 
   # always return multi-tidbit answer to a tags query
@@ -112,13 +112,18 @@ defmodule Memex.My.Wiki do
     tidbit
   end
 
+  def find(exact: search_term) do
+    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbit, {:exact, search_term}})
+    tidbit
+  end
+
   def find(search_term, opts) when is_list(opts) do
     {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbit, search_term, opts})
     tidbit
   end
 
   def open(params) do
-    find(params) |> Memex.Utils.ToolBag.open_external_textfile()
+    find(params) |> Memelex.Utils.ToolBag.open_external_textfile()
   end
 
   @doc ~s(Update a Tidbit.)
@@ -139,8 +144,8 @@ defmodule Memex.My.Wiki do
 
     # links/backlinks are just saved lists of references to other TidBits
     # so first, we simply compute what those new lists will be
-    new_base_node_links = base_node.links ++ [link_node |> Memex.TidBit.construct_reference()]
-    new_link_node_bases = link_node.backlinks ++ [base_node |> Memex.TidBit.construct_reference()]
+    new_base_node_links = base_node.links ++ [link_node |> Memelex.TidBit.construct_reference()]
+    new_link_node_bases = link_node.backlinks ++ [base_node |> Memelex.TidBit.construct_reference()]
 
     # then we update each seperately - with the correct list of course!!
     WikiManager |> GenServer.call({:update_tidbit, base_node, %{links: new_base_node_links}})

@@ -1,7 +1,7 @@
-defmodule Memex.Env.WikiManager do
+defmodule Memelex.Env.WikiManager do
   use GenServer
   require Logger
-  alias Memex.Utils
+  alias Memelex.Utils
 
 
   def start_link(params)  do
@@ -35,8 +35,8 @@ defmodule Memex.Env.WikiManager do
     {:reply, {:ok, state.wiki}, state}
   end 
 
-  def handle_call({:new_tidbit, %Memex.TidBit{} = t}, _from, state) do
-    results = Memex.Utils.WikiManagement.new_tidbit(%{tidbit: t, state: state})
+  def handle_call({:new_tidbit, %Memelex.TidBit{} = t}, _from, state) do
+    results = Memelex.Utils.WikiManagement.new_tidbit(%{tidbit: t, state: state})
     case results do
       {:ok, new_wiki} ->
         {:reply, {:ok, t}, %{state|wiki: new_wiki}}
@@ -47,9 +47,9 @@ defmodule Memex.Env.WikiManager do
 
   # fetches exactly 1 TidBit
   def handle_call({:find_tidbit, params}, _from, state) do
-    Memex.Utils.Search.one_tidbit(state.wiki, params)
+    Memelex.Utils.Search.one_tidbit(state.wiki, params)
     |> case do
-      {:ok, %Memex.TidBit{} = result} ->
+      {:ok, %Memelex.TidBit{} = result} ->
         {:reply, {:ok, result}, state}
       {:ok, results} when is_list(results) and length(results) >= 1 ->
         {:reply, {:error, "more than 1 TidBit found for this query"}, state}
@@ -61,7 +61,7 @@ defmodule Memex.Env.WikiManager do
 
   # returns multiple tidbits, in a list (no tuple)
   def handle_call({:list_tidbits, params}, _from, state) do
-    Memex.Utils.Search.tidbits(state.wiki, params)
+    Memelex.Utils.Search.tidbits(state.wiki, params)
     |> case do
       {:ok, results} ->
         {:reply, results, state}
@@ -72,14 +72,14 @@ defmodule Memex.Env.WikiManager do
 
   def handle_call({:update_tidbit, tidbit, %{add_tag: tag}}, _from, state) do
     {:ok, updated_tidbit, new_wiki} =
-       Memex.Utils.WikiManagement.add_tag(%{tag: tag, state: state, tidbit: tidbit})
+       Memelex.Utils.WikiManagement.add_tag(%{tag: tag, state: state, tidbit: tidbit})
     {:reply, {:ok, updated_tidbit}, %{state|wiki: new_wiki}}
   end
 
   def handle_call({:update_tidbit, tidbit, updates}, _from, state) do
-    Memex.Utils.WikiManagement.update_tidbit(%{state: state, tidbit: tidbit, updates: updates})
+    Memelex.Utils.WikiManagement.update_tidbit(%{state: state, tidbit: tidbit, updates: updates})
     |> case do
-      {:ok, %Memex.TidBit{} = updated_tidbit, new_wiki} ->
+      {:ok, %Memelex.TidBit{} = updated_tidbit, new_wiki} ->
         {:reply, {:ok, updated_tidbit}, %{state|wiki: new_wiki}}
       {:error, reason} ->
         {:reply, {:error, reason}, state}
