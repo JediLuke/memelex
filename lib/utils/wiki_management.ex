@@ -49,16 +49,18 @@ defmodule Memelex.Utils.WikiManagement do
   end
 
 
-  def update_tidbit(%{state: state, tidbit: tidbit, updates: updates}) do
+  def update_tidbit(%{state: state, tidbit: tidbit_to_update, updates: updates}) do
 
+    # is_this_the_tidbit_were_looking_for? =
+    #   fn(t) -> t.title == tidbit_to_update.title and t.uuid == tidbit_to_update.uuid end
     is_this_the_tidbit_were_looking_for? =
-      fn(t) -> t.title == tidbit.title and t.uuid == tidbit.uuid end
+      fn(t) -> t.uuid == tidbit_to_update.uuid end
     
     tidbit =
       state.wiki |> Enum.find(:not_found, is_this_the_tidbit_were_looking_for?)
 
     if tidbit == :not_found do
-      {:error, "Could not find a Tidbit with the title: #{inspect tidbit.title}"}
+      {:error, "Could not find a Tidbit with the title: #{inspect tidbit_to_update.title}"}
     else
 
       updated_tidbit =

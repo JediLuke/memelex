@@ -92,32 +92,43 @@ defmodule Memelex.Utils.FileIO do
 
   # each entry in the maplist ought to have a Struct it can map to
   def convert_to_structs(list_of_maps) do
+    _a = Memex.TidBit
     list_of_maps
     |> Enum.map(
          fn(map_with_string_keys) ->
-              struct_params =
-                map_with_string_keys |> convert_to_keyword_list()
-              Kernel.struct(struct_params[:module] |> String.to_existing_atom(), struct_params)
+              struct_params = map_with_string_keys |> convert_to_keyword_list()
+              struct_module =
+                #TODO temporary workaround for migrating types of struct
+                if struct_params[:module] == "Elixir.Memex.TidBit" do
+                  Memelex.TidBit
+                else
+                  struct_params[:module] |> String.to_existing_atom()
+                end
+              Kernel.struct(struct_module, struct_params)
          end 
          )
-    |> Enum.map(
-         fn
-           %Memelex.TidBit{}  = t ->
-                # if the TidBit contains a Struct in it's data field, we want to reconstruct it here 
-                case t.data do
-                  %{"module" => m} ->
-                      new_data = Kernel.struct(m |> String.to_existing_atom(), t.data |> convert_to_keyword_list())
-                      t |> Map.merge(%{data: new_data})
-                  _else ->
-                      t
-                end
-           #TODO probably should be ONLY TidBits, dont have multiple types of struct in the Memex
-           %Memelex.Password{} = p ->
-                p
-           %Memelex.BackupRecord{} = r ->
-                r
-         end
-         )
+    # |> Enum.map(
+    #      fn
+    #        %Memelex.TidBit{}  = t ->
+    #             # if the TidBit contains a Struct in it's data field, we want to reconstruct it here 
+    #             case t.data do
+    #               %{"module" => "Memex.Person"} ->
+    #                 Logger.warn "Found an old TidBit type..."
+    #                 new_data = Kernel.struct(Memelex.Person, t.data |> convert_to_keyword_list())
+    #                 t |> Map.merge(%{data: new_data})
+    #               %{"module" => mod} ->
+    #                 new_data = Kernel.struct(String.to_atom(mod), t.data |> convert_to_keyword_list())
+    #                 t |> Map.merge(%{data: new_data})
+    #               _else ->
+    #                   t
+    #             end
+          
+    #        #TODO probably should be ONLY TidBits, dont have multiple types of struct in the Memex
+    #        other ->
+    #             Logger.warn "FOund something weird in the memex: #{inspect other}"
+    #             other
+    #      end
+    #      )
   end
 
   defp convert_to_keyword_list(map) do

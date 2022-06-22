@@ -9,6 +9,7 @@ defmodule Memelex.Person do
 
   defstruct [
 
+    #TODO dont have uuid on the person or struct level, leave that to TidBit level - this is just for use as a Data field inside a TidBit
       uuid:          nil,   # we require UUIDs for precision when pattern-matching
       name:          nil,   # The persons name, where the full name is an ordered-list of words e.g. ["Napoléon", "Bonaparte"]
       nickname:      nil,   # Same as above, list any nicknames

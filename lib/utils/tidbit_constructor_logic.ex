@@ -10,7 +10,8 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
       |> sanitize_conveniences()
       |> sanitize_and_validate()
 
-    Kernel.struct(Memelex.TidBit, valid_params |> MiscElixir.convert_map_to_keyword_list())
+    valid_params = valid_params |> Map.delete(:__struct__)
+    Kernel.struct(Memelex.TidBit, valid_params |> Enum.into([]))
   end
 
   @doc ~s(Make a nice interface to construct, so we dont always have to make everything a map, we can just pass in a string as a title)

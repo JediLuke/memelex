@@ -10,6 +10,7 @@ defmodule Memelex.My.Wiki do
     params
     # |> TidBitUtils.sanitize_conveniences()
     |> Memelex.TidBit.construct()
+    |> IO.inspect(label: "THROUGH THE PIPE")
     |> __MODULE__.new_tidbit()
   end
 
@@ -112,6 +113,7 @@ defmodule Memelex.My.Wiki do
     tidbit
   end
 
+  #TODO deprecate the ones without bangs unless they return tuples
   def find(exact: search_term) do
     {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbit, {:exact, search_term}})
     tidbit
@@ -122,11 +124,21 @@ defmodule Memelex.My.Wiki do
     tidbit
   end
 
+  def find!(search_term) do
+    {:ok, tidbit} = WikiManager |> GenServer.call({:find_tidbit, search_term})
+    tidbit
+  end
+
   def open(params) do
     find(params) |> Memelex.Utils.ToolBag.open_external_textfile()
   end
 
-  @doc ~s(Update a Tidbit.)
+  @doc """
+  Update an existing TidBit.
+
+  Here `updates` is a map (in future, make this a changeset), it contains
+  all the new fields.
+  """
   def update(tidbit_being_updated, updates) do
     WikiManager |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
   end
