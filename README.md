@@ -27,7 +27,7 @@ I admire Ruston's choice to save all the data _within the code itself_.
 This design choice clearly leads to more robust (I use the word 'perdurable')
 software, and as Ruston himself says "even 80 years from now I will still
 be able to run my TiddlyWiki, because the software and all my data runs
-in the most pervalent platform aaround today, the browser." I did not go
+in the most prevalent platform around today, the browser." I did not go
 down this path for Memelex because I wanted to share this source-code with
 the world - and committing modules like "MyFriends" and "MyPasswords" into
 a public git repo was a non-starter. We gain some flexibility by splitting

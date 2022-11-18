@@ -31,6 +31,9 @@ defmodule Memelex.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:scenic, path: "../scenic", override: true},
+      {:scenic_driver_local, path: "../scenic_driver_local"},
+      {:scenic_widget_contrib, path: "../scenic-widget-contrib"},
       {:jason, "~> 1.2"},
       {:elixir_uuid, "~> 1.2"},
       {:timex, "~> 3.7.5"},
