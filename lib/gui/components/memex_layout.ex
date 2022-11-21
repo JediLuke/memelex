@@ -1,15 +1,3 @@
-# defmodule Flamelex.GUI.Memex.Layout do
-#     use Scenic.Component
-#     use Flamelex.ProjectAliases
-#     require Logger
-
-#     alias Flamelex.GUI.Component.Memex
-
-#     def validate(%{frame: %Frame{} = _f, state:  _memex} = data) do
-#         #Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
-#         {:ok, data}
-#     end
-
 #     def init(init_scene, args, opts) do
 #         #Logger.debug "#{__MODULE__} initializing..."
     
@@ -38,16 +26,5 @@
 #     end
 
 
-#     def left_quadrant(%{top_left: %{x: x, y: y}, dimensions: %{width: w, height: h}} = frame) do
-#         Frame.new(top_left: {x, y}, dimensions: {w/4, h})
-#     end
 
-#     def mid_section(%{top_left: %{x: x, y: y}, dimensions: %{width: w, height: h}} = frame) do
-#         one_quarter_page_width = w/4
-#         Frame.new(top_left: {x+one_quarter_page_width, y}, dimensions: {w/2, h})
-#     end
-
-#     def right_quadrant(%{top_left: %{x: x, y: y}, dimensions: %{width: w, height: h}} = frame) do
-#         Frame.new(top_left: {x+((3/4)*w), y}, dimensions: {w/4, h})
-#     end
 # end

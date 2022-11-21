@@ -1,6 +1,7 @@
 defmodule Memelex.GUI.Components.Diary do
    use Scenic.Component
    alias ScenicWidgets.Core.Structs.Frame
+   alias ScenicWidgets.Core.Utils.FlexiFrame
    require Logger
 
    def validate(%{frame: %Frame{} = _f} = data) do
@@ -14,19 +15,8 @@ defmodule Memelex.GUI.Components.Diary do
       # pubsub_mod = Module.concat(args.app, Utils.PubSub)
       # pubsub_mod.subscribe(topic: :radix_state_change)
   
-      init_graph =
-      #   render(args)
-         Scenic.Graph.build()
-         |> Scenic.Primitives.text("Memelex",
-            font: :ibm_plex_mono,
-            # font: args.font.name,
-            # font_size: args.font.size,
-            # fill: args.theme.text,
-            fill: :white,
-            # TODO this is what scenic does https://github.com/boydm/scenic/blob/master/lib/scenic/component/input/text_field.ex#L198
-            translate: {100, 100}
-      )
-      |> Scenic.Primitives.line({{10, 10}, {200, 200}}, stroke: {1, :white})
+      init_graph = render(args)
+
       
       # init_state =
       #   calc_state(args.radix_state)
@@ -41,5 +31,38 @@ defmodule Memelex.GUI.Components.Diary do
         |> push_graph(init_graph)
   
       {:ok, init_scene}
-    end
+   end
+
+   def render(%{frame: frame}) do
+
+      [left_bar|other_frames] = FlexiFrame.columns(frame, 3, :memex)
+      [middle_section|right_pane] = other_frames
+      right_pane = hd(right_pane)
+
+      IO.inspect left_bar, label: "LB"
+      Scenic.Graph.build()
+      |> ScenicWidgets.FrameBox.add_to_graph(%{frame: left_bar, fill: :purple})
+      |> ScenicWidgets.FrameBox.add_to_graph(%{frame: middle_section, fill: :yellow})
+      |> ScenicWidgets.FrameBox.add_to_graph(%{frame: right_pane, fill: :red})
+
+      # |> Scenic.Primitives.text("Memelex",
+      #    font: :ibm_plex_mono,
+      #    # font: args.font.name,
+      #    # font_size: args.font.size,
+      #    # fill: args.theme.text,
+      #    fill: :white,
+      #    # TODO this is what scenic does https://github.com/boydm/scenic/blob/master/lib/scenic/component/input/text_field.ex#L198
+      #    translate: {100, 100}
+      # )
+
+      #         |> Memex.StoryRiver.add_to_graph(%{
+      #                 frame: mid_section(args.frame),
+      #                 state: args.state.story_river})
+      #         |> Memex.SideBar.add_to_graph(%{
+      #                 frame: right_quadrant(args.frame),
+      #                 state: args.state.sidebar})
+
+
+      # |> Scenic.Primitives.line({{10, 10}, {200, 200}}, stroke: {1, :white})
+   end
 end
