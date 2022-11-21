@@ -8,6 +8,9 @@ config :logger,
   :console,
      format: "[$level] $message $metadata\n" # I like to remove the newline, which is there by default
 
+config :scenic, :assets,
+  module: Memelex.Assets
+
 config :memelex,
   text_editor_shell_command: "subl"
 
