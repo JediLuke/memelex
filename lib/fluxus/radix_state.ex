@@ -15,7 +15,10 @@ defmodule Memelex.Fluxus.Structs.RadixState do
         viewport: nil,
       },
       memex: %{
-
+        story_river: %{
+          open_tidbits: [],
+          scroll_acc: {0, 0}
+        }
       }
     }
   end

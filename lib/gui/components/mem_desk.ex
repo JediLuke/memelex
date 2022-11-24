@@ -1,10 +1,10 @@
-defmodule Memelex.GUI.Components.Diary do
+defmodule Memelex.GUI.Components.MemDesk do
    use Scenic.Component
    alias ScenicWidgets.Core.Structs.Frame
    alias ScenicWidgets.Core.Utils.FlexiFrame
    require Logger
 
-   def validate(%{frame: %Frame{} = _f} = data) do
+   def validate(%{frame: %Frame{} = _f, state: %{story_river: _river}, app: _app} = data) do
       # Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
       {:ok, data}
    end
@@ -33,17 +33,22 @@ defmodule Memelex.GUI.Components.Diary do
       {:ok, init_scene}
    end
 
-   def render(%{frame: frame}) do
+   def render(%{frame: frame, state: memex_state, app: app}) do
 
       [left_bar|other_frames] = FlexiFrame.columns(frame, 3, :memex)
       [middle_section|right_pane] = other_frames
       right_pane = hd(right_pane)
 
-      IO.inspect left_bar, label: "LB"
+
       Scenic.Graph.build()
-      |> ScenicWidgets.FrameBox.add_to_graph(%{frame: left_bar, fill: :purple})
-      |> ScenicWidgets.FrameBox.add_to_graph(%{frame: middle_section, fill: :yellow})
-      |> ScenicWidgets.FrameBox.add_to_graph(%{frame: right_pane, fill: :red})
+      # |> ScenicWidgets.FrameBox.add_to_graph(%{frame: left_bar, fill: :purple})
+      # |> ScenicWidgets.FrameBox.add_to_graph(%{frame: middle_section, fill: :yellow})
+      |> Memelex.GUI.Components.StoryRiver.add_to_graph(%{
+            frame: middle_section,
+            state: memex_state.story_river,
+            app: app
+      }) 
+      # |> ScenicWidgets.FrameBox.add_to_graph(%{frame: right_pane, fill: :red})
 
       # |> Scenic.Primitives.text("Memelex",
       #    font: :ibm_plex_mono,
@@ -55,9 +60,7 @@ defmodule Memelex.GUI.Components.Diary do
       #    translate: {100, 100}
       # )
 
-      #         |> Memex.StoryRiver.add_to_graph(%{
-      #                 frame: mid_section(args.frame),
-      #                 state: args.state.story_river})
+
       #         |> Memex.SideBar.add_to_graph(%{
       #                 frame: right_quadrant(args.frame),
       #                 state: args.state.sidebar})
