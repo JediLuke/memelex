@@ -52,15 +52,28 @@ defmodule Memelex.GUI.Components.StoryRiver do
       # it has rendered so far (which are variable in height), the
       # StoryRiver is able to accuractely lay out all the other
       # Hypercards it still has yet to draw
+      
+      #TODO actually when initializing, we should probably render all the open tidbits...
+
       init_state =
          args.state
+         |> Map.merge(%{scroll_acc: {0, 0}})
          #TODO this might not work with radix_state changes coming in at the same time...
          |> put_in([:open_tidbits], []) # start with no tidbits open, instead we load them into the render queue
+
+         IO.inspect init_state
+         #     state = %{
+#       # first_render?: true, #NOTE: We can do everything for the "first render" in the init/3 function
+#       active_components: [], # we haven't rendered any yet, so none are active
+#       render_queue: [] = params.components, # we will go through this list very soon & render them...
+#       scroll: {0, 0}
+#     }
       
       init_scene = scene
       |> assign(graph: init_graph)
       |> assign(frame: args.frame)
-      |> assign(state: args.state)
+      |> assign(state: init_state)
+      #TODO we should render the open tidbits in the init state
       |> assign(render_queue: args.state.open_tidbits) # used to buffer the rendering of flexible components (because they're flexible, so we can't render/position the next one until we know how tall the previous one is)
       |> push_graph(init_graph)
       
@@ -74,18 +87,37 @@ defmodule Memelex.GUI.Components.StoryRiver do
       {:ok, init_scene}
    end
 
-   def render(%{frame: frame, state: %{scroll_acc: scroll_acc} = _state}) do
-      # This way the graph has a Group with the right name already, so
-      # we can just use Scenic.Graph.add to add new HyperCards
-      Scenic.Graph.build()
-      |> Scenic.Primitives.group(fn graph ->
-            graph
-            |> ScenicWidgets.FrameBox.add_to_graph(%{frame: frame, fill: :pink})
-         end, [
-            id: __MODULE__,
-            translate: scroll_acc
-         ]
-      )
+   def handle_input(
+      {:cursor_scroll, {{_x_scroll, y_scroll} = delta_scroll, coords}},
+      _context,
+      scene
+   ) do
+         
+      #TODO handle all this via a Reducer?? Or just keep it in the component??
+      # Flamelex.Fluxus.action({Flamelex.Fluxus.Reducers.Memex, {:scroll, delta_scroll, __MODULE__}})
+      
+      fast_scroll = {0, 3*y_scroll}
+      #TODO cap scroll
+      # new_cumulative_scroll =
+      #     cap_position(scene, Scenic.Math.Vector2.add(scene.assigns.state.scroll, fast_scroll))
+      new_cumulative_scroll =
+          Scenic.Math.Vector2.add(scene.assigns.state.scroll_acc, fast_scroll)
+
+      new_graph =
+         scene.assigns.graph
+         |> Scenic.Graph.modify(:river_pane, &Scenic.Primitives.update_opts(&1, translate: new_cumulative_scroll))
+
+      new_state =
+         scene.assigns.state
+         |> put_in([:scroll_acc], new_cumulative_scroll)
+
+      new_scene =
+         scene
+         |> assign(graph: new_graph)
+         |> assign(state: new_state)
+         |> push_graph(new_graph)
+
+      {:noreply, new_scene}
    end
 
    def handle_cast(:render_next_component, %{assigns: %{render_queue: []}} = scene) do
@@ -123,7 +155,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
 
 
       new_graph = scene.assigns.graph
-      |> Scenic.Graph.add_to(__MODULE__, fn graph ->
+      |> Scenic.Graph.add_to(:river_pane, fn graph ->
          graph
          # |> ScenicWidgets.FrameBox.add_to_graph(%{frame: Frame.new(%{pin: {400, 400}, size: {400, 400}}), fill: :blue})
          |> ScenicWidgets.FrameBox.add_to_graph(%{frame: calc_hypercard_frame(scene), fill: :blue})
@@ -152,6 +184,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
 
       new_state = scene.assigns.state
       |> put_in([:open_tidbits], scene.assigns.state.open_tidbits ++ [tidbit])
+      |> IO.inspect(label: "NEW STATE AFTER ADDING TIDBIT")
 
       new_scene = scene
       |> assign(graph: new_graph)
@@ -226,7 +259,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
 
  
    # def handle_info({:radix_state_change, %{memex: %{open_tidbits: new_open_tidbits} = new_memex_state}}, %{assigns: %{state: %{open_tidbits: currently_open_tidbits}}} = scene)
-   def handle_info({:radix_state_change, %{memex: %{story_river: %{open_tidbits: new_open_tidbits}} = new_memex_state}}, %{assigns: %{state: %{open_tidbits: currently_open_tidbits}}} = scene)
+   def handle_info({:radix_state_change, %{memex: %{story_river: %{open_tidbits: new_open_tidbits} = new_memex_state} }}, %{assigns: %{state: %{open_tidbits: currently_open_tidbits}}} = scene)
       when new_open_tidbits != currently_open_tidbits do
          # IO.puts "GOT THE MXG #{inspect new_open_tidbits}"
 
@@ -244,6 +277,29 @@ defmodule Memelex.GUI.Components.StoryRiver do
          {:noreply, new_scene}
    end
 
+   def render(%{frame: frame, state: %{scroll_acc: scroll_acc} = _state}) do
+      # This way the graph has a Group with the right name already, so
+      # we can just use Scenic.Graph.add to add new HyperCards
+
+      Scenic.Graph.build()
+      |> Scenic.Primitives.group(fn graph ->
+            graph
+            |> ScenicWidgets.FrameBox.add_to_graph(%{frame: frame, fill: :pink})
+            #NOTE- make the container group, give it translation etc, just don't add any components yet
+            |> Scenic.Primitives.group(fn graph ->
+                  graph
+               end, [
+                  #NOTE: We will scroll this pane around later on, and need to
+                  #      add new TidBits to it with Modify
+                  id: :river_pane, # Scenic required we register groups/components with a name
+                  translate: scroll_acc
+            ])
+         end, [
+            id: __MODULE__
+         ]
+      )
+   end
+
    def calc_hypercard_frame(%{assigns: %{
       frame: %Frame{coords: %{x: x, y: y}, dimens: %{width: w, height: h}},
       state: %{
@@ -258,17 +314,37 @@ defmodule Memelex.GUI.Components.StoryRiver do
           size: {w-(2*@spacing_buffer), 500}) # TODO
    end
 
+   # # <3 @vacarsu
+   # def cap_position(%{assigns: %{frame: frame}} = scene, coord) do
+   #    # NOTE: We must keep track of components, because one could
+   #    #      get yanked out the middle.
+   #    height = calc_acc_height(scene)
+   #    # height = scene.assigns.state.scroll.acc_length
+   #    if height > frame.dimensions.height do
+   #       coord
+   #       |> calc_floor({0, -height + frame.dimensions.height / 2})
+   #       |> calc_ceil({0, 0})
+   #    else
+   #       coord
+   #       |> calc_floor(@min_position_cap)
+   #       |> calc_ceil(@min_position_cap)
+   #    end
+   # end
+
+   # defp calc_floor({x, y}, {min_x, min_y}), do: {max(x, min_x), max(y, min_y)}
+
+   # defp calc_ceil({x, y}, {max_x, max_y}), do: {min(x, max_x), min(y, max_y)}
+               
+
    # def calc_acc_height(components) when is_list(components) do
    #    do_calc_acc_height(0, components)
    # end
 
-   # # def calc_acc_height(%{assigns: %{state: %{scroll: %{components: components}}}}) do
-   # #     do_calc_acc_height(0, components)
-   # # end
+   # def calc_acc_height(%{assigns: %{state: %{open_tidbits: open_tidbits}}}) do
+   #     do_calc_acc_height(0, open_tidbits)
+   # end
 
    # def do_calc_acc_height(acc, []), do: acc
-
-
 
    # def do_calc_acc_height(acc, [{_id, bounds} = c | rest]) do
    #    # top is less than bottom, because the axis starts in top-left corner
@@ -278,6 +354,16 @@ defmodule Memelex.GUI.Components.StoryRiver do
    #    new_acc = acc + component_height + @spacing_buffer
    #    do_calc_acc_height(new_acc, rest)
    # end
+
+
+
+
+#   defp floor({x, y}, {min_x, min_y}), do: {max(x, min_x), max(y, min_y)}
+
+#   defp ceil({x, y}, {max_x, max_y}), do: {min(x, max_x), min(y, max_y)}
+
+
+
 end
 
 
@@ -339,41 +425,11 @@ end
 #         {:noreply, scene}
 #     end
 
-#     def handle_input(
-#         {:cursor_scroll, {{_x_scroll, _y_scroll} = delta_scroll, coords}},
-#         _context,
-#         scene
-#       ) do
-#         Flamelex.Fluxus.action({Flamelex.Fluxus.Reducers.Memex, {:scroll, delta_scroll, __MODULE__}})
-#         {:noreply, scene}
-#     end
 
 
     
 
-#     # <3 @vacarsu
-#     # def cap_position(%{assigns: %{frame: frame}} = scene, coord) do
-#     #     # NOTE: We must keep track of components, because one could
-#     #     #      get yanked out the middle.
-#     #     height = calc_acc_height(scene)
-#     #     # height = scene.assigns.state.scroll.acc_length
-#     #     if height > frame.dimensions.height do
-#     #         coord
-#     #         |> calc_floor({0, -height + frame.dimensions.height / 2})
-#     #         |> calc_ceil({0, 0})
-#     #     else
-#     #         coord
-#     #         |> calc_floor(@min_position_cap)
-#     #         |> calc_ceil(@min_position_cap)
-#     #     end
-#     # end
 
-
-
-#     # defp calc_floor({x, y}, {min_x, min_y}), do: {max(x, min_x), max(y, min_y)}
-
-#     # defp calc_ceil({x, y}, {max_x, max_y}), do: {min(x, max_x), min(y, max_y)}
-        
 
 #     # def hypercard_frame(%Frame{top_left: %{x: x, y: y}, dimensions: %{width: w, height: h}}) do
 #     #     bm = _buffer_margin = 50 # px
@@ -483,12 +539,7 @@ end
 #   def init(scene, params, opts) do
 #     Logger.debug "#{__MODULE__} initializing..."
 
-#     state = %{
-#       # first_render?: true, #NOTE: We can do everything for the "first render" in the init/3 function
-#       active_components: [], # we haven't rendered any yet, so none are active
-#       render_queue: [] = params.components, # we will go through this list very soon & render them...
-#       scroll: {0, 0}
-#     }
+
 
 #     Process.register(self(), __MODULE__) #TODO this is something that the old use Component system had - inbuilt process registration
 
@@ -513,10 +564,6 @@ end
 #     GenServer.cast(self(), :render_next_component) # trigger rendering of our (potential) backlog of components to render!
 #     # remember, they need to render "one at a time (yuck) - (or do they??) to get their positions"
 
-#     request_input(new_scene, [:cursor_scroll])
-
-#     {:ok, new_scene}
-#   end
 
 
 #       # def handle_cast({:add_tidbit, tidbit}, %{assigns: %{open_tidbits: ot}} = scene) when is_list(ot) do
@@ -638,34 +685,6 @@ end
 #     #   new_scene = render(scene) # updates the graph
 #     #   new_scene |> push_graph(new_scene.assigns.graph) # pushes the changes
 #     # end
-
-#     def handle_input({:cursor_scroll, {{_x_scroll, y_scroll} = delta_scroll, coords}}, _context, scene) do
-#       Logger.warn "#{__MODULE__} getting :scroll"
-#       # Logger.debug "Handling right scrolling - "
-
-#       fast_scroll = {0, 3*y_scroll}
-#       new_cumulative_scroll =
-#           cap_position(scene, Scenic.Math.Vector2.add(scene.assigns.state.scroll, fast_scroll))
-
-#       Logger.debug(inspect new_cumulative_scroll)
-
-#       new_graph = scene.assigns.graph
-#           |> Scenic.Graph.modify(:river_pane, &Scenic.Primitives.update_opts(&1, translate: new_cumulative_scroll))
-
-#       # new_state = scene.assigns
-#       #     |> Map.merge(%{scroll: new_cumulative_scroll})
-
-#       # # new_graph = render(state, first_render?: true)
-#       new_scene = scene
-#       |> assign(graph: new_graph)
-#       # |> assign(state: new_state)
-#       |> push_graph(new_graph)
-
-#       state = scene.assigns.state
-#       new_state = %{state|scroll: new_cumulative_scroll}
-
-#       {:noreply, scene |> assign(state: new_state)}
-#   end
 
 #   # Whenever a component successfully renders, it uses this to track how
 #   # big it is
@@ -796,23 +815,5 @@ end
 #       |> ceil(@min_position_cap)
 #     end
 #   end
-
-#   def calc_acc_height(%{assigns: %{state: %{active_components: components}}}) do
-#     do_calc_acc_height(0, components)
-#   end
-
-#   def do_calc_acc_height(acc, []), do: acc
-
-#   def do_calc_acc_height(acc, [{HyperCard, _id, bounds} = c|rest]) do
-#     {_left, top, _right, bottom} = bounds # top is less than bottom, because the axis starts in top-left corner
-#     component_height = bottom - top
-
-#     new_acc = acc+component_height+@spacing_buffer
-#     do_calc_acc_height(new_acc, rest)
-#   end
-
-#   defp floor({x, y}, {min_x, min_y}), do: {max(x, min_x), max(y, min_y)}
-
-#   defp ceil({x, y}, {max_x, max_y}), do: {min(x, max_x), min(y, max_y)}
 
 # end
