@@ -158,13 +158,14 @@ defmodule Memelex.GUI.Components.StoryRiver do
       |> Scenic.Graph.add_to(:river_pane, fn graph ->
          graph
          # |> ScenicWidgets.FrameBox.add_to_graph(%{frame: Frame.new(%{pin: {400, 400}, size: {400, 400}}), fill: :blue})
-         |> ScenicWidgets.FrameBox.add_to_graph(%{frame: calc_hypercard_frame(scene), fill: :blue})
-         # |> Flamelex.GUI.Component.Memex.HyperCard.add_to_graph(%{
-         #          id: tidbit.uuid,
-         #          # frame: calc_hypercard_frame(scene),
-         #          frame: Frame.new(%{pin: {400, 400}, size: {400, 400}}),
-         #          state: tidbit
-         #       })
+         # |> ScenicWidgets.FrameBox.add_to_graph(%{frame: calc_hypercard_frame(scene), fill: :blue})
+         |> Memelex.GUI.Components.HyperCard.add_to_graph(%{
+                  # id: tidbit.uuid,
+                  frame: calc_hypercard_frame(scene),
+                  # frame: Frame.new(%{pin: {400, 400}, size: {400, 400}}),
+                  # state: tidbit
+                  state: %{uuid: "123"}
+               })
          end)
 
       

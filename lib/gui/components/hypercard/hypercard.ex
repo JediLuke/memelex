@@ -1,3 +1,32 @@
+defmodule Memelex.GUI.Components.HyperCard do
+   use Scenic.Component
+
+   def validate(%{frame: _frame, state: %{uuid: _uuid}} = data) do
+      {:ok, data}
+   end
+
+   def init(scene, args, opts) do
+      init_graph = render(args)
+
+      init_scene = scene
+      |> assign(graph: init_graph)
+      |> push_graph(init_graph)
+
+      {:ok, init_scene}
+   end
+
+   def render(args) do
+      Scenic.Graph.build()
+      |> Scenic.Primitives.group(fn graph ->
+            graph
+            |> ScenicWidgets.FrameBox.add_to_graph(%{frame: args.frame, fill: :green})
+         end, [
+            id: {:hypercard, args.state.uuid}
+         ]
+      )
+   end
+end
+
 # defmodule Flamelex.GUI.Component.Memex.HyperCard do
 #     use Scenic.Component
 #     require Logger
