@@ -6,12 +6,26 @@ defmodule Memelex.My.Wiki do
   alias Memelex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
   require Logger
 
+  alias Memelex.Fluxus.Structs.RadixState
+
+  def new do
+    new(%{title: "untitled"})
+  end
+
   def new(params) do
-    params
+    new_tidbit = params
     # |> TidBitUtils.sanitize_conveniences()
     |> Memelex.TidBit.construct()
-    |> IO.inspect(label: "THROUGH THE PIPE")
-    |> __MODULE__.new_tidbit()
+
+    radix_state = Memelex.Fluxus.RadixStore.get()
+
+    # new_radix_state = %{radix_state|radix_state.memex.story_river.open_tidbits ++ [new_tidbit] }
+    new_radix_state = radix_state |> put_in([:memex, :story_river, :open_tidbits], radix_state.memex.story_river.open_tidbits ++ [new_tidbit])
+
+    Memelex.Fluxus.RadixStore.update(new_radix_state)
+
+    :ok
+    # |> new_tidbit()
   end
 
   # def new(param_one, param_two) do

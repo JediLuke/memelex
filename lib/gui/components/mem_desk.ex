@@ -48,6 +48,12 @@ defmodule Memelex.GUI.Components.MemDesk do
             state: memex_state.story_river,
             app: app
       }) 
+      |> Memelex.GUI.Component.Memex.SideBar.add_to_graph(%{
+            frame: right_pane,
+            state: %{}
+      })
+
+
       # |> ScenicWidgets.FrameBox.add_to_graph(%{frame: right_pane, fill: :red})
 
       # |> Scenic.Primitives.text("Memelex",
