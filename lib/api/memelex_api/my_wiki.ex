@@ -24,8 +24,10 @@ defmodule Memelex.My.Wiki do
 
     Memelex.Fluxus.RadixStore.update(new_radix_state)
 
-    :ok
+    # :ok
     # |> new_tidbit()
+
+    new_tidbit
   end
 
   # def new(param_one, param_two) do
