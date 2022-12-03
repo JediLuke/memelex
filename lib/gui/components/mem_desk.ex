@@ -43,6 +43,10 @@ defmodule Memelex.GUI.Components.MemDesk do
       Scenic.Graph.build()
       # |> ScenicWidgets.FrameBox.add_to_graph(%{frame: left_bar, fill: :purple})
       # |> ScenicWidgets.FrameBox.add_to_graph(%{frame: middle_section, fill: :yellow})
+      |> Memelex.GUI.Components.CollectionsMantel.add_to_graph(%{
+         frame: left_bar,
+         state: %{}
+      })
       |> Memelex.GUI.Components.StoryRiver.add_to_graph(%{
             frame: middle_section,
             state: memex_state.story_river,
