@@ -1,5 +1,12 @@
 defmodule Memelex.GUI.Components.HyperCard do
    use Scenic.Component
+   alias Memelex.GUI.Components.HyperCard.Utils
+   alias ScenicWidgets.Core.Structs.Frame
+
+   @margin 5
+
+   @header_height 100 # TODO customizable?
+   @toolbar_width 140
 
    def validate(%{frame: _frame, state: %{uuid: _uuid}} = data) do
       {:ok, data}
@@ -19,13 +26,85 @@ defmodule Memelex.GUI.Components.HyperCard do
       Scenic.Graph.build()
       |> Scenic.Primitives.group(fn graph ->
             graph
-            |> ScenicWidgets.FrameBox.add_to_graph(%{frame: args.frame, fill: :green})
+            |> Scenic.Primitives.rect(args.frame.size, fill: :antique_white, stroke: {2, :blue})
+            |> render_header(args)
+            |> render_body(args)
          end, [
-            id: {:hypercard, args.state.uuid}
+            id: {:hypercard, args.state.uuid},
+            translate: args.frame.pin
          ]
       )
    end
+
+   def render_header(graph, %{frame: frame} = args) do
+      graph
+      |> Scenic.Primitives.group(fn graph ->
+         graph
+         |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), @header_height}, fill: :grey)
+         |> render_title(args)
+         |> render_toolbar(args)
+      end, [
+         id: {:hypercard, args.state.uuid},
+         translate: {@margin, @margin}
+         ]
+      )
+   end
+
+   def render_title(graph, %{frame: frame, state: tidbit}) do
+      # REMINDER: Because we render this from within the group
+      # (which is already getting translated, we only need be
+      # concerned here with the _relative_ offset from the group.
+      # Or in other words, this is all referenced off the top-left
+      # corner of the HyperCard, not the top-left corner of the screen.
+
+      #TODO...
+      {:ok, ibm_plex_mono_font_metrics} =
+         TruetypeMetrics.load("./assets/fonts/IBMPlexMono-Regular.ttf")
+
+      #TODO make this more efficient, pass it in same everywhere
+      ascent = FontMetrics.ascent(36, ibm_plex_mono_font_metrics)
+
+      #TODO make title 0.72 * width of Hypercard (minus margins)
+      graph
+      |> Scenic.Primitives.group(
+         fn graph ->
+            graph
+            |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin)-@toolbar_width, 3*@header_height/4}, fill: :red)
+            |> Scenic.Primitives.text(tidbit.title, font: :ibm_plex_mono, font_size: 36, fill: :black, translate: {5, ascent})
+         end
+            # scissor: {100, 20},
+            # translate: 
+      )
+   end
+
+   def render_toolbar(graph, %{frame: frame, state: state}) do
+      graph
+      |> Scenic.Primitives.group(
+         fn graph ->
+            graph
+            |> Scenic.Primitives.rect({@toolbar_width, @header_height/2}, fill: :cyan)
+            # |> Scenic.Primitives.text(title, font: :ibm_plex_mono, font_size: 20)
+         end,
+            # scissor: {100, 20},
+            translate: {frame.dimens.width-(2*@margin)-@toolbar_width, 0}
+      )
+   end
+
+   def render_body(graph, %{frame: frame} = args) do
+      graph
+      |> Scenic.Primitives.group(fn graph ->
+         graph
+         |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), frame.dimens.height-(2*@margin)-@header_height}, fill: :purple)
+      end, [
+         id: {:hypercard, args.state.uuid},
+         translate: {@margin, @margin+@header_height}
+         ]
+      )
+   end
+
 end
+
+
 
 # defmodule Flamelex.GUI.Component.Memex.HyperCard do
 #     use Scenic.Component
