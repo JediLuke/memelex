@@ -18,18 +18,7 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
             (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
             |> Scenic.Primitive.Style.Theme.normalize()
 
-        init_graph = Scenic.Graph.build()
-        |> Scenic.Primitives.group(fn graph ->
-            graph
-            |> ScenicWidgets.FrameBox.add_to_graph(%{frame: args.frame, fill: :gainsboro})
-            # |> render_background(dimensions: args.frame.size, color: theme.background)
-            # |> render_personal_tile()
-            # |> render_main_memex_search()
-            # |> render_lower_pane(args)
-        end, [
-            id: __MODULE__
-            # translate: args.frame.pin
-        ])
+        init_graph = render(args)
 
         # Flamelex.Utils.PubSub.subscribe(topic: :radix_state_change)
 
@@ -40,6 +29,44 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
         |> push_graph(init_graph)
   
         {:ok, new_scene}
+    end
+
+    def render(args) do
+        Scenic.Graph.build()
+        |> Scenic.Primitives.group(fn graph ->
+            graph
+            # |> ScenicWidgets.FrameBox.add_to_graph(%{frame: args.frame, fill: :gainsboro})
+            |> Scenic.Primitives.rect({args.frame.dimens.width, (1-0.618)*args.frame.dimens.height}, fill: :violet)
+            |> render_toolbar(args)
+            # |> Scenic.Primitives.rect({32, 32}, fill: {:image, "icons/add.png"}, t: {50, 50})
+            # |> Scenic.Primitives.rect({64, 64}, fill: {:image, "icons/close.png"}, t: {50, 50})
+            # |> render_background(dimensions: args.frame.size, color: theme.background)
+            # |> render_personal_tile()
+            # |> render_main_memex_search()
+            # |> render_lower_pane(args)
+        end, [
+            id: __MODULE__,
+            translate: args.frame.pin
+        ])
+    end
+
+    def render_toolbar(graph, args) do
+        graph
+        |> Scenic.Primitives.group(fn graph ->
+            graph
+            |> Scenic.Primitives.rect({args.frame.dimens.width, 50}, fill: :forest_green)
+            |> render_tool_button(args)
+            |> ScenicWidgets.IconButton.add_to_graph(%{frame: Frame.new(pin: {50, 0}, size: {50, 50}), hover_highlight?: false}, id: :cog)
+            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {100, 0}, size: {50, 50}), icon: "ionicons/black_32/edit.png"}, id: :edit)
+            # |> Scenic.Primitives.rect({32, 32}, fill: {:image, "icons/add.png"}) 
+        end, [
+            translate: {0, ((1-0.618)*args.frame.dimens.height)-50}
+        ])
+    end
+
+    def render_tool_button(graph, args) do
+        graph
+        |> Scenic.Primitives.rect({32, 32}, fill: {:image, "icons/add.png"}, translate: {(50-32)/2, (50-32)/2}) 
     end
 
     # def handle_event({:click, :open_random_tidbit_btn}, _from, scene) do
