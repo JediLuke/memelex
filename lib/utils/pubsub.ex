@@ -1,6 +1,6 @@
 defmodule Memelex.Utils.PubSub do
-  @registrar_proc Memelex.PubSub
-  @topic :memelex
+  @registrar_proc Fluxus.PubSub
+  @topic :radix_state_changes
 
   def subscribe, do: subscribe(topic: @topic)
 

@@ -6,7 +6,7 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
     # alias Flamelex.GUI.Component.Memex
     # alias Flamelex.Fluxus.Reducers.Memex, as: MemexReducer
 
-    def validate(%{frame: %Frame{} = _f, state: _state} = data) do
+    def validate(%{frame: %Frame{} = _f, state: _state, app: _app} = data) do
         Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
         {:ok, data}
     end
@@ -29,6 +29,11 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
         |> push_graph(init_graph)
   
         {:ok, new_scene}
+    end
+
+    def handle_cast({:click, :add}, scene) do
+        Memelex.My.Wiki.new()
+        {:noreply, scene}
     end
 
     def render(args) do
@@ -55,9 +60,10 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
         |> Scenic.Primitives.group(fn graph ->
             graph
             |> Scenic.Primitives.rect({args.frame.dimens.width, 50}, fill: :forest_green)
-            |> render_tool_button(args)
+            # |> render_tool_button(args)
+            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {0, 0}, size: {50, 50}), icon: "ionicons/black_32/add.png"}, id: :add)
             |> ScenicWidgets.IconButton.add_to_graph(%{frame: Frame.new(pin: {50, 0}, size: {50, 50}), hover_highlight?: false}, id: :cog)
-            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {100, 0}, size: {50, 50}), icon: "ionicons/black_32/edit.png"}, id: :edit)
+            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {100, 0}, size: {50, 50}), icon: "ionicons/black_32/search.png"}, id: :edit)
             # |> Scenic.Primitives.rect({32, 32}, fill: {:image, "icons/add.png"}) 
         end, [
             translate: {0, ((1-0.618)*args.frame.dimens.height)-50}

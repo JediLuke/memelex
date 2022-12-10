@@ -1,132 +1,16 @@
 defmodule Memelex.GUI.Components.HyperCard do
    use Scenic.Component
-   alias Memelex.GUI.Components.HyperCard.Utils
-   alias ScenicWidgets.Core.Structs.Frame
+   alias Memelex.GUI.Components.HyperCard.{Utils, Render}
+   alias Memelex.Reducers.MemexReducer
+   
 
-   @margin 5
 
-   @header_height 100 # TODO customizable?
-   @toolbar_width 140
 
    def validate(%{frame: _frame, state: %{uuid: _uuid}} = data) do
       {:ok, data}
    end
 
-   def init(scene, args, opts) do
-      init_graph = render(args)
-
-      init_scene = scene
-      |> assign(graph: init_graph)
-      |> push_graph(init_graph)
-
-      {:ok, init_scene}
-   end
-
-   def render(args) do
-      Scenic.Graph.build()
-      |> Scenic.Primitives.group(fn graph ->
-            graph
-            |> Scenic.Primitives.rect(args.frame.size, fill: :antique_white, stroke: {2, :blue})
-            |> render_header(args)
-            |> render_body(args)
-         end, [
-            id: {:hypercard, args.state.uuid},
-            translate: args.frame.pin
-         ]
-      )
-   end
-
-   def render_header(graph, %{frame: frame} = args) do
-      graph
-      |> Scenic.Primitives.group(fn graph ->
-         graph
-         |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), @header_height}, fill: :grey)
-         |> render_title(args)
-         |> render_toolbar(args)
-      end, [
-         id: {:hypercard, args.state.uuid},
-         translate: {@margin, @margin}
-         ]
-      )
-   end
-
-   def render_title(graph, %{frame: frame, state: tidbit}) do
-      # REMINDER: Because we render this from within the group
-      # (which is already getting translated, we only need be
-      # concerned here with the _relative_ offset from the group.
-      # Or in other words, this is all referenced off the top-left
-      # corner of the HyperCard, not the top-left corner of the screen.
-
-      #TODO...
-      {:ok, ibm_plex_mono_font_metrics} =
-         TruetypeMetrics.load("./assets/fonts/IBMPlexMono-Regular.ttf")
-
-      #TODO make this more efficient, pass it in same everywhere
-      ascent = FontMetrics.ascent(36, ibm_plex_mono_font_metrics)
-
-      #TODO make title 0.72 * width of Hypercard (minus margins)
-      graph
-      |> Scenic.Primitives.group(
-         fn graph ->
-            graph
-            |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin)-@toolbar_width, 3*@header_height/4}, fill: :red)
-            |> Scenic.Primitives.text(tidbit.title, font: :ibm_plex_mono, font_size: 36, fill: :black, translate: {5, ascent})
-         end
-            # scissor: {100, 20},
-            # translate: 
-      )
-   end
-
-   def render_toolbar(graph, %{frame: frame, state: state}) do
-      graph
-      |> Scenic.Primitives.group(
-         fn graph ->
-            graph
-            |> Scenic.Primitives.rect({@toolbar_width, @header_height/2}, fill: :cyan)
-            # |> Scenic.Primitives.text(title, font: :ibm_plex_mono, font_size: 20)
-         end,
-            # scissor: {100, 20},
-            translate: {frame.dimens.width-(2*@margin)-@toolbar_width, 0}
-      )
-   end
-
-   def render_body(graph, %{frame: frame} = args) do
-      graph
-      |> Scenic.Primitives.group(fn graph ->
-         graph
-         |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), frame.dimens.height-(2*@margin)-@header_height}, fill: :purple)
-      end, [
-         id: {:hypercard, args.state.uuid},
-         translate: {@margin, @margin+@header_height}
-         ]
-      )
-   end
-
-end
-
-
-
-# defmodule Flamelex.GUI.Component.Memex.HyperCard do
-#     use Scenic.Component
-#     require Logger
-# 	alias ScenicWidgets.Core.Structs.Frame
-# 	alias Flamelex.GUI.Component.Memex.HyperCard.Utils
-# 	alias Flamelex.Fluxus.Reducers.Memex, as: MemexReducer
-
-# 	#TODO document this point
-# 	#TODO good idea: render each sub-component as a seperate graph,
-#     #                calculate their heights, then use Scenic.Graph.add_to
-#     #                to put them into the `:hypercard_itself` group
-#     #                -> Unfortunately, this doesn't work because Scenic
-#     #                doesn't seem to support "merging" 2 graphs, or
-#     #                if I return a graph (each component), no way to
-#     #                simply add that to another graph, as a sub-component
-    
-# 	@opts %{
-# 		margin: 5
-# 	}
-
-# 	#TODO ok so, this could indeed all be rendered away from us -
+   # 	#TODO ok so, this could indeed all be rendered away from us -
 # 	# all Flamelex components would need frames, ids, some custom_init_logic,
 # 	# but they all store the frame & id & state in the scene
 # 	def validate(%{
@@ -138,8 +22,18 @@ end
 # 		Logger.debug("#{__MODULE__} accepted params: #{inspect(data)}")
 # 		{:ok, Map.put(data, :state, data.state |> Utils.default_mode(:read_only))}
 # 	end
-	
-# 	def init(scene, args, opts) do
+
+   def init(scene, args, opts) do
+      init_graph = Render.hyper_card(args)
+
+      init_scene = scene
+      |> assign(graph: init_graph)
+      |> push_graph(init_graph)
+
+      {:ok, init_scene}
+   end
+
+   # 	def init(scene, args, opts) do
 # 		Logger.debug("#{__MODULE__} initializing...")
 	
 # 		theme = ScenicWidgets.Utils.Theme.get_theme(opts)
@@ -177,20 +71,46 @@ end
 # 		{:noreply, scene}
 # 	end
 
+# 	def handle_info({:radix_state_change, _new_radix_state}, scene) do
+#         Logger.debug "#{__MODULE__} ignoring a :radix_state_change..."
+#         {:noreply, scene}
+#     end
+
+   def handle_cast({:click, :close, tidbit_uuid}, scene) do
+      IO.puts "GOT THE MESSAGE"
+#         Flamelex.Fluxus.action({MemexReducer, {:close_tidbit, %{tidbit_uuid: tidbit_uuid}}})
+      #TODO pass it up to the story river (including tidbit info)
+      # which will then in turn call the API to close it
+      {:noreply, scene}
+    end
+
+
+
+
+
+
 # 	def handle_event({:click, {:edit_tidbit_btn, tidbit_uuid}}, _from, scene) do
 #         Flamelex.Fluxus.action({MemexReducer, {:edit_tidbit, %{tidbit_uuid: tidbit_uuid}}})
 #         {:noreply, scene}
 #     end
 
-# 	def handle_event({:click, {:save_tidbit_btn, tidbit_uuid}}, _from, scene) do
-#         Flamelex.Fluxus.action({MemexReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
-#         {:noreply, scene}
-#     end
+	def handle_cast({:click, {:save, tidbit_uuid}}, scene) do
+      #   Flamelex.Fluxus.action({MemexReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
+      # GenServer.cast(FluxusRadix, )
+      IO.puts "SAVINGGGGGG"
 
-# 	def handle_event({:click, {:close_tidbit_btn, tidbit_uuid}}, _from, scene) do
-#         Flamelex.Fluxus.action({MemexReducer, {:close_tidbit, %{tidbit_uuid: tidbit_uuid}}})
-#         {:noreply, scene}
-#     end
+      # :ok = EventBus.notify(%EventBus.Model.Event{
+      #    id: UUID.uuid4(),
+      #    topic: :general,
+      #    data: {:action, a}
+      # })
+
+      Memelex.Fluxus.action({MemexReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
+
+      {:noreply, scene}
+    end
+
+
 
 # 	def handle_event({:click, {:discard_changes_btn, tidbit_uuid}}, _from, scene) do
 #         Flamelex.Fluxus.action({MemexReducer, {:discard_changes, %{tidbit_uuid: tidbit_uuid}}})
@@ -211,10 +131,4 @@ end
 #     #     {:noreply, scene}
 #     # end
 
-
-# 	def handle_info({:radix_state_change, _new_radix_state}, scene) do
-#         Logger.debug "#{__MODULE__} ignoring a :radix_state_change..."
-#         {:noreply, scene}
-#     end
-
-# end
+end

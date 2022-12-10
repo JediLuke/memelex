@@ -26,7 +26,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
       frame: %Frame{} = _f,
       state: %{
          open_tidbits: _open_tidbits_list,
-         scroll_acc: {_x, _y}
+         scroll: {_x, _y}
       },
       app: _app
    } = data) do
@@ -57,7 +57,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
 
       init_state =
          args.state
-         |> Map.merge(%{scroll_acc: {0, 0}})
+         |> Map.merge(%{scroll: {0, 0}})
          #TODO this might not work with radix_state changes coming in at the same time...
          |> put_in([:open_tidbits], []) # start with no tidbits open, instead we load them into the render queue
 
@@ -101,7 +101,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
       # new_cumulative_scroll =
       #     cap_position(scene, Scenic.Math.Vector2.add(scene.assigns.state.scroll, fast_scroll))
       new_cumulative_scroll =
-          Scenic.Math.Vector2.add(scene.assigns.state.scroll_acc, fast_scroll)
+          Scenic.Math.Vector2.add(scene.assigns.state.scroll, fast_scroll)
 
       new_graph =
          scene.assigns.graph
@@ -109,7 +109,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
 
       new_state =
          scene.assigns.state
-         |> put_in([:scroll_acc], new_cumulative_scroll)
+         |> put_in([:scroll], new_cumulative_scroll)
 
       new_scene =
          scene
@@ -278,7 +278,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
          {:noreply, new_scene}
    end
 
-   def render(%{frame: frame, state: %{scroll_acc: scroll_acc} = _state}) do
+   def render(%{frame: frame, state: %{scroll: scroll} = _state}) do
       # This way the graph has a Group with the right name already, so
       # we can just use Scenic.Graph.add to add new HyperCards
 
@@ -293,7 +293,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
                   #NOTE: We will scroll this pane around later on, and need to
                   #      add new TidBits to it with Modify
                   id: :river_pane, # Scenic required we register groups/components with a name
-                  translate: scroll_acc
+                  translate: scroll
             ])
          end, [
             id: __MODULE__

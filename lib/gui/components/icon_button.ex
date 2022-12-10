@@ -57,6 +57,20 @@ defmodule Memelex.GUI.Components.IconButton do
   
         # id = opts[:id] || raise "#{__MODULE__} must receive `id` via opts."
 
+        icon_size =
+          if args.icon == "ionicons/black_32/chevron-down.png" do
+            {32, 18}  
+          else
+            {32, 32}
+          end
+
+        translate =
+          if args.icon == "ionicons/black_32/chevron-down.png" do
+            {@margin, @margin+10}  
+          else
+            {@margin, @margin}
+          end
+
         Scenic.Graph.build()
         |> Scenic.Primitives.group(
           fn graph ->
@@ -70,7 +84,7 @@ defmodule Memelex.GUI.Components.IconButton do
             # |> Scenic.Primitives.rect({32, 32}, fill: {:image, "ionicons_32_black/add.png"}, translate: {(50-32)/2, (50-32)/2}) 
             # |> ScenicWidgets.Ionicons.Black32.plus()
             # |> Scenic.Primitives.rect({32, 32}, fill: {:image, "ionicons/black_32/cog.png"}, translate: {@margin, @margin})
-            |> Scenic.Primitives.rect({32, 32}, fill: {:image, args.icon}, translate: {@margin, @margin})
+            |> Scenic.Primitives.rect(icon_size, fill: {:image, args.icon}, translate: translate)
             # |> Scenic.Primitives.text(args.label,
             #   id: :label,
             #   font: args.font.name,
@@ -147,7 +161,7 @@ defmodule Memelex.GUI.Components.IconButton do
       bounds = Scenic.Graph.bounds(scene.assigns.graph)
   
       if click_coords |> ScenicWidgets.Utils.inside?(bounds) do
-        cast_parent(scene, {:click, scene.assigns.state.id})
+        cast_parent(scene, {:click, scene.assigns.id})
       end
   
       {:noreply, scene}

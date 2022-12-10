@@ -20,7 +20,7 @@ defmodule Memelex.My.Wiki do
     radix_state = Memelex.Fluxus.RadixStore.get()
 
     # new_radix_state = %{radix_state|radix_state.memex.story_river.open_tidbits ++ [new_tidbit] }
-    new_radix_state = radix_state |> put_in([:memex, :story_river, :open_tidbits], radix_state.memex.story_river.open_tidbits ++ [new_tidbit])
+    new_radix_state = radix_state |> put_in([:memex, :story_river, :open_tidbits], radix_state.memex.story_river.open_tidbits ++ [new_tidbit |> Map.merge(%{gui: %{mode: :edit}})])
 
     Memelex.Fluxus.RadixStore.update(new_radix_state)
 
@@ -28,6 +28,16 @@ defmodule Memelex.My.Wiki do
     # |> new_tidbit()
 
     new_tidbit
+  end
+
+  #TODO add check for when running in gui mode or not
+  def open do
+    
+  end
+
+  def close(tidbit) do
+    # radix_state = Memelex.Fluxus.RadixStore.get()
+    IO.puts "HER HER NEXT WE NEED TO CLOSE TIDBITS"
   end
 
   # def new(param_one, param_two) do

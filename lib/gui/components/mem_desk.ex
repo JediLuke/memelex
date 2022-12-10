@@ -54,7 +54,8 @@ defmodule Memelex.GUI.Components.MemDesk do
       }) 
       |> Memelex.GUI.Component.Memex.SideBar.add_to_graph(%{
             frame: right_pane,
-            state: %{}
+            state: %{},
+            app: app
       })
 
 

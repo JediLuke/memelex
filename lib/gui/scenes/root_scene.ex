@@ -12,7 +12,7 @@ defmodule Memelex.GUI.RootScene do
       new_scene = init_scene
       |> push_graph(root_graph)
 
-      Memelex.Utils.PubSub.subscribe(topic: :radix_state_change)
+      # Memelex.Utils.PubSub.subscribe(topic: :radix_state_change)
 
       # request_input(new_scene, [:viewport, :key, :cursor_scroll])
       request_input(new_scene, [:viewport])
@@ -34,16 +34,19 @@ defmodule Memelex.GUI.RootScene do
    def handle_input({:viewport, {:reshape, new_dimensions}}, _context, scene) do # e.g. of new_dimensions: {1025, 818}
       Logger.debug "#{__MODULE__} received :viewport :reshape, dim: #{inspect new_dimensions}"
 
-      new_viewport = %{scene.viewport|size: new_dimensions}
+      # new_viewport = %{scene.viewport|size: new_dimensions}
 
       # NOTE - this causes render to be called twice upon boot, because
       # Scenic automatically sends itself a :reshape for some reason...
-      new_graph = render(new_viewport)
+      
+      #TODO don't re-draw, push a new frame down to the component...
+      # new_graph = render(new_viewport)
 
-      new_scene = scene
-      |> push_graph(new_graph)
+      # new_scene = scene
+      # |> push_graph(new_graph)
 
-      {:noreply, %{scene|viewport: new_viewport}}
+      # {:noreply, %{scene|viewport: new_viewport}}
+      {:noreply, scene}
    end
  
    def render(%Scenic.ViewPort{} = vp) do
