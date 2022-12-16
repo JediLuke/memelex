@@ -61,7 +61,6 @@ defmodule Memelex.GUI.Components.StoryRiver do
          #TODO this might not work with radix_state changes coming in at the same time...
          |> put_in([:open_tidbits], []) # start with no tidbits open, instead we load them into the render queue
 
-         IO.inspect init_state
          #     state = %{
 #       # first_render?: true, #NOTE: We can do everything for the "first render" in the init/3 function
 #       active_components: [], # we haven't rendered any yet, so none are active
@@ -134,6 +133,13 @@ defmodule Memelex.GUI.Components.StoryRiver do
       # - remember to take this component out of the render render_queu
       # - next hypercard will kick off next render
 
+      #     #NOTE: My original idea was to send all these re-render messages at once,
+      #      the problem with that is that then they all render before any
+      #      of them have called back with their height!! The solution is
+      #      to only render one, let it go through it's cycle (calling back
+      #      with it's own bounds) and then if we still have things in the
+      #      render_queue, re-drawing those too
+
 
       # margin_buf = 2*@spacing_buffer # this is how much margin we render around each HyperCard
 
@@ -185,7 +191,6 @@ defmodule Memelex.GUI.Components.StoryRiver do
 
       new_state = scene.assigns.state
       |> put_in([:open_tidbits], scene.assigns.state.open_tidbits ++ [tidbit])
-      |> IO.inspect(label: "NEW STATE AFTER ADDING TIDBIT")
 
       new_scene = scene
       |> assign(graph: new_graph)
@@ -260,18 +265,27 @@ defmodule Memelex.GUI.Components.StoryRiver do
 
  
    # def handle_info({:radix_state_change, %{memex: %{open_tidbits: new_open_tidbits} = new_memex_state}}, %{assigns: %{state: %{open_tidbits: currently_open_tidbits}}} = scene)
-   def handle_info({:radix_state_change, %{memex: %{story_river: %{open_tidbits: new_open_tidbits} = new_memex_state} }}, %{assigns: %{state: %{open_tidbits: currently_open_tidbits}}} = scene)
+   def handle_info({:radix_state_change, %{memex: %{story_river: %{open_tidbits: new_open_tidbits} = incoming_memex_state} }}, %{assigns: %{state: %{open_tidbits: currently_open_tidbits}}} = scene)
       when new_open_tidbits != currently_open_tidbits do
-         # IO.puts "GOT THE MXG #{inspect new_open_tidbits}"
 
          # new_tidbits_to_render = scene.assigns.state.open_tidbits 
+
+         new_memex_state =
+            # reset open tidbits to zero, since we need to re-render them all...
+            incoming_memex_state |> put_in([:open_tidbits], [])
+
+         new_graph = render(%{
+            frame: scene.assigns.frame,
+            state: new_memex_state
+         })
 
          #TODO add an optimization here, we dont need to destroy all the open tidbits & add *all* of them to the render buffer,
          # most of the time we're just appending a single ne TidBit to the bottom...
          new_scene = scene
-         |> assign(state: new_memex_state |> put_in([:open_tidbits], [])) # reset open tidbits to zero, since we need to re-render them all...
+         |> assign(state: new_memex_state) 
+         |> assign(graph: new_graph) 
          |> assign(render_queue: new_open_tidbits)
-         # |> push_graph(init_graph)
+         |> push_graph(new_graph)
 
          GenServer.cast(self(), :render_next_component)
 
@@ -718,56 +732,7 @@ end
 #   #   {:noreply, scene}
 #   # end
 
-#   def handle_cast({:close_tidbit, title}, scene) do
-#     #TODO here - we need to take the tidbit out of our list of active_components,
-#     #            re-compute the graph from this new list & swap in the new graph
-#     #            to update the display
 
-
-#     #TODO so for now, cause I'm lazy, I'm just gonna take out the tidbit we
-#     #     just closed & re-render everything from scratch
-#     state = scene.assigns.state
-
-#     new_active_components =
-#       # state.active_components |> Enum.reject(& &1.title == title)
-#       state.active_components
-#       |> Enum.reject(fn {HyperCard, tidbit, _bounds} -> tidbit.title == title end)
-#       # |> Enum.map(fn {HyperCard, tidbit, _bounds} -> tidbit end) # extract back out the main input, the TidBit, so we can just call re-render lmao
-
-#       #lmao so I need to do this cause active_components have bounds, and actuall add_tidbit wants options
-#       |> Enum.map(fn {HyperCard, tidbit, _bounds} -> {HyperCard, tidbit, []} end) # extract back out the main input, the TidBit, so we can just call re-render lmao
-
-#     IO.inspect new_active_components, label: "WHATS LEFT"
-
-#     new_state = %{state|active_components: [], render_queue: new_active_components}
-
-#     new_graph =
-#       Scenic.Graph.build()
-#       |> Scenic.Primitives.group(fn graph ->
-#           graph
-#         end, [
-#             #NOTE: We will scroll this pane around later on, and need to
-#             #      add new TidBits to it with Modify
-#             id: :river_pane, # Scenic required we register groups/components with a name
-#             translate: state.scroll
-#         ])
-
-#     new_scene = scene
-#     |> assign(graph: new_graph)
-#     |> assign(state: new_state)
-#     |> push_graph(new_graph)
-
-#     #NOTE: My original idea was to send all these re-render messages at once,
-#     #      the problem with that is that then they all render before any
-#     #      of them have called back with their height!! The solution is
-#     #      to only render one, let it go through it's cycle (calling back
-#     #      with it's own bounds) and then if we still have things in the
-#     #      render_queue, re-drawing those too
-#     #Enum.each(new_active_components, fn _x -> GenServer.cast(self(), :render_next_component) end)
-#     GenServer.cast(self(), :render_next_component)
-
-#     {:noreply, new_scene}
-#   end
 
 #   #TODO this should be called - register_component_bounds/size or something
 #   def handle_cast({:component_height, full_tidbit, bounds}, %{assigns: %{state: state}} = scene) do

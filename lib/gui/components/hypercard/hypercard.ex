@@ -76,11 +76,11 @@ defmodule Memelex.GUI.Components.HyperCard do
 #         {:noreply, scene}
 #     end
 
-   def handle_cast({:click, :close, tidbit_uuid}, scene) do
-      IO.puts "GOT THE MESSAGE"
-#         Flamelex.Fluxus.action({MemexReducer, {:close_tidbit, %{tidbit_uuid: tidbit_uuid}}})
+   def handle_cast({:click, {:close, tidbit_uuid}}, scene) do
+      IO.puts "DOORS _ CLOSING"
       #TODO pass it up to the story river (including tidbit info)
-      # which will then in turn call the API to close it
+      # which will then in turn call the API to close it?? Or just keep doing it here??
+      Memelex.Fluxus.action({MemexReducer, {:close_tidbit, %{tidbit_uuid: tidbit_uuid}}})
       {:noreply, scene}
     end
 
@@ -89,15 +89,14 @@ defmodule Memelex.GUI.Components.HyperCard do
 
 
 
-# 	def handle_event({:click, {:edit_tidbit_btn, tidbit_uuid}}, _from, scene) do
-#         Flamelex.Fluxus.action({MemexReducer, {:edit_tidbit, %{tidbit_uuid: tidbit_uuid}}})
-#         {:noreply, scene}
-#     end
+	def handle_cast({:click, {:edit, tidbit_uuid}}, scene) do
+      Memelex.Fluxus.action({MemexReducer, {:edit_tidbit, %{tidbit_uuid: tidbit_uuid}}})
+      {:noreply, scene}
+   end
 
 	def handle_cast({:click, {:save, tidbit_uuid}}, scene) do
-      #   Flamelex.Fluxus.action({MemexReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
+      # Flamelex.Fluxus.action({MemexReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
       # GenServer.cast(FluxusRadix, )
-      IO.puts "SAVINGGGGGG"
 
       # :ok = EventBus.notify(%EventBus.Model.Event{
       #    id: UUID.uuid4(),
