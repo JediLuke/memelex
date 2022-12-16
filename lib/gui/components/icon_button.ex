@@ -58,18 +58,10 @@ defmodule Memelex.GUI.Components.IconButton do
         # id = opts[:id] || raise "#{__MODULE__} must receive `id` via opts."
 
         icon_size =
-          if args.icon == "ionicons/black_32/chevron-down.png" do
-            {32, 18}  
-          else
             {32, 32}
-          end
 
         translate =
-          if args.icon == "ionicons/black_32/chevron-down.png" do
-            {@margin, @margin+10}  
-          else
             {@margin, @margin}
-          end
 
         Scenic.Graph.build()
         |> Scenic.Primitives.group(
