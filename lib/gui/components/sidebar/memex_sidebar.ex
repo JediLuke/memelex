@@ -79,7 +79,7 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
             graph
             |> Scenic.Primitives.rect({args.frame.dimens.width, 50}, fill: :forest_green)
             # |> render_tool_button(args)
-            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {0, 0}, size: {50, 50}), icon: "ionicons/black_32/add.png"}, id: :add)
+            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {0, 0}, size: {50, 50}), icon: "ionicons/black_32/add-circle.png"}, id: :add)
             |> ScenicWidgets.IconButton.add_to_graph(%{frame: Frame.new(pin: {50, 0}, size: {50, 50}), hover_highlight?: false}, id: :cog)
             |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {100, 0}, size: {50, 50}), icon: "ionicons/black_32/search.png"}, id: :edit)
             # |> Scenic.Primitives.rect({32, 32}, fill: {:image, "icons/add.png"}) 
