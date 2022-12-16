@@ -4,24 +4,9 @@ defmodule Memelex.GUI.Components.HyperCard do
    alias Memelex.Reducers.MemexReducer
    
 
-
-
    def validate(%{frame: _frame, state: %{uuid: _uuid}} = data) do
       {:ok, data}
    end
-
-   # 	#TODO ok so, this could indeed all be rendered away from us -
-# 	# all Flamelex components would need frames, ids, some custom_init_logic,
-# 	# but they all store the frame & id & state in the scene
-# 	def validate(%{
-# 			id: _id,
-# 			frame: %Frame{} = _f,
-# 			state: %{
-# 				title: title,
-# 			}} = data) when is_bitstring(title) do
-# 		Logger.debug("#{__MODULE__} accepted params: #{inspect(data)}")
-# 		{:ok, Map.put(data, :state, data.state |> Utils.default_mode(:read_only))}
-# 	end
 
    def init(scene, args, opts) do
       init_graph = Render.hyper_card(args)
@@ -33,23 +18,14 @@ defmodule Memelex.GUI.Components.HyperCard do
       {:ok, init_scene}
    end
 
-   # 	def init(scene, args, opts) do
-# 		Logger.debug("#{__MODULE__} initializing...")
-	
-# 		theme = ScenicWidgets.Utils.Theme.get_theme(opts)
-
-# 		init_graph = Utils.render(args |> Map.merge(%{theme: theme}))
-	
-# 		init_scene = scene
-# 			|> assign(graph: init_graph)
-# 			|> assign(frame: args.frame)
-# 			|> assign(state: args.state)
-# 			|> push_graph(init_graph)
-
-# 		Flamelex.Utils.PubSub.subscribe(topic: :radix_state_change)
-
-# 		{:ok, init_scene, {:continue, :publish_bounds}}
-# 	end
+   	#TODO document this point
+	#TODO good idea: render each sub-component as a seperate graph,
+    #                calculate their heights, then use Scenic.Graph.add_to
+    #                to put them into the `:hypercard_itself` group
+    #                -> Unfortunately, this doesn't work because Scenic
+    #                doesn't seem to support "merging" 2 graphs, or
+    #                if I return a graph (each component), no way to
+    #                simply add that to another graph, as a sub-component
 
 # 	#REMINDER: Here we call back to the outer-component with out size, since
 # 	# 		   HyperCards are flexible in size 
@@ -71,23 +47,12 @@ defmodule Memelex.GUI.Components.HyperCard do
 # 		{:noreply, scene}
 # 	end
 
-# 	def handle_info({:radix_state_change, _new_radix_state}, scene) do
-#         Logger.debug "#{__MODULE__} ignoring a :radix_state_change..."
-#         {:noreply, scene}
-#     end
-
    def handle_cast({:click, {:close, tidbit_uuid}}, scene) do
-      IO.puts "DOORS _ CLOSING"
       #TODO pass it up to the story river (including tidbit info)
       # which will then in turn call the API to close it?? Or just keep doing it here??
       Memelex.Fluxus.action({MemexReducer, {:close_tidbit, %{tidbit_uuid: tidbit_uuid}}})
       {:noreply, scene}
-    end
-
-
-
-
-
+   end
 
 	def handle_cast({:click, {:edit, tidbit_uuid}}, scene) do
       Memelex.Fluxus.action({MemexReducer, {:edit_tidbit, %{tidbit_uuid: tidbit_uuid}}})
@@ -95,21 +60,9 @@ defmodule Memelex.GUI.Components.HyperCard do
    end
 
 	def handle_cast({:click, {:save, tidbit_uuid}}, scene) do
-      # Flamelex.Fluxus.action({MemexReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
-      # GenServer.cast(FluxusRadix, )
-
-      # :ok = EventBus.notify(%EventBus.Model.Event{
-      #    id: UUID.uuid4(),
-      #    topic: :general,
-      #    data: {:action, a}
-      # })
-
       Memelex.Fluxus.action({MemexReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
-
       {:noreply, scene}
     end
-
-
 
 # 	def handle_event({:click, {:discard_changes_btn, tidbit_uuid}}, _from, scene) do
 #         Flamelex.Fluxus.action({MemexReducer, {:discard_changes, %{tidbit_uuid: tidbit_uuid}}})

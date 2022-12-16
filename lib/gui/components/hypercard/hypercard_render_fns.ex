@@ -1,12 +1,4 @@
 defmodule Memelex.GUI.Components.HyperCard.Render do
-	#TODO document this point
-	#TODO good idea: render each sub-component as a seperate graph,
-    #                calculate their heights, then use Scenic.Graph.add_to
-    #                to put them into the `:hypercard_itself` group
-    #                -> Unfortunately, this doesn't work because Scenic
-    #                doesn't seem to support "merging" 2 graphs, or
-    #                if I return a graph (each component), no way to
-    #                simply add that to another graph, as a sub-component
     alias ScenicWidgets.Core.Structs.Frame
 
     @margin 5
@@ -14,36 +6,43 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
     @header_height 100 # TODO customizable?
     @toolbar_width 150
 
-    def hyper_card(%{state: %{gui: %{mode: :edit}}} = args) do
-        Scenic.Graph.build()
-        |> Scenic.Primitives.group(fn graph ->
-           graph
-           |> Scenic.Primitives.rect(args.frame.size, fill: :yellow, stroke: {2, :blue})
-           |> render_header(args)
-           |> render_editable_body(args |> Map.merge(%{active?: false}))
-        end, [
-           id: {:hypercard, args.state.uuid},
-           translate: args.frame.pin
-        ]
-     )
-     end
+   def hyper_card(%{state: %{gui: %{mode: :edit}}} = args) do
+      Scenic.Graph.build()
+      |> Scenic.Primitives.group(fn graph ->
+         graph
+         |> Scenic.Primitives.rect(args.frame.size, fill: :yellow, stroke: {2, :blue})
+         |> render_header(args)
+         |> render_editable_body(args |> Map.merge(%{active?: false}))
+      end, [
+         id: {:hypercard, args.state.uuid},
+         translate: args.frame.pin
+      ])
+   end
+
+   def hyper_card(args) do
+      Scenic.Graph.build()
+      |> Scenic.Primitives.group(fn graph ->
+         graph
+         |> Scenic.Primitives.rect(args.frame.size, fill: :antique_white, stroke: {2, :blue})
+         |> render_header(args)
+         |> render_body(args)
+      end, [
+         id: {:hypercard, args.state.uuid},
+         translate: args.frame.pin
+      ])
+   end
+
+
+     # 		# - work on body component displaying how we actually want it to work
+# 		# - wraps at correct width
+# 		# - renders infinitely long
+# 		# - only works for pure text, shows "NOT AVAILABLE" or whatever otherwise (centered ;)
+
 
 
 
 
 # 	#TODO write a blog post about using matches to distinguish the case vs just for convenience (if for convenience, do it inside the function)
-#     def render_tidbit(graph, %{state: %{
-# 			mode: :edit,
-# 			activate: :title, data: text} = tidbit} = args)
-# 	when is_bitstring(text) do
-
-# 		# - work on body component displaying how we actually want it to work
-# 		# - wraps at correct width
-# 		# - renders infinitely long
-# 		# - only works for pure text, shows "NOT AVAILABLE" or whatever otherwise (centered ;)
-
-# 		background_color = :red
-# 		frame = args.frame
 
 
 # 		#TODO here we need to pre-calculate the height of the TidBit
@@ -52,162 +51,56 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
 # 		{width, {:flex_grow, %{min_height: min_height}}} = frame.size
 # 		frame_size = {width, min_height}
 
-# 		graph
-# 		|> Scenic.Primitives.rect(frame_size, fill: background_color) # background rectangle
-# 		|> render_heading(tidbit, frame, mode: :edit)
-# 		|> Scenic.Components.button("Save", id: {:save_tidbit_btn, args.id}, translate: {frame.dimensions.width-100, 10})
-# 		|> Scenic.Components.button("Discard", id: {:discard_changes_btn, args.id}, translate: {frame.dimensions.width-100, 60})
 # 		|> render_tags_box(%{mode: :edit, tidbit: tidbit, frame: frame})
 # 		|> render_text_pad(%{mode: :read_only, tidbit: tidbit, frame: frame})
-# 	end
-
-# 	def render_tidbit(graph, %{state: %{
-# 			mode: :edit,
-# 			activate: :body, data: text} = tidbit} = args)
-# 	when is_bitstring(text) do
-
-# 		# - work on body component displaying how we actually want it to work
-# 		# - wraps at correct width
-# 		# - renders infinitely long
-# 		# - only works for pure text, shows "NOT AVAILABLE" or whatever otherwise (centered ;)
 
 # 		background_color = :pink
 # 		frame = args.frame
 
 
 # 		#TODO here we need to pre-calculate the height of the TidBit
-# 		# body_height = calc_wrapped_text_height(%{frame: frame, text: data})
 # 		# this is a workaround because of flex_grow
 # 		{width, {:flex_grow, %{min_height: min_height}}} = frame.size
 # 		frame_size = {width, min_height}
 
-# 		graph
-# 		|> Scenic.Primitives.rect(frame_size, fill: background_color) # background rectangle
-# 		|> render_heading(tidbit, frame)
-# 		|> Scenic.Components.button("Save", id: {:save_tidbit_btn, args.id}, translate: {frame.dimensions.width-100, 10})
-# 		|> Scenic.Components.button("Discard", id: {:discard_changes_btn, args.id}, translate: {frame.dimensions.width-100, 60})
-# 		|> render_tags_box(%{mode: :edit, tidbit: tidbit, frame: frame})
-# 		|> render_text_pad(%{mode: :edit, tidbit: tidbit, frame: frame})
-# 	end
-
-
-
-  
-     def hyper_card(args) do
-        Scenic.Graph.build()
-        |> Scenic.Primitives.group(fn graph ->
-              graph
-              |> Scenic.Primitives.rect(args.frame.size, fill: :antique_white, stroke: {2, :blue})
-              |> render_header(args)
-              |> render_body(args)
-           end, [
-              id: {:hypercard, args.state.uuid},
-              translate: args.frame.pin
-           ]
-        )
-     end
-
-
-     # 	def render_tidbit(graph, %{state: %{
-# 			mode: :read_only,
-# 			data: text} = tidbit, frame: frame} = args)
-# 	when is_bitstring(text) do
 
 # 		#TODO here we need to pre-calculate the height of the TidBit
 # 		# this is a workaround because of flex_grow
 # 		{width, {:flex_grow, %{min_height: min_height}}} = frame.size
 # 		frame_size = {width, min_height}
 
-# 		graph
-# 		|> Scenic.Primitives.rect(frame_size, fill: :antique_white) # background rectangle
-# 		|> render_heading(tidbit, frame)
-# 		|> Scenic.Components.button("Edit", id: {:edit_tidbit_btn, args.id}, translate: {frame.dimensions.width-100, 10})
-# 		|> Scenic.Components.button("Close", id: {:close_tidbit_btn, args.id}, translate: {frame.dimensions.width-100, 60})
-# 		|> render_dateline(tidbit)
-# 		|> render_tags_box(%{mode: :read_only, tidbit: tidbit, frame: frame})
-# 		|> render_text_pad(%{mode: :read_only, tidbit: tidbit, frame: frame})
-# 	end
-
-# 	# def render_tidbit(graph, %{state: %{edit_mode?: false} = tidbit, frame: frame} = args) do
-# 	#NOTE: For now have this case here as a catch-all, but better to really match on a mode
-# 	#NOTE: THis case means we failed to match any known case for rendering the body
-# 	def render_tidbit(graph, %{state: tidbit, frame: frame} = args) do
-# 		Logger.error "Could not successfully render TidBit: #{inspect tidbit}"
-
-# 		#TODO here we need to pre-calculate the height of the TidBit
-# 		# this is a workaround because of flex_grow
-# 		{width, {:flex_grow, %{min_height: min_height}}} = frame.size
-# 		frame_size = {width, min_height}
-
-# 		graph
-# 		|> Scenic.Primitives.rect(frame_size, fill: :antique_white) # background rectangle
-# 		|> render_heading(tidbit, frame)
-# 		|> Scenic.Components.button("Edit", id: {:edit_tidbit_btn, args.id}, translate: {frame.dimensions.width-100, 10})
-# 		|> Scenic.Components.button("Close", id: {:close_tidbit_btn, args.id}, translate: {frame.dimensions.width-100, 60})
 # 		|> render_dateline(tidbit)
 # 		|> render_tags_box(%{mode: :read_only, tidbit: tidbit, frame: frame})
 # 		|> show_unrenderable_box(%{tidbit: tidbit, frame: frame})
-# 	end
 
 
-defp render_header(graph, %{frame: frame, state: %{gui: %{mode: :edit}}} = args) do
-    graph
-    |> Scenic.Primitives.group(fn graph ->
-       graph
-       |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), @header_height}, fill: :blue)
-       |> render_editable_title(args)
-       |> render_toolbar(args)
-    end, [
-       id: {:hypercard, args.state.uuid},
-       translate: {@margin, @margin}
-       ]
-    )
- end
-
+   defp render_header(graph, %{frame: frame, state: %{gui: %{mode: :edit}}} = args) do
+      graph
+      |> Scenic.Primitives.group(fn graph ->
+         graph
+         |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), @header_height}, fill: :blue)
+         |> render_editable_title(args)
+         |> render_toolbar(args)
+      end, [
+         id: {:hypercard, args.state.uuid},
+         translate: {@margin, @margin}
+         ]
+      )
+   end
   
-     defp render_header(graph, %{frame: frame} = args) do
-        graph
-        |> Scenic.Primitives.group(fn graph ->
-           graph
-           |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), @header_height}, fill: :grey)
-           |> render_title(args)
-           |> render_toolbar(args)
-        end, [
-           id: {:hypercard, args.state.uuid},
-           translate: {@margin, @margin}
-           ]
-        )
-     end
-  
-
-# 	def render_heading(graph, tidbit, frame, mode: mode) do
-# 		graph
-
-
-
-
-# 		|> ScenicWidgets.TextPad.add_to_graph(%{
-# 			id: "__heading__" <> tidbit.uuid,
-# 			frame: calc_title_frame(frame),
-# 			text: tidbit.title,
-# 			cursor: Map.get(tidbit, :cursor, 0),
-# 			mode: mode,
-# 			format_opts: %{
-# 				alignment: :left,
-# 				wrap_opts: {:wrap, :end_of_line},
-# 				show_line_num?: false
-# 			},
-# 			font: ibm_plex_mono(size: @heading_1)
-# 		})
-# 		# |> ScenicWidgets.Simple.Heading.add_to_graph(%{
-# 		# 	text: tidbit.title,
-# 		# 	frame: calc_title_frame(frame),
-# 		# 	font: heading_font(),
-# 		# 	color: :green,
-# 		# 	# text_wrap_opts: :wrap #TODO
-# 		# 	background_color: :yellow
-# 		# }) #TODO theme: theme?? Does this get automatically passed down??
-# 	end
+   defp render_header(graph, %{frame: frame} = args) do
+      graph
+      |> Scenic.Primitives.group(fn graph ->
+         graph
+         |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), @header_height}, fill: :grey)
+         |> render_title(args)
+         |> render_toolbar(args)
+      end, [
+         id: {:hypercard, args.state.uuid},
+         translate: {@margin, @margin}
+         ]
+      )
+   end
 
    defp render_editable_title(graph, %{frame: fr, state: %{uuid: tidbit_uuid, gui: %{mode: :edit}} = tidbit} = args) do
       graph
@@ -249,7 +142,7 @@ defp render_header(graph, %{frame: frame, state: %{gui: %{mode: :edit}}} = args)
             graph
             |> Scenic.Primitives.rect({@toolbar_width, @header_height/2}, fill: :purple)
             |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-150, 0}, size: {50, 50}), icon: "ionicons/black_32/trash.png"}, id: {:delete, tidbit_uuid})
-            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-100, 0}, size: {50, 50}), icon: "ionicons/black_32/ban.png"}, id: {:discard, tidbit_uuid})
+            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-100, 0}, size: {50, 50}), icon: "ionicons/black_32/backspace.png"}, id: {:discard, tidbit_uuid})
             |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-50, 0}, size: {50, 50}), icon: "ionicons/black_32/save.png"}, id: {:save, tidbit_uuid})
             # |> Scenic.Primitives.text(title, font: :ibm_plex_mono, font_size: 20)
          end,
