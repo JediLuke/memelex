@@ -4,7 +4,7 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
     require Logger
     alias ScenicWidgets.Core.Structs.Frame
     # alias Flamelex.GUI.Component.Memex
-    # alias Flamelex.Fluxus.Reducers.Memex, as: MemexReducer
+    # alias Flamelex.Fluxus.Reducers.Memex, as: RootReducer
 
     @split 0.618 # this is where we split the sidebar into upper & lower pane
 
@@ -93,12 +93,12 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
     end
 
     # def handle_event({:click, :open_random_tidbit_btn}, _from, scene) do
-    #     Flamelex.Fluxus.action({MemexReducer, {:open_tidbit, :random}})
+    #     Flamelex.Fluxus.action({RootReducer, {:open_tidbit, :random}})
     #     {:noreply, scene}
     # end
 
     # def handle_event({:click, :create_new_tidbit_btn}, _from, scene) do
-    #     Flamelex.Fluxus.action({MemexReducer, :new_tidbit})
+    #     Flamelex.Fluxus.action({RootReducer, :new_tidbit})
     #     {:noreply, scene}
     # end
 

@@ -4,7 +4,7 @@ defmodule Memelex.GUI.Components.CollectionsMantel do
     require Logger
     alias ScenicWidgets.Core.Structs.Frame
     # alias Flamelex.GUI.Component.Memex
-    # alias Flamelex.Fluxus.Reducers.Memex, as: MemexReducer
+    # alias Flamelex.Fluxus.Reducers.Memex, as: RootReducer
 
     def validate(%{frame: %Frame{} = _f, state: _state} = data) do
         Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
@@ -43,12 +43,12 @@ defmodule Memelex.GUI.Components.CollectionsMantel do
     end
 
     # def handle_event({:click, :open_random_tidbit_btn}, _from, scene) do
-    #     Flamelex.Fluxus.action({MemexReducer, {:open_tidbit, :random}})
+    #     Flamelex.Fluxus.action({RootReducer, {:open_tidbit, :random}})
     #     {:noreply, scene}
     # end
 
     # def handle_event({:click, :create_new_tidbit_btn}, _from, scene) do
-    #     Flamelex.Fluxus.action({MemexReducer, :new_tidbit})
+    #     Flamelex.Fluxus.action({RootReducer, :new_tidbit})
     #     {:noreply, scene}
     # end
 

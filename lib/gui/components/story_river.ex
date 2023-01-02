@@ -63,7 +63,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
 
          #     state = %{
 #       # first_render?: true, #NOTE: We can do everything for the "first render" in the init/3 function
-#       active_components: [], # we haven't rendered any yet, so none are active
+#       active_tidbit: [], # we haven't rendered any yet, so none are active
 #       render_queue: [] = params.components, # we will go through this list very soon & render them...
 #       scroll: {0, 0}
 #     }
@@ -206,7 +206,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
 
 
 #   def handle_cast(:render_next_component, scene = %{assigns: %{state: %{
-#                     #  active_components: [],
+#                     #  active_tidbits: [],
 #                      render_queue: [c|rest]}}}) do
 #     Logger.debug "Attempting to render an additional component in the LayoutList..."
 #     # Logger.warn "IN THE RENDER LIST YES"
@@ -685,7 +685,6 @@ end
 #   # def handle_call({:add_tidbit, tidbit}, _from, %{assigns: %{state: state}} = scene) do
 #   #   #TODO note - I cant handle adding more than  tidbit yet, so that's why the above matches on active_components: [], and this is a catchall
 #   #   Logger.warn "Trying to add tidbit, bad bad"
-#   #   IO.inspect state.active_components
 #   #   {:reply, :ok, scene}
 #   # end
 
@@ -745,7 +744,7 @@ end
 #       # Logger.emergency "WERE GETTING CALLBACK"
 
 #       new_state = %{state|
-#                       active_components: state.active_components ++ [{HyperCard, full_tidbit, bounds}],
+#                       active_components: state.focuss ++ [{HyperCard, full_tidbit, bounds}],
 #                       # acc_height: state.acc_height+(component_height+@spacing_buffer)
 #                     }
 

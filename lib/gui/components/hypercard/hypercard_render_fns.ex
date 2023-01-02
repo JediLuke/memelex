@@ -57,7 +57,7 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       )
    end
 
-   def render_header_background(graph, frame, %{gui: %{mode: :edit, active_component: :title}}) do
+   def render_header_background(graph, frame, %{gui: %{mode: :edit}}) do
       graph
       |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), @header_height}, fill: :blue)
    end
@@ -67,14 +67,27 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), @header_height}, fill: :grey)
    end
 
-   defp render_title(graph, frame, %{gui: %{mode: :edit, active_component: :title}} = tidbit) do
+   defp render_title(graph, frame, %{gui: %{mode: :edit, focus: :title}} = tidbit) do
       graph
       |> ScenicWidgets.TextPad.add_to_graph(%{
          frame: title_frame(frame),
          state: ScenicWidgets.TextPad.new(%{
-            text: tidbit.title || "untitled",
+            text: tidbit.title || "",
             font: title_font()
-            # active?: true
+         })
+      },
+         id: {:hypercard, :body, :text_pad, tidbit.uuid}
+      )
+   end
+
+   defp render_title(graph, frame, %{gui: %{mode: :edit, focus: :body}} = tidbit) do
+      graph
+      |> ScenicWidgets.TextPad.add_to_graph(%{
+         frame: title_frame(frame),
+         state: ScenicWidgets.TextPad.new(%{
+            mode: :read_only,
+            text: tidbit.title || "",
+            font: title_font()
          })
       },
          id: {:hypercard, :body, :text_pad, tidbit.uuid}
@@ -141,7 +154,26 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
    # 		|> render_tags_box(%{mode: :read_only, tidbit: tidbit, frame: frame})
    # 		|> show_unrenderable_box(%{tidbit: tidbit, frame: frame})
 
-   def render_body(graph, frame, %{gui: %{mode: :edit, active_component: :title}} = tidbit) do
+   def render_body(graph, frame, %{gui: %{mode: :edit, focus: :title}} = tidbit) do
+      graph
+      |> Scenic.Primitives.group(fn graph ->
+         graph
+         |> ScenicWidgets.TextPad.add_to_graph(%{
+            frame: body_frame(frame),
+            state: ScenicWidgets.TextPad.new(%{
+               mode: :read_only,
+               text: tidbit.title,
+               font: body_font()
+            })
+         }, id: {:hypercard, :body, :text_pad, tidbit.uuid})
+      end, [
+         id: {:hypercard, :body, tidbit.uuid},
+         translate: {@margin, @margin+@header_height}
+         ]
+      )
+   end
+
+   def render_body(graph, frame, %{gui: %{mode: :edit, focus: :body}} = tidbit) do
       graph
       |> Scenic.Primitives.group(fn graph ->
          graph
@@ -149,8 +181,7 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
             frame: body_frame(frame),
             state: ScenicWidgets.TextPad.new(%{
                text: tidbit.title,
-               font: body_font(),
-               active?: false
+               font: body_font()
             })
          }, id: {:hypercard, :body, :text_pad, tidbit.uuid})
       end, [

@@ -23,7 +23,7 @@ defmodule Memelex.My.Wiki do
       radix_state
       |> put_in(
         [:memex, :story_river, :open_tidbits],
-        radix_state.memex.story_river.open_tidbits ++ [new_tidbit |> Map.merge(%{gui: %{mode: :edit, active_component: :title}})]
+        radix_state.memex.story_river.open_tidbits ++ [new_tidbit |> Map.merge(%{gui: %{mode: :edit, focus: :title}})]
       )
 
     Memelex.Fluxus.RadixStore.update(new_radix_state)
