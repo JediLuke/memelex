@@ -39,7 +39,6 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
     end
 
     def handle_info({:radix_state_change, new_radix_state}, scene) do
-        IO.puts "SIDEBARRRRRR"
 
         new_graph = render(%{
             frame: scene.assigns.frame,

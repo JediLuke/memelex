@@ -19,20 +19,21 @@ defmodule Memelex.My.Wiki do
 
     radix_state = Memelex.Fluxus.RadixStore.get()
 
-    # new_radix_state = %{radix_state|radix_state.memex.story_river.open_tidbits ++ [new_tidbit] }
-    new_radix_state = radix_state |> put_in([:memex, :story_river, :open_tidbits], radix_state.memex.story_river.open_tidbits ++ [new_tidbit |> Map.merge(%{gui: %{mode: :edit}})])
+    new_radix_state =
+      radix_state
+      |> put_in(
+        [:memex, :story_river, :open_tidbits],
+        radix_state.memex.story_river.open_tidbits ++ [new_tidbit |> Map.merge(%{gui: %{mode: :edit, active_component: :title}})]
+      )
 
     Memelex.Fluxus.RadixStore.update(new_radix_state)
-
-    # :ok
-    # |> new_tidbit()
 
     new_tidbit
   end
 
   #TODO add check for when running in gui mode or not
   def open do
-    
+    raise "hmmmmm"
   end
 
   def close(tidbit) do

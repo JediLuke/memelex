@@ -26,7 +26,7 @@ defmodule Memelex.Reducers.MemexReducer do
         %{uuid: ^tidbit_uuid} = tidbit ->
             # tidbit |> put_in([:gui, :mode], :normal)
             tidbit_gui = tidbit.gui
-            new_tidbit_gui = tidbit_gui |> Map.merge(%{mode: :edit})
+            new_tidbit_gui = tidbit_gui |> Map.merge(%{mode: :edit, active_component: :title})
             tidbit |> Map.merge(%{gui: new_tidbit_gui})
          other_tidbit ->
             other_tidbit # make no changes to other TidBits...
