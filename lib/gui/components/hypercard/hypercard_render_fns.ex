@@ -3,6 +3,7 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
 
    @margin 5
 
+   @title_height 50
    @header_height 100 # TODO customizable?
    @toolbar_width 150
 
@@ -43,7 +44,7 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       |> Scenic.Primitives.rect(frame.size, fill: color, stroke: {2, :blue})
    end
 
-   defp render_header(graph, frame, tidbit) do
+   def render_header(graph, frame, tidbit) do
       graph
       |> Scenic.Primitives.group(fn graph ->
          graph
@@ -67,7 +68,7 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), @header_height}, fill: :grey)
    end
 
-   defp render_title(graph, frame, %{gui: %{mode: :edit, focus: :title}} = tidbit) do
+   def render_title(graph, frame, %{gui: %{mode: :edit, focus: :title}} = tidbit) do
       graph
       |> ScenicWidgets.TextPad.add_to_graph(%{
          frame: title_frame(frame),
@@ -76,11 +77,11 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
             font: title_font()
          })
       },
-         id: {:hypercard, :body, :text_pad, tidbit.uuid}
+         id: {:hypercard, :title, :text_pad, tidbit.uuid}
       )
    end
 
-   defp render_title(graph, frame, %{gui: %{mode: :edit, focus: :body}} = tidbit) do
+   def render_title(graph, frame, %{gui: %{mode: :edit, focus: :body}} = tidbit) do
       graph
       |> ScenicWidgets.TextPad.add_to_graph(%{
          frame: title_frame(frame),
@@ -94,15 +95,15 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       )
    end
 
-   defp render_title(graph, frame, %{gui: %{mode: :normal}} = tidbit) do
+   def render_title(graph, frame, %{gui: %{mode: :normal}} = tidbit) do
       font = title_font()
-      title_frame_size = title_frame_size(frame)
+      title_frame = title_frame(frame)
 
       graph
       |> Scenic.Primitives.group(
          fn graph ->
             graph
-            |> Scenic.Primitives.rect(title_frame_size, fill: :red)
+            |> Scenic.Primitives.rect(title_frame.size, fill: :red)
             |> Scenic.Primitives.text(tidbit.title,
                   font: font.name,
                   font_size: font.size,
@@ -113,12 +114,12 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       )
    end
 
-   defp render_toolbar(graph, frame, %{gui: %{mode: :edit}} = tidbit) do
+   def render_toolbar(graph, frame, %{gui: %{mode: :edit}} = tidbit) do
       graph
       |> Scenic.Primitives.group(
          fn graph ->
             graph
-            |> Scenic.Primitives.rect({@toolbar_width, @header_height/2}, fill: :purple)
+            |> Scenic.Primitives.rect({@toolbar_width, @title_height}, fill: :purple)
             |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-150, 0}, size: {50, 50}), icon: "ionicons/black_32/trash.png"}, id: {:delete, tidbit.uuid})
             |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-100, 0}, size: {50, 50}), icon: "ionicons/black_32/backspace.png"}, id: {:discard, tidbit.uuid})
             |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-50, 0}, size: {50, 50}), icon: "ionicons/black_32/save.png"}, id: {:save, tidbit.uuid})
@@ -127,12 +128,12 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       )
    end
   
-   defp render_toolbar(graph, frame, %{uuid: tidbit_uuid} = tidbit) do
+   def render_toolbar(graph, frame, %{uuid: tidbit_uuid} = tidbit) do
       graph
       |> Scenic.Primitives.group(
          fn graph ->
             graph
-            |> Scenic.Primitives.rect({@toolbar_width, @header_height/2}, fill: :cyan)
+            |> Scenic.Primitives.rect({@toolbar_width, @title_height}, fill: :cyan)
             |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-150, 0}, size: {50, 50}), icon: "ionicons/black_32/chevron-down.png"}, id: {:chevron_down, tidbit.uuid})
             |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-100, 0}, size: {50, 50}), icon: "ionicons/black_32/edit.png"}, id: {:edit, tidbit.uuid})
             |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-50, 0}, size: {50, 50}), icon: "ionicons/black_32/close.png"}, id: {:close, tidbit.uuid})
@@ -162,7 +163,7 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
             frame: body_frame(frame),
             state: ScenicWidgets.TextPad.new(%{
                mode: :read_only,
-               text: tidbit.title,
+               text: tidbit.data,
                font: body_font()
             })
          }, id: {:hypercard, :body, :text_pad, tidbit.uuid})
@@ -180,7 +181,7 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
          |> ScenicWidgets.TextPad.add_to_graph(%{
             frame: body_frame(frame),
             state: ScenicWidgets.TextPad.new(%{
-               text: tidbit.title,
+               text: tidbit.data,
                font: body_font()
             })
          }, id: {:hypercard, :body, :text_pad, tidbit.uuid})
@@ -206,12 +207,16 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
    def title_frame(tidbit_frame) do
       # NOTE - the pin is in reference to the top-left corner of the TidBit
       # We don't need to add any margin because that already gets dont in render_header
-      Frame.new(pin: {0, 0}, size: title_frame_size(tidbit_frame))
-   end
 
-   def title_frame_size(tidbit_frame) do
       #TODO make title 0.72 * width of Hypercard (minus margins)
-      {tidbit_frame.dimens.width-(2*@margin)-@toolbar_width, 3*@header_height/4}
+
+      Frame.new(
+         pin: {0, 0},
+         size: {
+            tidbit_frame.dimens.width-(2*@margin)-@toolbar_width,
+            @title_height
+         }
+      )
    end
 
    def body_frame(tidbit_frame) do

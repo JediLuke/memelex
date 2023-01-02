@@ -15,11 +15,7 @@ defmodule Memelex.GUI.Components.HyperCard do
       |> assign(graph: init_graph)
       |> push_graph(init_graph)
 
-      # this should work since we changed the name of the PubSub module...
-      # Memelex.Utils.PubSub.subscribe(topic: :radix_state_change)
-      pubsub_mod = Module.concat(Flamelex, Utils.PubSub)
-      IO.inspect pubsub_mod, label: "PUP PUB - HYPERCARD"
-      pubsub_mod.subscribe(topic: :radix_state_change)
+      Memelex.Utils.PubSub.subscribe(topic: :radix_state_change)
 
       {:ok, init_scene}
    end
@@ -71,7 +67,9 @@ defmodule Memelex.GUI.Components.HyperCard do
    end
 
    def handle_info({:radix_state_change, new_radix_state}, scene) do
-      IO.puts "GOT THE THINGY"
+      # IO.puts "GOT THE THINGY"
+      #TODO would be better if we caught spcific TidBit changes here, rather
+      # than re-rendering the entire StoryRiver...
       {:noreply, scene}
    end
 
