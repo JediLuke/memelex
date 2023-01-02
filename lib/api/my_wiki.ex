@@ -8,25 +8,18 @@ defmodule Memelex.My.Wiki do
 
   alias Memelex.Fluxus.Structs.RadixState
 
+  #TODO none of these reducers will work in the standalone Memelex application until I add an ActionListener...
+
   def new do
-    new(%{title: "untitled"})
+    new(%{title: ""})
   end
 
   def new(params) do
-    new_tidbit = params
+    %Memelex.TidBit{} = new_tidbit = params
     # |> TidBitUtils.sanitize_conveniences()
     |> Memelex.TidBit.construct()
 
-    radix_state = Memelex.Fluxus.RadixStore.get()
-
-    new_radix_state =
-      radix_state
-      |> put_in(
-        [:memex, :story_river, :open_tidbits],
-        radix_state.memex.story_river.open_tidbits ++ [new_tidbit |> Map.merge(%{gui: %{mode: :edit, focus: :title}})]
-      )
-
-    Memelex.Fluxus.RadixStore.update(new_radix_state)
+    Memelex.Fluxus.action({Memelex.Reducers.RootReducer, {:create_tidbit, new_tidbit}})
 
     new_tidbit
   end
@@ -166,8 +159,12 @@ defmodule Memelex.My.Wiki do
   Here `updates` is a map (in future, make this a changeset), it contains
   all the new fields.
   """
-  def update(tidbit_being_updated, updates) do
-    WikiManager |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
+  def update(tidbit, updates) do
+    # WikiManager |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
+
+    #TODO use declare here somehow, so the actual TidBit gets returned...
+
+    Memelex.Fluxus.action({Memelex.Reducers.TidbitReducer, {:update, tidbit, updates}})
   end
 
   def tag(tidbit, tag) do
