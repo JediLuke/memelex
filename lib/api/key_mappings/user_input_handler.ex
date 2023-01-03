@@ -37,6 +37,17 @@ defmodule Memelex.Keymaps.UserInputHandler do
       end
    end
 
+   def process(radix_state, @backspace_key) do
+      case find_focussed_tidbit(radix_state.memex) do
+         %{gui: %{mode: :edit}} = t ->
+            Memelex.My.Wiki.update(t, {:backspace, 1, :at_cursor})
+            :ok
+         nil ->
+               Logger.warn "No `focussed` TidBit in the StoryRiver."
+               :ok
+      end
+   end
+
 #     #TODO save the TidBit
 #     # def handle(%{root: %{active_app: :memex}, memex: memex} = radix_state, @enter_key) do
 #     def handle(%{root: %{active_app: :memex}, memex: memex} = radix_state, @meta_lowercase_s) do

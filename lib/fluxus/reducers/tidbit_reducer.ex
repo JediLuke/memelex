@@ -42,6 +42,15 @@ defmodule Memelex.Reducers.TidbitReducer do
       |> Map.put(:data, tidbit.data <> text)
    end
 
+   def modify(%{gui: %{mode: :edit, focus: :title}} = tidbit, {:backspace, x, :at_cursor}) do
+
+      {new_title, new_cursor} =
+         ScenicWidgets.TextPad.backspace(tidbit.title, tidbit.gui.cursors.title, x, :at_cursor)
+
+      put_in(tidbit.gui.cursors.title, new_cursor)
+      |> Map.put(:title, new_title)
+   end
+
    def move_cursor(cursor, args) do
       ScenicWidgets.TextPad.CursorCaret.move_cursor(cursor, args)
    end
