@@ -5,7 +5,16 @@ defmodule Memelex.Reducers.RootReducer do
    def process(radix_state, {:create_tidbit, %Memelex.TidBit{} = new_tidbit}) do
 
       new_tidbit = new_tidbit
-      |> Map.merge(%{gui: %{mode: :edit, focus: :title}})
+      |> Map.merge(%{
+         gui: %{
+            mode: :edit,
+            focus: :title,
+            cursors: %{
+               title: %{line: 1, col: 1},
+               body: %{line: 1, col: 1}
+            }
+         }
+      })
    
       new_radix_state =
          radix_state

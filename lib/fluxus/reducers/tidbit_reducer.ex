@@ -31,11 +31,19 @@ defmodule Memelex.Reducers.TidbitReducer do
    end
 
    def modify(tidbit, {:append_to_title, text}) do
-      %{tidbit|title: tidbit.title <> text}
+      title_cursor = tidbit.gui.cursors.title
+      put_in(tidbit.gui.cursors.title, move_cursor(title_cursor, {:columns_right, String.length(text)}))
+      |> Map.put(:title, tidbit.title <> text)
    end
 
    def modify(tidbit, {:append_to_body, text}) do
-      %{tidbit|data: tidbit.data <> text}
+      body_cursor = tidbit.gui.cursors.body
+      put_in(tidbit.gui.cursors.body, move_cursor(body_cursor, {:columns_right, String.length(text)}))
+      |> Map.put(:data, tidbit.data <> text)
+   end
+
+   def move_cursor(cursor, args) do
+      ScenicWidgets.TextPad.CursorCaret.move_cursor(cursor, args)
    end
 
 end

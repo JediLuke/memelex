@@ -74,7 +74,8 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
          frame: title_frame(frame),
          state: ScenicWidgets.TextPad.new(%{
             text: tidbit.title || "",
-            font: title_font()
+            font: title_font(),
+            cursor: tidbit.gui.cursors.title
          })
       },
          id: {:hypercard, :title, :text_pad, tidbit.uuid}
@@ -182,7 +183,8 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
             frame: body_frame(frame),
             state: ScenicWidgets.TextPad.new(%{
                text: tidbit.data,
-               font: body_font()
+               font: body_font(),
+               cursor: tidbit.gui.cursors.body
             })
          }, id: {:hypercard, :body, :text_pad, tidbit.uuid})
       end, [
