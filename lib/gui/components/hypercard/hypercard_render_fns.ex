@@ -199,6 +199,14 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       |> Scenic.Primitives.group(fn graph ->
          graph
          |> Scenic.Primitives.rect({frame.dimens.width-(2*@margin), frame.dimens.height-(2*@margin)-@header_height}, fill: :purple)
+         |> ScenicWidgets.TextPad.add_to_graph(%{
+            frame: body_frame(frame),
+            state: ScenicWidgets.TextPad.new(%{
+               mode: :read_only,
+               text: tidbit.data,
+               font: body_font(),
+            })
+         }, id: {:hypercard, :body, :text_pad, tidbit.uuid})
       end, [
          id: {:hypercard, :body, tidbit.uuid},
          translate: {@margin, @margin+@header_height}
