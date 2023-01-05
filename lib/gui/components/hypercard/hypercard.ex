@@ -15,7 +15,7 @@ defmodule Memelex.GUI.Components.HyperCard do
       |> assign(graph: init_graph)
       |> push_graph(init_graph)
 
-      Memelex.Utils.PubSub.subscribe(topic: :radix_state_change)
+      Memelex.Utils.PubSub.subscribe()
 
       {:ok, init_scene}
    end

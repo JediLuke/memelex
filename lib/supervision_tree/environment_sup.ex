@@ -1,4 +1,4 @@
-defmodule Memelex.EnvironmentSupervisor do
+defmodule Memelex.Environment do
   use GenServer
   require Logger
 

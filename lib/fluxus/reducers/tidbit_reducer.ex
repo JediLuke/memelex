@@ -15,7 +15,7 @@ defmodule Memelex.Reducers.TidbitReducer do
 
    def update(radix_state, %{uuid: tidbit_uuid}, modification) do
       new_tidbit_list =
-         radix_state.memex.story_river.open_tidbits
+         radix_state.story_river.open_tidbits
          |> Enum.map(fn
                %{uuid: ^tidbit_uuid} = t ->
                   t |> modify(modification)
@@ -23,7 +23,7 @@ defmodule Memelex.Reducers.TidbitReducer do
                   other_tidbit # no edit
             end)
 
-      radix_state |> put_in([:memex, :story_river, :open_tidbits], new_tidbit_list)
+      radix_state |> put_in([:story_river, :open_tidbits], new_tidbit_list)
    end
 
    def modify(%{gui: %{mode: :edit}} = tidbit, focus: new_focus) do

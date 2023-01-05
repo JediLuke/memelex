@@ -19,7 +19,7 @@ defmodule Memelex.My.Wiki do
     # |> TidBitUtils.sanitize_conveniences()
     |> Memelex.TidBit.construct()
 
-    Memelex.Fluxus.action({Memelex.Reducers.RootReducer, {:create_tidbit, new_tidbit}})
+    Memelex.Fluxus.action({:create_tidbit, new_tidbit})
 
     new_tidbit
   end

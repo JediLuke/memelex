@@ -9,6 +9,9 @@ defmodule Memelex.GUI.RootScene do
 
       root_graph = render(init_scene.viewport)
 
+      #TODO here, we should fetch the memelex app radix_state & use that going forward, also using that topic
+      # dont worry about passing in memex state from above, in fact it wont exist at that level!!
+
       new_scene = init_scene
       |> push_graph(root_graph)
 
@@ -50,15 +53,10 @@ defmodule Memelex.GUI.RootScene do
    end
  
    def render(%Scenic.ViewPort{} = vp) do
-
-      IO.puts "RENRENRENRENREN"
-      radix_state = Memelex.Fluxus.RadixStore.get()
-
       Scenic.Graph.build()
       |> Memelex.GUI.Components.MemDesk.add_to_graph(%{
          frame: ScenicWidgets.Core.Structs.Frame.new(vp),
-         state: radix_state.memex,
-         app: Memelex
+         state: Memelex.Fluxus.RadixStore.get()
       })
    end
  end

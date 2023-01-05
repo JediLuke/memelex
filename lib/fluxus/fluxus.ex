@@ -19,7 +19,7 @@ defmodule Memelex.Fluxus do
       #Logger.debug "Fluxus handling action `#{inspect a}`..."
       :ok = EventBus.notify(%EventBus.Model.Event{
          id: UUID.uuid4(),
-         topic: :general,
+         topic: :memelex,
          data: {:action, a}
       })
    end

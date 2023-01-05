@@ -69,7 +69,7 @@ defmodule Memelex.BootLoader do
    #    Logger.info "No `#{env.name}` Memex environment detected."
    #    Logger.info "Creating new memex directory: #{env.memex_directory}..."
    #    :ok = File.mkdir_p!(env.memex_directory)
-   #    # Memelex.EnvironmentSupervisor.start_link(env)
+   #    # Memelex.Environment.start_link(env)
    # end
  
    def load_existing_memex(env) do

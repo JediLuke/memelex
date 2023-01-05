@@ -27,8 +27,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
       state: %{
          open_tidbits: _open_tidbits_list,
          scroll: {_x, _y}
-      },
-      app: _app
+      }
    } = data) do
       Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
       {:ok, data}
@@ -57,7 +56,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
 
       init_state =
          args.state
-         |> Map.merge(%{scroll: {0, 0}})
+         # |> Map.merge(%{scroll: {0, 0}})
          #TODO this might not work with radix_state changes coming in at the same time...
          |> put_in([:open_tidbits], []) # start with no tidbits open, instead we load them into the render queue
 
@@ -76,8 +75,9 @@ defmodule Memelex.GUI.Components.StoryRiver do
       |> assign(render_queue: args.state.open_tidbits) # used to buffer the rendering of flexible components (because they're flexible, so we can't render/position the next one until we know how tall the previous one is)
       |> push_graph(init_graph)
       
-      pubsub_mod = Module.concat(args.app, Utils.PubSub)
-      pubsub_mod.subscribe(topic: :radix_state_change)
+      Memelex.Utils.PubSub.subscribe()
+      # pubsub_mod = Module.concat(args.app, Utils.PubSub)
+      # pubsub_mod.subscribe(topic: :radix_state_change)
 
       request_input(init_scene, [:cursor_scroll])
 
@@ -265,24 +265,24 @@ defmodule Memelex.GUI.Components.StoryRiver do
 
  
    # def handle_info({:radix_state_change, %{memex: %{open_tidbits: new_open_tidbits} = new_memex_state}}, %{assigns: %{state: %{open_tidbits: currently_open_tidbits}}} = scene)
-   def handle_info({:radix_state_change, %{memex: %{story_river: %{open_tidbits: new_open_tidbits} = incoming_memex_state} }}, %{assigns: %{state: %{open_tidbits: currently_open_tidbits}}} = scene)
+   def handle_info({:radix_state_change, %{story_river: %{open_tidbits: new_open_tidbits} = incoming_story_river_state}}, %{assigns: %{state: %{open_tidbits: currently_open_tidbits}}} = scene)
       when new_open_tidbits != currently_open_tidbits do
 
          # new_tidbits_to_render = scene.assigns.state.open_tidbits 
 
-         new_memex_state =
+         new_story_river_state =
             # reset open tidbits to zero, since we need to re-render them all...
-            incoming_memex_state |> put_in([:open_tidbits], [])
+            incoming_story_river_state |> put_in([:open_tidbits], [])
 
          new_graph = render(%{
             frame: scene.assigns.frame,
-            state: new_memex_state
+            state: new_story_river_state
          })
 
          #TODO add an optimization here, we dont need to destroy all the open tidbits & add *all* of them to the render buffer,
          # most of the time we're just appending a single ne TidBit to the bottom...
          new_scene = scene
-         |> assign(state: new_memex_state) 
+         |> assign(state: new_story_river_state) 
          |> assign(graph: new_graph) 
          |> assign(render_queue: new_open_tidbits)
          |> push_graph(new_graph)

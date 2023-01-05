@@ -4,7 +4,10 @@ defmodule Memelex.GUI.Components.MemDesk do
    alias ScenicWidgets.Core.Utils.FlexiFrame
    require Logger
 
-   def validate(%{frame: %Frame{} = _f, state: %{story_river: _river}, app: _app} = data) do
+   def validate(%{
+      frame: %Frame{} = _f,
+      state: %{story_river: _river}
+   } = data) do
       # Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
       {:ok, data}
    end
@@ -33,12 +36,11 @@ defmodule Memelex.GUI.Components.MemDesk do
       {:ok, init_scene}
    end
 
-   def render(%{frame: frame, state: memex_state, app: app}) do
+   def render(%{frame: frame, state: memex_state}) do
 
       [left_bar|other_frames] = FlexiFrame.columns(frame, 3, :memex)
       [middle_section|right_pane] = other_frames
       right_pane = hd(right_pane)
-
 
       Scenic.Graph.build()
       # |> ScenicWidgets.FrameBox.add_to_graph(%{frame: left_bar, fill: :purple})
@@ -49,8 +51,7 @@ defmodule Memelex.GUI.Components.MemDesk do
       })
       |> Memelex.GUI.Components.StoryRiver.add_to_graph(%{
             frame: middle_section,
-            state: memex_state.story_river,
-            app: app
+            state: memex_state.story_river
       }) 
       |> Memelex.GUI.Component.Memex.SideBar.add_to_graph(%{
             frame: right_pane,

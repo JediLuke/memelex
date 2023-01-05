@@ -10,7 +10,8 @@ defmodule Memelex.Application do
     children = [
       # Memelex.BootCheck,
       {Registry, keys: :duplicate, name: Fluxus.PubSub},
-      Memelex.Fluxus.RadixStore,
+      # Memelex.Fluxus.RadixStore,
+      # ScenicWidgets.FluxusTree,
       {Scenic, [viewport_config()]},
       # Memelex.EventListener
     ]

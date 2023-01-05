@@ -100,12 +100,12 @@ defmodule Memelex.GUI.Components.IconButton do
         |> Scenic.Graph.modify(:background, &Scenic.Primitives.update_opts(&1, fill: scene.assigns.theme.highlight))
 
         new_scene =
-        scene
-        |> assign(graph: new_graph)
-        # |> assign(frame: args.frame)
-        # |> assign(theme: theme)
-        |> assign(state: %{mode: :hover})
-        |> push_graph(new_graph)
+          scene
+          |> assign(graph: new_graph)
+          # |> assign(frame: args.frame)
+          # |> assign(theme: theme)
+          |> assign(state: %{mode: :hover})
+          |> push_graph(new_graph)
 
         {:noreply, new_scene}
       else

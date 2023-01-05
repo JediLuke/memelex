@@ -13,7 +13,11 @@ defmodule Memelex.Supervisor do
       # {Memelex.Env.ExecutiveManager, env_map},
       # Memelex.MoneyPenny # agents are started after the main Memex, since they need access to it
 
-      {Memelex.EnvironmentSupervisor, env}
+      #TODO not here, put this & INPUTLISTENER HIGHER UP IN THE MEMELEX TREE. WHEN RUNNING FROM FLAMALEX, Flamelex needs to boot this
+      # {Registry, keys: :duplicate, name: Memelex.PubSub}, # https://hexdocs.pm/elixir/1.12/Registry.html#module-using-as-a-dispatcher
+      # Memelex.Fluxus.RadixStore,
+      # Memelex.Fluxus.ActionListener, 
+      {Memelex.Environment, env}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

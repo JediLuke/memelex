@@ -22,7 +22,7 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
 
         init_graph = render(args)
 
-        Flamelex.Utils.PubSub.subscribe(topic: :radix_state_change)
+        Memelex.Utils.PubSub.subscribe()
 
         new_scene = init_scene
         |> assign(graph: init_graph)
@@ -42,12 +42,12 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
 
         new_graph = render(%{
             frame: scene.assigns.frame,
-            state: new_radix_state.memex
+            state: new_radix_state
         })
     
         new_scene = scene
         |> assign(graph: new_graph)
-        |> assign(state: new_radix_state.memex)
+        |> assign(state: new_radix_state)
         |> push_graph(new_graph)
 
         {:noreply, new_scene}

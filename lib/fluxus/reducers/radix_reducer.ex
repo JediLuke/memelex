@@ -1,6 +1,8 @@
-defmodule Memelex.Reducers.RootReducer do
+defmodule Memelex.Fluxus.Reducers.RadixReducer do
    require Logger
    alias Memelex.Reducers.TidbitReducer
+
+   #TODO Memelex needs its own ActionListener now :S
 
    def process(radix_state, {:create_tidbit, %Memelex.TidBit{} = new_tidbit}) do
 
@@ -19,11 +21,11 @@ defmodule Memelex.Reducers.RootReducer do
       new_radix_state =
          radix_state
          |> put_in(
-            [:memex, :story_river, :open_tidbits],
-            radix_state.memex.story_river.open_tidbits ++ [new_tidbit]
+            [:story_river, :open_tidbits],
+            radix_state.story_river.open_tidbits ++ [new_tidbit]
          )
          |> put_in(
-            [:memex, :story_river, :focussed_tidbit],
+            [:story_river, :focussed_tidbit],
             new_tidbit.uuid
          )
   
@@ -32,7 +34,7 @@ defmodule Memelex.Reducers.RootReducer do
 
    def process(radix_state, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}) do
 
-      updated_tidbits = radix_state.memex.story_river.open_tidbits |> Enum.map(fn
+      updated_tidbits = radix_state.story_river.open_tidbits |> Enum.map(fn
         %{uuid: ^tidbit_uuid} = tidbit ->
             {:ok, _saved_tidbit} = GenServer.call(Memelex.WikiServer, {:save_tidbit, tidbit})
             put_in(tidbit.gui.mode, :normal)
@@ -41,7 +43,7 @@ defmodule Memelex.Reducers.RootReducer do
       end)
    
       new_radix_state = radix_state
-      |> put_in([:memex, :story_river, :open_tidbits], updated_tidbits)
+      |> put_in([:story_river, :open_tidbits], updated_tidbits)
 
       {:ok, new_radix_state}
    end
@@ -50,7 +52,7 @@ defmodule Memelex.Reducers.RootReducer do
       Logger.warn "REMINDER we need to ACTUALLY SAVE the TidBit in the DB..."
       IO.puts "Here we need to save the TidBit & Update RadixState..."
 
-      updated_tidbits = radix_state.memex.story_river.open_tidbits |> Enum.map(fn
+      updated_tidbits = radix_state.story_river.open_tidbits |> Enum.map(fn
         %{uuid: ^tidbit_uuid} = tidbit ->
             tidbit_gui = tidbit.gui
             new_tidbit_gui = tidbit_gui |> Map.merge(%{mode: :edit, focus: :title})
@@ -60,8 +62,8 @@ defmodule Memelex.Reducers.RootReducer do
       end)
 
       new_radix_state = radix_state
-      |> put_in([:memex, :story_river, :open_tidbits], updated_tidbits)
-      |> put_in([:memex, :story_river, :focussed_tidbit], tidbit_uuid)
+      |> put_in([:story_river, :open_tidbits], updated_tidbits)
+      |> put_in([:story_river, :focussed_tidbit], tidbit_uuid)
 
       {:ok, new_radix_state}
    end
@@ -72,14 +74,17 @@ defmodule Memelex.Reducers.RootReducer do
 
    def process(radix_state, {:close_tidbit, %{tidbit_uuid: tidbit_uuid}}) do
       updated_tidbits =
-         radix_state.memex.story_river.open_tidbits
+         radix_state.story_river.open_tidbits
          |> Enum.reject(& &1.uuid == tidbit_uuid)
 
       new_radix_state = radix_state
-      |> put_in([:memex, :story_river, :open_tidbits], updated_tidbits)
-      |> put_in([:memex, :story_river, :focussed_tidbit], nil)
+      |> put_in([:story_river, :open_tidbits], updated_tidbits)
+      |> put_in([:story_river, :focussed_tidbit], nil)
 
       {:ok, new_radix_state}
    end
 
+   def process(state, a) do
+      dbg()
+   end
 end

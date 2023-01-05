@@ -25,62 +25,60 @@ defmodule Memelex.Fluxus.RadixStore do
   that PubSub is a perfect solution for.
   """
 
-  @app Memelex
 
   #TODO make this a GenServer & do all edits in the context of the GenServer
   #TODO this should be a GenServer so we dont copy the state out & manipulate it in another process
 
   def start_link(_params) do
-    radix_state = @app.Fluxus.Structs.RadixState.new()
-    Agent.start_link(fn -> radix_state end, name: RadixStore)
+    radix_state = Memelex.Fluxus.Structs.RadixState.init()
+    Agent.start_link(fn -> radix_state end, name: __MODULE__)
   end
 
   def get do
-    Agent.get(RadixStore, & &1)
+    Agent.get(__MODULE__, & &1)
   end
 
   #NOTE: Here we update, but don't broadcast the changes. For example,
   #      adding user-input to the input history, doesn't need to be broadcast.
   def put(new_state) do
     #Logger.debug("#{RadixStore} updating state...")
-    Agent.update(RadixStore, fn _old -> new_state end)
+    Agent.update(__MODULE__, fn _old -> new_state end)
   end
 
   def put_viewport(%Scenic.ViewPort{} = new_vp) do
-    Agent.update(RadixStore, fn radix_state ->
+    Agent.update(__MODULE__, fn radix_state ->
       radix_state |> put_in([:gui, :viewport], new_vp)
     end)
   end
 
   #NOTE: When `Flamelex.GUI.RootScene` boots, it calls this function.
   #      We don't want to broadcast these changes out.
-  def put_root_graph(new_graph) do
-    Agent.update(RadixStore, fn radix_state ->
-      radix_state
-      |> put_in([:root, :graph], new_graph)
-    end)
-  end
+  # def put_root_graph(new_graph) do
+  #   Agent.update(RadixStore, fn radix_state ->
+  #     radix_state
+  #     |> put_in([:root, :graph], new_graph)
+  #   end)
+  # end
 
   # update/1 also broadcasts changes to the rest of the app
   def update(new_state) do
     #Logger.debug("#{RadixStore} updating state & broadcasting new_state...")
     #Logger.debug("#{RadixStore} updating state & broadcasting new_state: #{inspect(new_state)}")
 
-    @app.Utils.PubSub.broadcast(
-        topic: :radix_state_change,
-        msg: {:radix_state_change, new_state})
+    Memelex.Utils.PubSub.broadcast(
+      msg: {:radix_state_change, new_state})
+        #TODO dont use `radix_state_cjhange` any more
 
-    Agent.update(RadixStore, fn _old -> new_state end)
+    Agent.update(__MODULE__, fn _old -> new_state end)
   end
 
   def update_viewport(%Scenic.ViewPort{} = new_vp) do
-    Agent.update(RadixStore, fn radix_state ->
+    Agent.update(__MODULE__, fn radix_state ->
       
       new_radix_state =
         radix_state |> put_in([:gui, :viewport], new_vp)
 
-      @app.Utils.PubSub.broadcast(
-        topic: :radix_state_change,
+      Memelex.Utils.PubSub.broadcast(
         msg: {:radix_state_change, new_radix_state})
 
       new_radix_state
