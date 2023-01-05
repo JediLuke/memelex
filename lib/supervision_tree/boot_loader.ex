@@ -29,7 +29,7 @@ defmodule Memelex.BootLoader do
  
    def probe(%{name: name, memex_directory: dir} = env)
       when is_bitstring(name) and is_bitstring(dir) do
-         if File.exists?(dir) do
+         if File.dir?(dir) do
             load_existing_memex(env)
          else
             # start_new_memex(env)
@@ -53,6 +53,7 @@ defmodule Memelex.BootLoader do
       Memelex has detected an invalid configuration.
    
       To run the Memex, you need to set up a valid Memex directory in the `config.exs` file. For example, if you wanted the name of the memex to be `JediLuke` (my GitHub name), you would have a config like this:
+
       config :memelex,
          environment: %{
             name: "JediLuke",
@@ -72,8 +73,8 @@ defmodule Memelex.BootLoader do
    # end
  
    def load_existing_memex(env) do
-     Logger.info "Loading `#{env.name}` Memex..."
-      # Memelex.EnvironmentSupervisor.start_link(env)
+      Logger.info "Loading `#{env.name}` Memex..."
+      Memelex.Supervisor.start_link(env)
    end
  
    def stop_boot(msg) do
