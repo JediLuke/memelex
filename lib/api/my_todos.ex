@@ -57,7 +57,7 @@ defmodule Memelex.My.TODOs do
   def list do
 
     {:ok, tidbits} =
-      WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
+      WikiManager |> GenServer.call(:list_all_tidbits)
 
 
     #TODO check this works even with an empty TidBit list
@@ -68,7 +68,7 @@ defmodule Memelex.My.TODOs do
 
   def random do
     {:ok, tidbits} =
-      WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
+      WikiManager |> GenServer.call(:list_all_tidbits)
     
     only_todos = fn(tidbit) -> tidbit.tags |> Enum.member?("#TODO") end
     

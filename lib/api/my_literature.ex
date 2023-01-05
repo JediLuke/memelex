@@ -20,7 +20,7 @@ defmodule Memelex.My.Literature do
 
   def ideas do
     {:ok, tidbits} =
-       GenServer.call(WikiManager, :can_i_get_a_list_of_all_tidbits_plz)
+       GenServer.call(WikiManager, :list_all_tidbits)
 
     tidbits
     |> Enum.filter(

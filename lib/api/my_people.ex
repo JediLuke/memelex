@@ -13,7 +13,7 @@ defmodule Memelex.My.People do
   @doc ~s(Fetch the whole list of TODOs)
   def list do
     {:ok, tidbits} =
-      WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
+      WikiManager |> GenServer.call(:list_all_tidbits)
 
     tidbits
     |> Enum.filter(fn(tidbit) -> tidbit.type |> Enum.member?("person") end)

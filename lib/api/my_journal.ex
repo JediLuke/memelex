@@ -49,7 +49,7 @@ defmodule Memelex.My.Journal do
     tidbit_title = journal_page_title(datetime)
 
     {:ok, tidbits} =
-      WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
+      WikiManager |> GenServer.call(:list_all_tidbits)
 
     # look for todays journal entry in the Wiki
     # e.g. tagged "my_journal" & title is "Journal of JediLuke ~ Wednesday 29th of June, 2021")

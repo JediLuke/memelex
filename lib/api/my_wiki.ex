@@ -92,7 +92,7 @@ defmodule Memelex.My.Wiki do
 
   @doc ~s(Return a list containing every single TidBit.)
   def list do
-    {:ok, tidbits} = WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
+    {:ok, tidbits} = WikiManager |> GenServer.call(:list_all_tidbits)
     tidbits
   end
 
@@ -119,7 +119,7 @@ defmodule Memelex.My.Wiki do
   end
 
   def list(params) when is_list(params) do
-    {:ok, tidbits} = WikiManager |> GenServer.call(:can_i_get_a_list_of_all_tidbits_plz)
+    {:ok, tidbits} = WikiManager |> GenServer.call(:list_all_tidbits)
     tidbits |> Enum.filter(&Memelex.Utils.Search.typed_and_tagged?(&1, params))
   end
 

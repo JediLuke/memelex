@@ -13,7 +13,7 @@ defmodule Memelex.My.Snippets do
   end
 
   def list do
-    {:ok, wiki} = GenServer.call(WikiManager, :can_i_get_a_list_of_all_tidbits_plz)
+    {:ok, wiki} = GenServer.call(WikiManager, :list_all_tidbits)
     wiki |> Enum.filter(&is_snippet?/1)
   end
 
