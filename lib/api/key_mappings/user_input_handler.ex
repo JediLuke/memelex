@@ -10,7 +10,7 @@ defmodule Memelex.Keymaps.UserInputHandler do
 
    def process(%{root: %{active_app: :memex}} = radix_state, @tab_key) do
       # move the focus from the title, to the body
-      case find_focussed_tidbit(radix_state.memex) do
+      case find_focussed_tidbit(radix_state) do
          %{gui: %{mode: :edit, focus: :title}} = t ->
             Memelex.API.GUIControl.move_tidbit_focus(t, :body)
             :ok
@@ -24,7 +24,7 @@ defmodule Memelex.Keymaps.UserInputHandler do
    end
 
    def process(radix_state, key) when key in @valid_text_input_characters do
-      case find_focussed_tidbit(radix_state.memex) do
+      case find_focussed_tidbit(radix_state) do
          %{gui: %{focus: :title}} = t ->
             Memelex.My.Wiki.update(t, {:append_to_title, key2string(key)})
             :ok
@@ -38,7 +38,7 @@ defmodule Memelex.Keymaps.UserInputHandler do
    end
 
    def process(radix_state, @backspace_key) do
-      case find_focussed_tidbit(radix_state.memex) do
+      case find_focussed_tidbit(radix_state) do
          %{gui: %{mode: :edit}} = t ->
             Memelex.My.Wiki.update(t, {:backspace, 1, :at_cursor})
             :ok

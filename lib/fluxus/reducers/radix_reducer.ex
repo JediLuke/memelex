@@ -4,6 +4,8 @@ defmodule Memelex.Fluxus.Reducers.RadixReducer do
 
    #TODO Memelex needs its own ActionListener now :S
 
+
+
    def process(radix_state, {:create_tidbit, %Memelex.TidBit{} = new_tidbit}) do
 
       new_tidbit = new_tidbit
@@ -83,6 +85,18 @@ defmodule Memelex.Fluxus.Reducers.RadixReducer do
 
       {:ok, new_radix_state}
    end
+
+      #TODO clean this up, move to it's own module (or rather move everything else to a different module)
+      def process(radix_state, {reducer, action}) when is_atom(reducer) do
+         try do
+            reducer.process(radix_state, action)
+         rescue
+            e in FunctionClauseError ->
+            IO.inspect e
+            {:error, "#{__MODULE__} -- Reducer `#{inspect reducer}` could not match action: #{inspect action}"}
+         end
+      end
+      
 
    def process(state, a) do
       dbg()

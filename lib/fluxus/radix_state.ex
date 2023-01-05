@@ -22,7 +22,11 @@ defmodule Memelex.Fluxus.Structs.RadixState do
         #   active?: false,
         #   string: ""
         # }
-      }
+      },
+      history: %{
+        keystrokes:   [],
+        # actions:      []
+     }
     }
   end
 

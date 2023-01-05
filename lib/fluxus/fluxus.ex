@@ -13,15 +13,26 @@ defmodule Memelex.Fluxus do
    https://medium.com/grandcentrix/state-management-with-phoenix-liveview-and-liveex-f53f8f1ec4d7
    """
 
+   @topic :memelex
+
   
    # called to fire off an action
    def action(a) do
       #Logger.debug "Fluxus handling action `#{inspect a}`..."
       :ok = EventBus.notify(%EventBus.Model.Event{
          id: UUID.uuid4(),
-         topic: :memelex,
+         topic: @topic,
          data: {:action, a}
       })
    end
+
+   def input(ii) do
+      EventBus.notify(%EventBus.Model.Event{
+        id: UUID.uuid4(),
+        topic: @topic,
+        data: {:input, ii}
+      })
+    end
+  
 
 end
