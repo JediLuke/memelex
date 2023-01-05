@@ -31,11 +31,10 @@ defmodule Memelex.Reducers.RootReducer do
    end
 
    def process(radix_state, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}) do
-      Logger.warn "REMINDER we need to ACTUALLY SAVE the TidBit in the DB..."
-      IO.puts "Here we need to save the TidBit & Update RadixState..."
 
       updated_tidbits = radix_state.memex.story_river.open_tidbits |> Enum.map(fn
         %{uuid: ^tidbit_uuid} = tidbit ->
+            {:ok, _saved_tidbit} = GenServer.call(Memelex.WikiServer, {:save_tidbit, tidbit})
             put_in(tidbit.gui.mode, :normal)
          other_tidbit ->
             other_tidbit # make no changes to other TidBits...

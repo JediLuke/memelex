@@ -18,6 +18,26 @@ defmodule Memelex.Utils.WikiManagement do
     end
   end
 
+   def save_tidbit(state, tidbit = %{uuid: this_uuid}) do
+      # if it doesn't already exist, we need to create it
+      case state.wiki |> Enum.find(& &1.uuid == this_uuid) do
+         %{uuid: ^this_uuid} ->
+            new_wiki = Enum.map(state.wiki, fn
+                  %{uuid: ^this_uuid} ->
+                     tidbit # replace with the incoming tidbit
+                  any_other_tidbit ->
+                     any_other_tidbit # don't change it...
+               end)
+
+            :ok = write_wiki_to_disk(state, new_wiki)
+            {:ok, tidbit, new_wiki}
+         nil ->
+            new_wiki = state.wiki ++ [tidbit]
+            :ok = write_wiki_to_disk(state, new_wiki)
+            {:ok, tidbit, new_wiki}
+      end
+  end
+
   def add_tag(%{tag: tag, state: state, tidbit: %Memelex.TidBit{} = tidbit})
     when is_bitstring(tag) do
     
@@ -80,8 +100,11 @@ defmodule Memelex.Utils.WikiManagement do
     end
   end
 
+   def write_wiki_to_disk(state, wiki) do
+      Memelex.Utils.FileIO.write(wiki_file(state), wiki)
+   end
 
-  defp wiki_file(%{memex_directory: dir}) do
-    "#{dir}/tidbit-db.json"
-  end
+   defp wiki_file(%{memex_directory: dir}) do
+      "#{dir}/tidbit-db.json"
+   end
 end

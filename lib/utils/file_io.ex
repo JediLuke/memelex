@@ -84,11 +84,15 @@ defmodule Memelex.Utils.FileIO do
   ## Utils
 
 
-  def write(filepath, data) when is_bitstring(filepath) and is_binary(data) do
-    {:ok, file} = File.open(filepath, [:write])
-    file |> IO.binwrite(data)
-    :ok = File.close(file)
-  end
+   def write(filepath, data) when (is_map(data) or is_list(data)) do
+      write(filepath, Jason.encode!(data))
+   end
+
+   def write(filepath, data) when is_bitstring(filepath) and is_binary(data) do
+      {:ok, file} = File.open(filepath, [:write])
+      :ok = IO.binwrite(file, data)
+      :ok = File.close(file)
+   end
 
   # each entry in the maplist ought to have a Struct it can map to
   def convert_to_structs(list_of_maps) do
