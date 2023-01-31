@@ -8,7 +8,7 @@ defmodule Memelex.Keymaps.UserInputHandler do
    #NOTE ok, figured it out :D
    # we need to fire an action, can't merely rely on updating the state here, because updates made inside this chain dont get broadcast...
 
-   def process(%{root: %{active_app: :memex}} = radix_state, @tab_key) do
+   def process(radix_state, @tab_key) do
       # move the focus from the title, to the body
       case find_focussed_tidbit(radix_state) do
          %{gui: %{mode: :edit, focus: :title}} = t ->
@@ -47,6 +47,24 @@ defmodule Memelex.Keymaps.UserInputHandler do
                :ok
       end
    end
+
+   
+
+   def process(_radix_state, {:key, {:key_unknown, _press_state, _extra_keys_held}}) do
+      :ignore
+   end
+
+   def process(_radix_state, key) when key in [@left_shift] do
+      :ok
+   end
+
+   def process(_radix_state, {:cursor_button, _details}) do
+      :ignore
+   end
+
+   # def process(radix_state, key) do
+   #    dbg()
+   # end
 
 #     #TODO save the TidBit
 #     # def handle(%{root: %{active_app: :memex}, memex: memex} = radix_state, @enter_key) do

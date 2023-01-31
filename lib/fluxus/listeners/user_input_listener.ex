@@ -45,16 +45,14 @@ defmodule Memelex.Fluxus.UserInputListener do
         Memelex.Keymaps.UserInputHandler.process(radix_state, input)
       rescue
          FunctionClauseError ->
-            #    Logger.warn "input: #{inspect input} not handled by Reducer `#{inspect reducer}`"
-               #TODO should we still record this input??
-               # {:ok, radix_state |> record_input(input)}
-               :ignore
+            Logger.warn "input: #{inspect input} not handled by `Memelex.Keymaps.UserInputHandler`"
+            :ignore
       else
+         #NOTE: I don't think we should allow any InputHandler to return a RadixState,
+         # since we dont broadcast out updates from inputs, we just fire actions, and these
+         # are where the side-effects take place...
          :ok ->
             {:ok, radix_state |> record_input(input)}
-         #TODO I don't think we should allow any InputHandler to return a RadixState, since we dont broadcast out from them...
-         # {:ok, new_radix_state} ->
-         #    {:ok, new_radix_state |> record_input(input)}
          :ignore ->
             :ignore
       end

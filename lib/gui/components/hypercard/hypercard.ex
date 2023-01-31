@@ -1,7 +1,7 @@
 defmodule Memelex.GUI.Components.HyperCard do
    use Scenic.Component
    alias Memelex.GUI.Components.HyperCard.Render
-   alias Memelex.Reducers.RootReducer
+   alias Memelex.Fluxus.Reducers.RadixReducer
    
 
    def validate(%{frame: _frame, state: %{uuid: _uuid}} = data) do
@@ -52,17 +52,17 @@ defmodule Memelex.GUI.Components.HyperCard do
    def handle_cast({:click, {:close, tidbit_uuid}}, scene) do
       #TODO pass it up to the story river (including tidbit info)
       # which will then in turn call the API to close it?? Or just keep doing it here??
-      Memelex.Fluxus.action({RootReducer, {:close_tidbit, %{tidbit_uuid: tidbit_uuid}}})
+      Memelex.Fluxus.action({RadixReducer, {:close_tidbit, %{tidbit_uuid: tidbit_uuid}}})
       {:noreply, scene}
    end
 
 	def handle_cast({:click, {:edit, tidbit_uuid}}, scene) do
-      Memelex.Fluxus.action({RootReducer, {:edit_tidbit, %{tidbit_uuid: tidbit_uuid}}})
+      Memelex.Fluxus.action({RadixReducer, {:edit_tidbit, %{tidbit_uuid: tidbit_uuid}}})
       {:noreply, scene}
    end
 
 	def handle_cast({:click, {:save, tidbit_uuid}}, scene) do
-      Memelex.Fluxus.action({RootReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
+      Memelex.Fluxus.action({RadixReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
       {:noreply, scene}
    end
 
@@ -74,13 +74,13 @@ defmodule Memelex.GUI.Components.HyperCard do
    end
 
 # 	def handle_event({:click, {:discard_changes_btn, tidbit_uuid}}, _from, scene) do
-#         Flamelex.Fluxus.action({RootReducer, {:discard_changes, %{tidbit_uuid: tidbit_uuid}}})
+#         Flamelex.Fluxus.action({RadixReducer, {:discard_changes, %{tidbit_uuid: tidbit_uuid}}})
 #         {:noreply, scene}
 #     end
 
 # 	#TODO only activate this inside edit mode
 # 	def handle_event({:click, {:delete_btn, tidbit_uuid}}, _from, scene) do
-#         Flamelex.Fluxus.action({RootReducer, {:delete, %{tidbit_uuid: tidbit_uuid}}})
+#         Flamelex.Fluxus.action({RadixReducer, {:delete, %{tidbit_uuid: tidbit_uuid}}})
 #         {:noreply, scene}
 #     end
 
@@ -88,7 +88,7 @@ defmodule Memelex.GUI.Components.HyperCard do
 # 	# #TODO make this be {:body, tidbit_uuid}
 # 	# def handle_event({:value_changed, tidbit_uuid, new_text}, _from, %{assigns: %{state: %{uuid: tidbit_uuid, mode: :edit}}} = scene) do
 # 	# 	new_tidbit = scene.assigns.state |> Map.merge(%{data: new_text, saved?: false})
-# 	# 	Flamelex.Fluxus.action({RootReducer, {:update_tidbit, new_tidbit}})
+# 	# 	Flamelex.Fluxus.action({RadixReducer, {:update_tidbit, new_tidbit}})
 #     #     {:noreply, scene}
 #     # end
 
