@@ -41,6 +41,11 @@ defmodule Memelex.WikiServer do
     {:reply, {:ok, state.wiki}, state}
   end 
 
+  def handle_call({:fetch, %Memelex.TidBit{uuid: t_uuid}}, _from, state) do
+    full_tidbit = Enum.find(state.wiki, & &1.uuid == t_uuid)
+    {:reply, {:ok, full_tidbit}, state}
+  end 
+
   def handle_call({:new_tidbit, %Memelex.TidBit{} = t}, _from, state) do
     results = WikiManagement.new_tidbit(%{tidbit: t, state: state})
     case results do

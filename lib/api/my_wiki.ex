@@ -25,8 +25,8 @@ defmodule Memelex.My.Wiki do
   end
 
   #TODO add check for when running in gui mode or not
-  def open do
-    raise "hmmmmm"
+  def open(%Memelex.TidBit{} = t) do
+    Memelex.Fluxus.action({:open_tidbit, t})
   end
 
   def close(tidbit) do
@@ -87,18 +87,18 @@ defmodule Memelex.My.Wiki do
 
   def random do
     # fetch a random TidBit
-    list() |> Enum.random()
+    all() |> Enum.random()
   end
 
   @doc ~s(Return a list containing every single TidBit.)
-  def list do
-    {:ok, tidbits} = WikiManager |> GenServer.call(:list_all_tidbits)
+  def all do
+    {:ok, tidbits} = Memelex.WikiServer |> GenServer.call(:list_all_tidbits)
     tidbits
   end
 
-  def list(:external) do
-    list() |> Enum.filter(& &1.type |> Enum.member?("external"))
-  end
+  # def list(:external) do
+  #   list() |> Enum.filter(& &1.type |> Enum.member?("external"))
+  # end
 
   @doc """
   Used to get a unique list of one of the Wiki's sub fields,
@@ -110,7 +110,7 @@ defmodule Memelex.My.Wiki do
   end
 
   def list(wiki_field) when is_atom(wiki_field) do
-    list() |> Enum.map(& Map.get(&1, wiki_field)) |> List.flatten() |> Enum.uniq()
+    all() |> Enum.map(& Map.get(&1, wiki_field)) |> List.flatten() |> Enum.uniq()
   end
 
   def list(map) when is_map(map) do

@@ -4,8 +4,6 @@ defmodule Memelex.Fluxus.Reducers.RadixReducer do
 
    #TODO Memelex needs its own ActionListener now :S
 
-
-
    def process(radix_state, {:create_tidbit, %Memelex.TidBit{} = new_tidbit}) do
 
       new_tidbit = new_tidbit
@@ -20,6 +18,35 @@ defmodule Memelex.Fluxus.Reducers.RadixReducer do
          }
       })
    
+      new_radix_state =
+         radix_state
+         |> put_in(
+            [:story_river, :open_tidbits],
+            radix_state.story_river.open_tidbits ++ [new_tidbit]
+         )
+         |> put_in(
+            [:story_river, :focussed_tidbit],
+            new_tidbit.uuid
+         )
+  
+      {:ok, new_radix_state}
+   end
+
+   def process(radix_state, {:open_tidbit, t}) do
+      tidbit = fetch_tidbit(t)
+
+      new_tidbit = fetch_tidbit(t)
+      |> Map.merge(%{
+         gui: %{
+            mode: :normal,
+            focus: :title,
+            cursors: %{
+               title: %{line: 1, col: 1},
+               body: %{line: 1, col: 1}
+            }
+         }
+      })
+
       new_radix_state =
          radix_state
          |> put_in(
@@ -100,5 +127,10 @@ defmodule Memelex.Fluxus.Reducers.RadixReducer do
 
    def process(state, a) do
       dbg()
+   end
+
+   def fetch_tidbit(t) do
+      {:ok, full_tidbit} = GenServer.call(Memelex.WikiServer, {:fetch, t})
+      full_tidbit
    end
 end
