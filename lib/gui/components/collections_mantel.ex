@@ -36,7 +36,7 @@ defmodule Memelex.GUI.Components.CollectionsMantel do
             # translate: args.frame.pin
         ])
 
-        # Flamelex.Utils.PubSub.subscribe(topic: :radix_state_change)
+        Memelex.Utils.PubSub.subscribe()
 
         new_scene = init_scene
         |> assign(graph: init_graph)
@@ -52,7 +52,23 @@ defmodule Memelex.GUI.Components.CollectionsMantel do
         #TODO need to add indexes to each tidbit so we know what we clicked on (eventually)
         all_leaves = Enum.map(all_tidbits, fn t -> {:leaf, t.title, [], fn -> Memelex.My.Wiki.open(t) end} end)
 
-        [{:closed_node, "All TidBits", [0], all_leaves}]
+        [{:open_node, "All TidBits", [0], all_leaves}]
+    end
+
+    def handle_info({:wiki_server, :memex_saved_to_disc}, scene) do
+        IO.puts "GOT MSG GOT MSG GOT MSG"
+        # get child processes & cast update to SideNav
+
+        new_tree = construct_collections_nav_tree()
+
+        {:ok, [pid]} = Scenic.Scene.child(scene, {__MODULE__, :side_nav})
+        GenServer.cast(pid, {:state_change, new_tree})
+
+        {:noreply, scene}
+    end
+
+    def handle_info({:radix_state_change, _rx}, scene) do
+        {:noreply, scene}
     end
 
     # def construct_file_tuples(root_dir, files) do

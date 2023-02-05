@@ -92,6 +92,10 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
         |> Scenic.Primitives.rect({32, 32}, fill: {:image, "icons/add.png"}, translate: {(50-32)/2, (50-32)/2}) 
     end
 
+    def handle_info({:wiki_server, :memex_saved_to_disc}, scene) do
+        # get child processes & cast update to SideNav
+    {:noreply, scene}
+    end
     # def handle_event({:click, :open_random_tidbit_btn}, _from, scene) do
     #     Flamelex.Fluxus.action({RootReducer, {:open_tidbit, :random}})
     #     {:noreply, scene}

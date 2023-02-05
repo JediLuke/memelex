@@ -122,7 +122,7 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
             graph
             |> Scenic.Primitives.rect({@toolbar_width, @title_height}, fill: :purple)
             |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-150, 0}, size: {50, 50}), icon: "ionicons/black_32/trash.png"}, id: {:delete, tidbit.uuid})
-            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-100, 0}, size: {50, 50}), icon: "ionicons/black_32/backspace.png"}, id: {:discard, tidbit.uuid})
+            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-100, 0}, size: {50, 50}), icon: "ionicons/black_32/backspace.png"}, id: {:discard_changes, tidbit.uuid})
             |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {@toolbar_width-50, 0}, size: {50, 50}), icon: "ionicons/black_32/save.png"}, id: {:save, tidbit.uuid})
          end,
             translate: {frame.dimens.width-(2*@margin)-@toolbar_width, 0}
@@ -158,6 +158,7 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
 
    def render_body(graph, frame, %{gui: %{mode: :edit, focus: :title}} = tidbit) do
       graph
+      #TODO this could be cleaned up, why is it a single component inside a group??
       |> Scenic.Primitives.group(fn graph ->
          graph
          |> ScenicWidgets.TextPad.add_to_graph(%{
@@ -176,6 +177,7 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
    end
 
    def render_body(graph, frame, %{gui: %{mode: :edit, focus: :body}} = tidbit) do
+      IO.puts "RENDERING EDIT BODY #{inspect tidbit.gui.cursors.body}"
       graph
       |> Scenic.Primitives.group(fn graph ->
          graph

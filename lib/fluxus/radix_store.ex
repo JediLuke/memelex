@@ -65,8 +65,7 @@ defmodule Memelex.Fluxus.RadixStore do
     #Logger.debug("#{RadixStore} updating state & broadcasting new_state...")
     #Logger.debug("#{RadixStore} updating state & broadcasting new_state: #{inspect(new_state)}")
 
-    Memelex.Utils.PubSub.broadcast(
-      msg: {:radix_state_change, new_state})
+    Memelex.Utils.PubSub.broadcast({:radix_state_change, new_state})
         #TODO dont use `radix_state_cjhange` any more
 
     Agent.update(__MODULE__, fn _old -> new_state end)
@@ -79,7 +78,7 @@ defmodule Memelex.Fluxus.RadixStore do
         radix_state |> put_in([:gui, :viewport], new_vp)
 
       Memelex.Utils.PubSub.broadcast(
-        msg: {:radix_state_change, new_radix_state})
+        {:radix_state_change, new_radix_state})
 
       new_radix_state
     end)

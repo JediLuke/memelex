@@ -12,8 +12,7 @@ defmodule Memelex.Fluxus.ActionListener do
   
     def init(_args) do
       Logger.debug("#{__MODULE__} initializing...")
-      r = EventBus.subscribe({__MODULE__, ["memelex"]})
-      IO.inspect(r, label: "MEMELEX ACTION LISTENER")
+      :ok = EventBus.subscribe({__MODULE__, ["memelex"]})
       {:ok, %{}}
     end
   
@@ -47,11 +46,6 @@ defmodule Memelex.Fluxus.ActionListener do
                     raise reason
             end
         end
-    end
-
-    def process(x) do
-        IO.puts "LOLLLLLLLLLLLL"
-        raise "here we go....."
     end
 
     defp an_action?(%{data: {:action, _action}}), do: true

@@ -315,6 +315,11 @@ defmodule Memelex.GUI.Components.StoryRiver do
       )
    end
 
+   def handle_info({:wiki_server, :memex_saved_to_disc}, scene) do
+      # get child processes & cast update to SideNav
+  {:noreply, scene}
+  end
+
    def calc_hypercard_frame(%{assigns: %{
       frame: %Frame{coords: %{x: x, y: y}, dimens: %{width: w, height: h}},
       state: %{

@@ -7,6 +7,7 @@ defmodule Memelex.My.Wiki do
   require Logger
 
   alias Memelex.Fluxus.Structs.RadixState
+  alias Memelex.Reducers.TidbitReducer
 
   #TODO none of these reducers will work in the standalone Memelex application until I add an ActionListener...
 
@@ -19,14 +20,14 @@ defmodule Memelex.My.Wiki do
     # |> TidBitUtils.sanitize_conveniences()
     |> Memelex.TidBit.construct()
 
-    Memelex.Fluxus.action({:create_tidbit, new_tidbit})
+    Memelex.Fluxus.action({TidbitReducer, {:create_tidbit, new_tidbit}})
 
     new_tidbit
   end
 
   #TODO add check for when running in gui mode or not
   def open(%Memelex.TidBit{} = t) do
-    Memelex.Fluxus.action({:open_tidbit, t})
+    Memelex.Fluxus.action({TidbitReducer, {:open_tidbit, t}})
   end
 
   def close(tidbit) do
@@ -156,15 +157,25 @@ defmodule Memelex.My.Wiki do
   @doc """
   Update an existing TidBit.
 
-  Here `updates` is a map (in future, make this a changeset), it contains
-  all the new fields.
+  `updates` is a generic field which gets passed through.
   """
-  def update(tidbit, updates) do
+
+  #TODO ok so yeah this is how it needs to work... once again, circles within circles...
+
+  # We need to have a GUI update listener??
+
+  # This should go through a Process which keeps things orderly. Then, it --!?
+
+  def update(%Memelex.TidBit{} = tidbit, updates) do
+    #TODO this might actually be a good idea, serialize this operation inside a GenServer??
     # WikiManager |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
 
     #TODO use declare here somehow, so the actual TidBit gets returned...
 
-    Memelex.Fluxus.action({Memelex.Reducers.TidbitReducer, {:update, tidbit, updates}})
+    Memelex.Fluxus.action({
+      Memelex.Reducers.TidbitReducer,
+      {:update, tidbit, updates}
+    })
   end
 
   def tag(tidbit, tag) do

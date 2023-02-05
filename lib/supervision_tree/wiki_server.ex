@@ -46,6 +46,11 @@ defmodule Memelex.WikiServer do
     {:reply, {:ok, full_tidbit}, state}
   end 
 
+  def handle_call({:fetch, %{tidbit_uuid: t_uuid}}, _from, state) do
+    full_tidbit = Enum.find(state.wiki, & &1.uuid == t_uuid)
+    {:reply, {:ok, full_tidbit}, state}
+  end
+
   def handle_call({:new_tidbit, %Memelex.TidBit{} = t}, _from, state) do
     results = WikiManagement.new_tidbit(%{tidbit: t, state: state})
     case results do
@@ -85,6 +90,8 @@ defmodule Memelex.WikiServer do
       {:ok, saved_tidbit, new_wiki} =
          WikiManagement.save_tidbit(state, tidbit)
 
+         Memelex.Utils.PubSub.broadcast({:wiki_server, :memex_saved_to_disc})
+         #TODO broadcast update to wiki here
       {:reply, {:ok, saved_tidbit}, %{state|wiki: new_wiki}}
    end
 

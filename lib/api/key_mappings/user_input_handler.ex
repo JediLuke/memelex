@@ -12,10 +12,10 @@ defmodule Memelex.Keymaps.UserInputHandler do
       # move the focus from the title, to the body
       case find_focussed_tidbit(radix_state) do
          %{gui: %{mode: :edit, focus: :title}} = t ->
-            Memelex.API.GUIControl.move_tidbit_focus(t, :body)
+            Memelex.GUI.Control.move_tidbit_focus(t, :body)
             :ok
          %{gui: %{mode: :edit, focus: :body}} = t ->
-            Memelex.API.GUIControl.move_tidbit_focus(t, :title)
+            Memelex.GUI.Control.move_tidbit_focus(t, :title)
             :ok
          _otherwise ->
             Logger.warn "No `focussed` TidBit in the StoryRiver."
@@ -26,10 +26,25 @@ defmodule Memelex.Keymaps.UserInputHandler do
    def process(radix_state, key) when key in @valid_text_input_characters do
       case find_focussed_tidbit(radix_state) do
          %{gui: %{focus: :title}} = t ->
-            Memelex.My.Wiki.update(t, {:append_to_title, key2string(key)})
+            #TODO THIS IS IT!!!!
+            # Memelex.My.Wiki.update(t, {:append_to_title, key2string(key)})
             :ok
-         %{gui: %{focus: :body}} = t ->
-            Memelex.My.Wiki.update(t, {:append_to_body, key2string(key)})
+         %{gui: %{focus: :body, cursors: %{body: c}}} = t ->
+            #TODO HERE
+            # Memelex.My.Wiki.update(t, {:append_to_body, key2string(key)})
+
+            #TODO need to both update the cursor, AND the body, where should this live??
+            # new_body = 
+
+            # Memelex.GUI.Control.move_cursor(t, :one_forward})
+
+            #NOTE what I dont love about this is that Memelex.Update should be decoupled from the UI...
+            # updating the textbox is a single action & should encapsulate updating the cursor
+
+            # HOWEVER we also will need a seperate GUIControl for just moving the cursor, without editing the text
+
+            :ok = Memelex.My.Wiki.update(t, {:insert_text, key2string(key), in: :body, at: {:cursor, c}})
+            
             :ok
          nil ->
                Logger.warn "No `focussed` TidBit in the StoryRiver."
