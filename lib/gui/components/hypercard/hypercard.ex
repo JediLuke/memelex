@@ -68,9 +68,9 @@ defmodule Memelex.GUI.Components.HyperCard do
       {:noreply, scene}
    end
 
-   def handle_event({:click, {:discard_changes, tidbit_uuid}}, _from, scene) do
-        Flamelex.Fluxus.action({TidbitReducer, {:discard_changes, %{tidbit_uuid: tidbit_uuid}}})
-        {:noreply, scene}
+   def handle_cast({:click, {:discard_changes, tidbit_uuid}}, scene) do
+      Memelex.Fluxus.action({TidbitReducer, {:discard_changes, %{tidbit_uuid: tidbit_uuid}}})
+      {:noreply, scene}
    end
 
    def handle_info({:radix_state_change, new_radix_state}, scene) do

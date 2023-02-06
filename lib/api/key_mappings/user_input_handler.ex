@@ -25,10 +25,11 @@ defmodule Memelex.Keymaps.UserInputHandler do
 
    def process(radix_state, key) when key in @valid_text_input_characters do
       case find_focussed_tidbit(radix_state) do
-         %{gui: %{focus: :title}} = t ->
+         %{gui: %{focus: :title, cursors: %{title: c}}} = t ->
             #TODO THIS IS IT!!!!
             # Memelex.My.Wiki.update(t, {:append_to_title, key2string(key)})
-            :ok
+            # :ok = Memelex.My.Wiki.update(t, {:insert_text, key2string(key), in: :title, at: {:cursor, c}})
+            :ok = Memelex.My.Wiki.update(t, {:insert_text, key2string(key), :at_cursor})
          %{gui: %{focus: :body, cursors: %{body: c}}} = t ->
             #TODO HERE
             # Memelex.My.Wiki.update(t, {:append_to_body, key2string(key)})
@@ -44,8 +45,6 @@ defmodule Memelex.Keymaps.UserInputHandler do
             # HOWEVER we also will need a seperate GUIControl for just moving the cursor, without editing the text
 
             :ok = Memelex.My.Wiki.update(t, {:insert_text, key2string(key), in: :body, at: {:cursor, c}})
-            
-            :ok
          nil ->
                Logger.warn "No `focussed` TidBit in the StoryRiver."
                :ok
@@ -54,7 +53,7 @@ defmodule Memelex.Keymaps.UserInputHandler do
 
    def process(radix_state, @backspace_key) do
       case find_focussed_tidbit(radix_state) do
-         %{gui: %{mode: :edit}} = t ->
+         %{gui: %{mode: :edit, focus: :body}} = t ->
             Memelex.My.Wiki.update(t, {:backspace, 1, :at_cursor})
             :ok
          nil ->
@@ -63,7 +62,28 @@ defmodule Memelex.Keymaps.UserInputHandler do
       end
    end
 
-   
+   def process(radix_state, key) when key in @arrow_keys do
+
+      delta = case key do
+         @left_arrow ->
+            {0, -1}
+         @up_arrow ->
+            {-1, 0}
+         @right_arrow ->
+            {0, 1}
+         @down_arrow ->
+            {1, 0}
+      end
+
+      case find_focussed_tidbit(radix_state) do
+         %{gui: %{mode: :edit, focus: section}} = t ->
+            Memelex.GUI.Control.move_cursor(t, section, delta)
+            :ok
+         nil ->
+            Logger.warn "No `focussed` TidBit in the StoryRiver."
+            :ok
+      end
+   end 
 
    def process(_radix_state, {:key, {:key_unknown, _press_state, _extra_keys_held}}) do
       :ignore
@@ -77,50 +97,7 @@ defmodule Memelex.Keymaps.UserInputHandler do
       :ignore
    end
 
-   # def process(radix_state, key) do
-   #    dbg()
-   # end
 
-#     #TODO save the TidBit
-#     # def handle(%{root: %{active_app: :memex}, memex: memex} = radix_state, @enter_key) do
-#     def handle(%{root: %{active_app: :memex}, memex: memex} = radix_state, @meta_lowercase_s) do
-#         case find_focussed_tidbit(memex) do
-#             [t = %{uuid: tidbit_uuid}] ->
-#                 Flamelex.Fluxus.action({RootReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
-#             nil ->
-#                 Logger.warn "No open tidbits so we dont do anything"
-#                 :ok
-#         end
-#     end
-
-
-
-#     def handle(%{root: %{active_app: :memex}, memex: memex} = radix_state, @backspace_key) do
-#         case find_focussed_tidbit(memex) do
-#             [%{activate: :title, title: old_title} = tidbit] ->
-#                 {remaining_string, _backspaced_letter} = String.split_at(old_title, -1)
-#                 Flamelex.API.Buffer.modify(tidbit, %{
-#                     title: remaining_string,
-#                     cursor: (if tidbit.cursor-1 >= 0, do: tidbit.cursor-1, else: 0) # Don't go below 0 TODO also dont go higher than the number of characters lol
-#                 })
-#                 :ok
-#             [%{activate: :body, data: old_text} = tidbit] ->
-#                 {remaining_string, _backspaced_letter} = String.split_at(old_text, -1)
-#                 Flamelex.API.Buffer.modify(tidbit, %{
-#                     data: remaining_string,
-#                     cursor: (if tidbit.cursor-1 >= 0, do: tidbit.cursor-1, else: 0) # Don't go below 0 TODO also dont go higher than the number of characters lol
-#                 })
-#                 :ok
-#             nil ->
-#                 Logger.warn "No open tidbits so we dont do anything"
-#                 :ok
-#         end
-#     end
-
-#     # # def keymap(%{mode: :memex} = state, %{input: {:cursor_button, {:btn_left, 1, [], _coords}}} = input) do
-#     # def keymap(%{mode: :memex} = state, {:cursor_button, {:btn_left, 1, [], _coords}} = input) do
-#     #   {:execute_function, fn -> Flamelex.Fluxus.action({:memex, :new_random}) end}
-#     # end
 
 #     # # this is the function which gets called externally
 #     # def keymap(%{mode: :memex} = state, input) do
@@ -235,9 +212,6 @@ end
 #    alias Flamelex.Fluxus.Reducers.Memex, as: MemexReducer
 #    require Logger
 
-
-#    #TODO save the TidBit
-#    # def handle(%{root: %{active_app: :memex}, memex: memex} = radix_state, @enter_key) do
 
 #    def handle(%{root: %{active_app: :memex}, memex: memex} = radix_state, @tab_key) do
 #        # move the focus from the title, to the body
