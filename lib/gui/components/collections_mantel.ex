@@ -38,14 +38,51 @@ defmodule Memelex.GUI.Components.CollectionsMantel do
 
         Memelex.Utils.PubSub.subscribe()
 
+        request_input(init_scene, [:cursor_scroll])
+
         new_scene = init_scene
         |> assign(graph: init_graph)
         |> assign(frame: args.frame)
         |> assign(state: args.state)
+        |> assign(scroll: {0, 0})
         |> push_graph(init_graph)
   
         {:ok, new_scene}
     end
+
+    def handle_input(
+        {:cursor_scroll, {{_x_scroll, y_scroll} = delta_scroll, coords}},
+        _context,
+        scene
+     ) do
+           
+        #TODO handle all this via a Reducer?? Or just keep it in the component??
+        # Flamelex.Fluxus.action({Flamelex.Fluxus.Reducers.Memex, {:scroll, delta_scroll, __MODULE__}})
+        
+        fast_scroll = {0, 3*y_scroll}
+        #TODO cap scroll
+        # new_cumulative_scroll =
+        #     cap_position(scene, Scenic.Math.Vector2.add(scene.assigns.state.scroll, fast_scroll))
+        new_cumulative_scroll =
+            Scenic.Math.Vector2.add(scene.assigns.scroll, fast_scroll)
+  
+        new_graph =
+           scene.assigns.graph
+           |> Scenic.Graph.modify(__MODULE__, &Scenic.Primitives.update_opts(&1, translate: new_cumulative_scroll))
+  
+        # new_state =
+        #    scene.assigns.state
+        #    |> put_in(scene.assigns., new_cumulative_scroll)
+  
+        new_scene =
+           scene
+           |> assign(graph: new_graph)
+        #    |> assign(state: new_state)
+           |> assign(scroll: new_cumulative_scroll)
+           |> push_graph(new_graph)
+  
+        {:noreply, new_scene}
+     end
 
     def construct_collections_nav_tree do
         all_tidbits = Memelex.My.Wiki.all()
