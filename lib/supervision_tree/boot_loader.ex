@@ -1,4 +1,4 @@
-defmodule Memelex.BootLoader do
+defmodule Memelex.App.BootLoader do
    use GenServer
    require Logger
 

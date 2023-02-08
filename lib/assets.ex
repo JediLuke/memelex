@@ -1,4 +1,4 @@
-defmodule Memelex.Assets do
+defmodule Memelex.App.Scenic.Assets do
   use Scenic.Assets.Static,
     otp_app: :memelex,
     alias: [

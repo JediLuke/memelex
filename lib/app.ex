@@ -1,4 +1,4 @@
-defmodule Memelex.Application do
+defmodule Memelex.App do
   @moduledoc false
   use Application
 
