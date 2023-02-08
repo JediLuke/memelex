@@ -23,7 +23,7 @@ defmodule Memelex.Fluxus.UserInputListener do
         else
             %EventBus.Model.Event{id: _id, topic: :memelex, data: {:input, input}} = event
             radix_state = Memelex.Fluxus.RadixStore.get() #TODO lock the store?
-            # case Memelex.Fluxus.UserInputHandler.process(radix_state, input) do
+
             case process_with_rescue(radix_state, input) do
                 :ignore ->
                     #Logger.debug "#{__MODULE__} ignoring... #{inspect(%{radix_state: radix_state, action: action})}"

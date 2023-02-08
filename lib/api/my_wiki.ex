@@ -9,7 +9,6 @@ defmodule Memelex.My.Wiki do
   alias Memelex.Fluxus.Structs.RadixState
   alias Memelex.Reducers.TidbitReducer
 
-  #TODO none of these reducers will work in the standalone Memelex application until I add an ActionListener...
 
   def new do
     new(%{title: ""})
@@ -29,6 +28,34 @@ defmodule Memelex.My.Wiki do
   def open(%Memelex.TidBit{} = t) do
     Memelex.Fluxus.action({TidbitReducer, {:open_tidbit, t}})
   end
+
+  @doc """
+  Perform an edit on an existing TidBit. This means update content,
+  change the title, etc.
+
+  `modification` is a generic field which gets passed through.
+
+  This update happens via an action being processed by the Fluxus system,
+  so we don't need to concern ourselves with serializing operations here -
+  that comes when we want to save to disk, we will wrap reads & saves in a process.
+  """
+  def edit(%Memelex.TidBit{} = t, modification) do
+    Memelex.Fluxus.action({TidbitReducer, {:edit_tidbit, t, modification}})
+  end
+
+
+  # def update(%Memelex.TidBit{} = tidbit, updates) do
+  #   #TODO this might actually be a good idea, serialize this operation inside a GenServer??
+  #   # WikiManager |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
+
+  #   #TODO use declare here somehow, so the actual TidBit gets returned...
+
+  #   Memelex.Fluxus.action({
+  #     Memelex.Reducers.TidbitReducer,
+  #     {:update, tidbit, updates}
+  #   })
+  # end
+
 
   def close(tidbit) do
     # radix_state = Memelex.Fluxus.RadixStore.get()
@@ -154,37 +181,13 @@ defmodule Memelex.My.Wiki do
     find(params) |> Memelex.Utils.ToolBag.open_external_textfile()
   end
 
-  @doc """
-  Update an existing TidBit.
+  # def tag(tidbit, tag) do
+  #   add_tag(tidbit, tag)
+  # end
 
-  `updates` is a generic field which gets passed through.
-  """
-
-  #TODO ok so yeah this is how it needs to work... once again, circles within circles...
-
-  # We need to have a GUI update listener??
-
-  # This should go through a Process which keeps things orderly. Then, it --!?
-
-  def update(%Memelex.TidBit{} = tidbit, updates) do
-    #TODO this might actually be a good idea, serialize this operation inside a GenServer??
-    # WikiManager |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
-
-    #TODO use declare here somehow, so the actual TidBit gets returned...
-
-    Memelex.Fluxus.action({
-      Memelex.Reducers.TidbitReducer,
-      {:update, tidbit, updates}
-    })
-  end
-
-  def tag(tidbit, tag) do
-    add_tag(tidbit, tag)
-  end
-
-  def add_tag(tidbit, tag) when is_bitstring(tag) do
-    update(tidbit, %{add_tag: tag})
-  end
+  # def add_tag(tidbit, tag) when is_bitstring(tag) do
+  #   edit(tidbit, %{add_tag: tag})
+  # end
 
   @doc ~s(Create a link between two TidBits.)
   def link(base_node, link_node) do

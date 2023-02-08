@@ -29,7 +29,9 @@ defmodule Memelex.Keymaps.UserInputHandler do
             #TODO THIS IS IT!!!!
             # Memelex.My.Wiki.update(t, {:append_to_title, key2string(key)})
             # :ok = Memelex.My.Wiki.update(t, {:insert_text, key2string(key), in: :title, at: {:cursor, c}})
-            :ok = Memelex.My.Wiki.update(t, {:insert_text, key2string(key), :at_cursor})
+            # :ok = Memelex.My.Wiki.update(t, {:insert_text, key2string(key), :at_cursor})
+
+            :ok = Memelex.My.Wiki.edit(t, {:insert_text, key2string(key), :at_cursor})
          %{gui: %{focus: :body, cursors: %{body: c}}} = t ->
             #TODO HERE
             # Memelex.My.Wiki.update(t, {:append_to_body, key2string(key)})
@@ -53,12 +55,12 @@ defmodule Memelex.Keymaps.UserInputHandler do
 
    def process(radix_state, @backspace_key) do
       case find_focussed_tidbit(radix_state) do
-         %{gui: %{mode: :edit, focus: :body}} = t ->
-            Memelex.My.Wiki.update(t, {:backspace, 1, :at_cursor})
+         %{gui: %{mode: :edit}} = t ->
+            Memelex.My.Wiki.edit(t, {:backspace, 1, :at_cursor})
             :ok
          nil ->
-               Logger.warn "No `focussed` TidBit in the StoryRiver."
-               :ok
+            Logger.warn "No `focussed` TidBit in the StoryRiver."
+            :ok
       end
    end
 
@@ -272,27 +274,6 @@ end
 #        end
 #    end
 
-#    def handle(%{root: %{active_app: :memex}, memex: memex} = radix_state, @backspace_key) do
-#        case find_focussed_tidbit(memex) do
-#            [%{activate: :title, title: old_title} = tidbit] ->
-#                {remaining_string, _backspaced_letter} = String.split_at(old_title, -1)
-#                Flamelex.API.Buffer.modify(tidbit, %{
-#                    title: remaining_string,
-#                    cursor: (if tidbit.cursor-1 >= 0, do: tidbit.cursor-1, else: 0) # Don't go below 0 TODO also dont go higher than the number of characters lol
-#                })
-#                :ok
-#            [%{activate: :body, data: old_text} = tidbit] ->
-#                {remaining_string, _backspaced_letter} = String.split_at(old_text, -1)
-#                Flamelex.API.Buffer.modify(tidbit, %{
-#                    data: remaining_string,
-#                    cursor: (if tidbit.cursor-1 >= 0, do: tidbit.cursor-1, else: 0) # Don't go below 0 TODO also dont go higher than the number of characters lol
-#                })
-#                :ok
-#            nil ->
-#                Logger.warn "No open tidbits so we dont do anything"
-#                :ok
-#        end
-#    end
 
 #    # # def keymap(%{mode: :memex} = state, %{input: {:cursor_button, {:btn_left, 1, [], _coords}}} = input) do
 #    # def keymap(%{mode: :memex} = state, {:cursor_button, {:btn_left, 1, [], _coords}} = input) do

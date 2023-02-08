@@ -1,4 +1,7 @@
-# defmodule Memelex do
+defmodule Memelex do
+
+    defdelegate edit, to: Memelex.My.Wiki
+end
 #   require Logger
 
 #   def reload_customizations do

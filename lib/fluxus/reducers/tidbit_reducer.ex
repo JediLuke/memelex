@@ -1,8 +1,13 @@
 defmodule Memelex.Reducers.TidbitReducer do
    require Logger
+   alias Memelex.TidBit
 
 
-   def process(radix_state, {:create_tidbit, %Memelex.TidBit{} = new_tidbit}) do
+   def process(radix_state, {:edit_tidbit, %TidBit{} = tidbit, modification}) do
+      {:ok, radix_state |> apply_mod(tidbit, modification)}
+   end
+
+   def process(radix_state, {:create_tidbit, %TidBit{} = new_tidbit}) do
       new_tidbit = new_tidbit
       |> Map.merge(%{
          gui: %{
@@ -155,33 +160,43 @@ defmodule Memelex.Reducers.TidbitReducer do
       {:ok, new_radix_state}
    end
 
-   # def process(radix_state, {:move_cursor, %Memelex.TidBit{} = tidbit, section, delta}) when section in [:title, :body] do
    def process(radix_state, {:move_cursor, tidbit, section, delta}) when section in [:title, :body] do
-      new_radix_state = radix_state
-      |> update(tidbit, move_cursor: {section, delta})
-
-      {:ok, new_radix_state}
+      {:ok, radix_state |> apply_mod(tidbit, {:move_cursor, section, delta})}
    end
 
-   # def process(rx, a) do
-   #    dbg()
+   @doc """
+   Updates the radix_state with specific modifications to a TidBit.
+   """
+   def apply_mod(radix_state, %TidBit{uuid: tidbit_uuid}, modification) do
+
+      # find the specific tidbit in the radix_state & apply the modification to it
+      new_tidbit_list =
+         radix_state.story_river.open_tidbits
+         |> Enum.map(fn
+               %{uuid: ^tidbit_uuid} = t ->
+                  TidBit.modify(t, modification)
+               other_tidbit ->
+                  other_tidbit # no edit
+            end)
+
+      put_in(radix_state.story_river.open_tidbits, new_tidbit_list)
+   end
+
+   # #NOTE - the use of :update -- (THIS IS THE FUTURE!!)
+   # # instead of having all those individual calls, just keep the same functon & pattern match on the modification in modify/2
+   # def process(radix_state, {:update, tidbit, updates}) do
+   #    new_radix_state = radix_state |> update(tidbit, updates)
+   #    {:ok, new_radix_state}
    # end
-
-   #NOTE - the use of :update -- (THIS IS THE FUTURE!!)
-   # instead of having all those individual calls, just keep the same functon & pattern match on the modification in modify/2
-   def process(radix_state, {:update, tidbit, updates}) do
-      new_radix_state = radix_state |> update(tidbit, updates)
-      {:ok, new_radix_state}
-   end
 
    #TODO refactor all below here, each function in this moduole needs to be process/2 or else move it into another module
 
-   def fetch_tidbit(t) do
+   defp fetch_tidbit(t) do
       {:ok, full_tidbit} = GenServer.call(Memelex.WikiServer, {:fetch, t})
       full_tidbit
    end
 
-   def update(radix_state, %Memelex.TidBit{uuid: tidbit_uuid}, modification) do
+   def update(radix_state, %TidBit{uuid: tidbit_uuid}, modification) do
       new_tidbit_list =
          radix_state.story_river.open_tidbits
          |> Enum.map(fn
@@ -216,39 +231,11 @@ defmodule Memelex.Reducers.TidbitReducer do
       |> Map.put(:data, tidbit.data <> text)
    end
 
-   def modify(%{gui: %{mode: :edit, focus: :title}} = tidbit, {:backspace, x, :at_cursor}) do
 
-      {new_title, new_cursor} =
-         ScenicWidgets.TextPad.backspace(tidbit.title, tidbit.gui.cursors.title, x, :at_cursor)
-
-      put_in(tidbit.gui.cursors.title, new_cursor)
-      |> Map.put(:title, new_title)
-   end
-
-   def modify(%{gui: %{mode: :edit, focus: :body}} = tidbit, {:backspace, x, :at_cursor}) do
-
-      {new_data, new_cursor} =
-         QuillEx.Utils.EditingText.backspace(tidbit.data, tidbit.gui.cursors.body, x, :at_cursor)
-
-      put_in(tidbit.gui.cursors.body, new_cursor)
-      |> Map.put(:data, new_data)
-   end
-
-   def modify(%{gui: %{mode: :edit, focus: :title}} = tidbit, {:insert_text, txt, :at_cursor}) do
-      {new_text, new_cursor} =
-         QuillEx.Utils.EditingText.insert_text_at_cursor(%{
-            old_text: tidbit.title,
-            cursor: tidbit.gui.cursors.title,
-            text_2_insert: txt
-         })
-
-      put_in(tidbit.gui.cursors.title, new_cursor)
-      |> Map.put(:title, new_text)
-   end
 
    def modify(tidbit, {:insert_text, t, in: :body, at: {:cursor, c}}) do
       {new_data, new_cursor} =
-         QuillEx.Utils.EditingText.insert_text_at_cursor(%{
+         QuillEx.Tools.TextEdit.insert_text_at_cursor(%{
             old_text: tidbit.data,
             cursor: c,
             text_2_insert: t
@@ -258,18 +245,18 @@ defmodule Memelex.Reducers.TidbitReducer do
       |> Map.put(:data, new_data)
    end
 
-   def modify(tidbit, [move_cursor: {:body, delta}]) do
-      current_cursor = tidbit.gui.cursors.body
+   # def modify(tidbit, [move_cursor: {:body, delta}]) do
+   #    current_cursor = tidbit.gui.cursors.body
       
-      new_cursor = QuillEx.Utils.EditingText.move_cursor(tidbit.data, current_cursor, delta)
+   #    new_cursor = QuillEx.Tools.TextEdit.move_cursor(tidbit.data, current_cursor, delta)
 
-      put_in(tidbit.gui.cursors.body, new_cursor)
-   end
+   #    put_in(tidbit.gui.cursors.body, new_cursor)
+   # end
 
-   def modify(tidbit, modification) do
-      Logger.error "Unrecognised modification: #{inspect modification}. No TidBit modification occured..."
-      tidbit
-   end
+   # def modify(tidbit, modification) do
+   #    Logger.error "Unrecognised modification: #{inspect modification}. No TidBit modification occured..."
+   #    tidbit
+   # end
 
    defp move_cursor(cursor, args) do
       ScenicWidgets.TextPad.CursorCaret.move_cursor(cursor, args)

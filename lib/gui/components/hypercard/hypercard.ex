@@ -80,20 +80,4 @@ defmodule Memelex.GUI.Components.HyperCard do
       {:noreply, scene}
    end
 
-
-
-# 	#TODO only activate this inside edit mode
-# 	def handle_event({:click, {:delete_btn, tidbit_uuid}}, _from, scene) do
-#         Flamelex.Fluxus.action({RadixReducer, {:delete, %{tidbit_uuid: tidbit_uuid}}})
-#         {:noreply, scene}
-#     end
-
-# 	#NOTE: Take note of the matching `tidbit_uuid` variables, these have to be the same for this pattern-match to bind
-# 	# #TODO make this be {:body, tidbit_uuid}
-# 	# def handle_event({:value_changed, tidbit_uuid, new_text}, _from, %{assigns: %{state: %{uuid: tidbit_uuid, mode: :edit}}} = scene) do
-# 	# 	new_tidbit = scene.assigns.state |> Map.merge(%{data: new_text, saved?: false})
-# 	# 	Flamelex.Fluxus.action({RadixReducer, {:update_tidbit, new_tidbit}})
-#     #     {:noreply, scene}
-#     # end
-
 end

@@ -1,4 +1,4 @@
-defmodule Memelex.TidBit do
+defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
   @moduledoc """
   modelled after the `tiddler` of TiddlyWiki.
 
@@ -15,6 +15,8 @@ defmodule Memelex.TidBit do
   @enforce_keys [:uuid, :title, :created, :creator, :modified, :modifier]
 
   @derive Jason.Encoder
+
+  require Logger
 
   defstruct [
 
@@ -38,6 +40,8 @@ defmodule Memelex.TidBit do
       
       caption: nil,     # the text to be displayed in a tab or button
       meta:    [],      # a place to put extra data, e.g. `due_date`
+
+      gui:     nil,     # an optional key which holds information about the GUI state of a TidBit. Not relevant when operating purely from the CLI.
 
       module: __MODULE__ # this allows us to reconstruct the correct Elixir struct from the JSON text files
   ]
@@ -72,6 +76,8 @@ defmodule Memelex.TidBit do
     Memelex.Utils.ToolBag.open_external_textfile(tidbit)
   end
 
+
+
   def link(base_node, link_node) do
     Memelex.My.Wiki.link(base_node, link_node)
   end
@@ -93,6 +99,82 @@ defmodule Memelex.TidBit do
   def construct_link_string(%{title: t, uuid: uuid}) do
     "#{t}-[#{t}/#{uuid}]"
   end
+
+  @doc """
+  Apply a modification to a %TidBit{} struct & return the updated struct.
+
+  This function does NOT save the TidBit in the Memexex permanent memory!
+  It *only* casts from one struct to another based on a known modification.
+  """
+  def modify(
+    %__MODULE__{gui: %{mode: :edit}} = tidbit,
+    {:backspace, 1 = x, :at_cursor}
+  ) when is_integer(x) and x >= 1 do
+
+    # figure out if we're backspacing the title or the body (which is saved as `data` on a TidBit struct)
+    focus = tidbit.gui.focus
+    tidbit_field = case focus do
+      :title -> :title
+      :body  -> :data #TODO just call it body, this was a bad idea
+    end
+  
+    text_2_backspace = Map.get(tidbit, tidbit_field)
+    cursor_2_move = Map.get(tidbit.gui.cursors, focus)
+
+    {new_data, new_cursor} =
+      QuillEx.Tools.TextEdit.backspace(text_2_backspace, cursor_2_move, x, :at_cursor)
+
+    put_in(tidbit.gui.cursors[focus], new_cursor)
+    |> Map.put(tidbit_field, new_data)
+  end
+
+  def modify(
+      %__MODULE__{gui: %{mode: :edit}} = tidbit,
+      {:insert_text, txt, :at_cursor}) when is_bitstring(txt)
+  do
+
+    focus = tidbit.gui.focus
+    tidbit_field = case focus do
+      :title -> :title
+      :body  -> :data #TODO just call it body, this was a bad idea
+    end
+
+    current_text = Map.get(tidbit, tidbit_field)
+    cursor_2_move = Map.get(tidbit.gui.cursors, focus)
+
+    {new_text, new_cursor} =
+      QuillEx.Tools.TextEdit.insert_text_at_cursor(%{
+            old_text: current_text,
+            cursor: tidbit.cursor_2_move,
+            text_2_insert: txt
+        })
+
+    put_in(tidbit.gui.cursors.title, new_cursor)
+    |> Map.put(:title, new_text)
+  end
+
+  def modify(
+    %__MODULE__{gui: %{mode: :edit}} = tidbit,
+    {:move_cursor, section, {_d_line, _d_col} = delta})
+  do
+
+    tidbit_field = case section do
+      :title -> :title
+      :body  -> :data #TODO just call it body, this was a bad idea
+    end
+
+    current_text = Map.get(tidbit, tidbit_field)
+    current_crsr = Map.get(tidbit.gui.cursors, section)    
+      
+    new_cursor = QuillEx.Tools.TextEdit.move_cursor(current_text, current_crsr, delta)
+
+    put_in(tidbit.gui.cursors[section], new_cursor)
+  end
+
+  def modify(tidbit, modification) do
+    Logger.error "Unrecognised modification: #{inspect modification}. No TidBit modification occured..."
+    tidbit
+ end
 
 end
 
