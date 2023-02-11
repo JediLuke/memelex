@@ -35,63 +35,62 @@ defmodule Memelex.Reducers.TidbitReducer do
       {:ok, new_radix_state}
    end
 
-   def process(radix_state, {:open_tidbit, t}) do
-      # tidbit = fetch_tidbit(t)
+   def process(%{story_river: %{focussed_tidbit: t_uuid}} = radix_state, {:open_tidbit, %{uuid: t_uuid}}) do
+      # NOTE - it's possible that the above code, while executing, called
+      # Wiki.new, which will auto-magically cause it to be rendered in the
+      # memex & potentially even the Editor... for this reason we are going to
+      # need a clause which handles :open_tidbit getting called on a tidbit which
+      # is already open, which shouldn't be such a hack really as we can just
+      # explicitely ignore it
 
-      #TODO we need to ensure no titles contain newoine chars, or if we do, then we need to allow ourselves to handle it - probably we should be able to just say "put the cursor in final position" & let TextPad figure it out...
-      opening_cursors = %{
-         # we need the +1 because a string of length zero is still position 1 in our editor
-         title: %{line: 1, col: String.length(t.title)+1},
-         body: %{line: 1, col: 1}
-      }
-
-      #TODO need to handle :ok/:error when we fetch
-      new_tidbit = fetch_tidbit(t)
-      |> Map.merge(%{
-         gui: %{
-            mode: :normal,
-            focus: :title,
-            cursors: opening_cursors
-         }
-      })
-
-      new_radix_state =
-         radix_state
-         |> put_in(
-            [:story_river, :open_tidbits],
-            radix_state.story_river.open_tidbits ++ [new_tidbit]
-         )
-         |> put_in(
-            [:story_river, :focussed_tidbit],
-            new_tidbit.uuid
-         )
-  
-      {:ok, new_radix_state}
+      # clause where we need to open a tidbit, and it already exists as gui mode
+      :ignore
    end
 
-   def process(radix_state, {:edit_tidbit, %{tidbit_uuid: t_uuid}}) do
-      Logger.warn "REMINDER we need to ACTUALLY SAVE the TidBit in the DB..."
-      IO.puts "Here we need to save the TidBit & Update RadixState..."
+   def process(radix_state, {:open_tidbit, t}) do
+      case fetch_tidbit(t) do
+         nil ->
+            {:error, "No such TidBit `#{t.title}` exists in the Memex."}
+         %TidBit{} = t ->
+            new_tidbit =
+               Map.merge(t, %{
+                  gui: %{
+                     mode: :normal,
+                     focus: :title,
+                     cursors: %{
+                        #TODO we need to ensure no titles contain newoine chars, or if we do, then we need to allow ourselves to handle it - probably we should be able to just say "put the cursor in final position" & let TextPad figure it out...
+                        # we need the +1 because a string of length zero is still position 1 in our editor
+                        title: %{line: 1, col: String.length(t.title)+1},
+                        body: %{line: 1, col: 1}
+                     }
+                  }
+               })
+            new_radix_state =
+               radix_state
+               |> put_in(
+                  [:story_river, :open_tidbits],
+                  radix_state.story_river.open_tidbits ++ [new_tidbit]
+               )
+               |> put_in(
+                  [:story_river, :focussed_tidbit],
+                  new_tidbit.uuid
+               )
+        
+            {:ok, new_radix_state}
+      end
 
-      updated_tidbits = radix_state.story_river.open_tidbits |> Enum.map(fn
-        %{uuid: ^t_uuid} = tidbit ->
+   end
 
-            IO.puts "EDITING THIS TIDBIT #{inspect tidbit}"
+   def process(radix_state, {:set_gui_mode, new_mode, %{tidbit_uuid: t_uuid}}) do
+      updated_tidbits =
+         radix_state.story_river.open_tidbits
+         |> Enum.map(fn
+            %{uuid: ^t_uuid} = t ->
+               TidBit.modify(t, {:set_gui_mode, new_mode, focus: :title})
 
-            tidbit_gui = tidbit.gui
-            new_tidbit_gui = tidbit_gui |> Map.merge(%{
-               mode: :edit,
-               focus: :title,
-               # stash the current saved contents, incase we discard these edits
-               stash: %{
-                  title: tidbit.title,
-                  body: tidbit.data
-               }
-            })
-            tidbit |> Map.merge(%{gui: new_tidbit_gui})
-         other_tidbit ->
-            other_tidbit # make no changes to other TidBits...
-      end)
+            other_tidbit ->
+               other_tidbit # make no changes to other TidBits...
+         end)
 
       new_radix_state = radix_state
       |> put_in([:story_river, :open_tidbits], updated_tidbits)
@@ -99,7 +98,7 @@ defmodule Memelex.Reducers.TidbitReducer do
 
       {:ok, new_radix_state}
    end
-   
+
    def process(radix_state, {:discard_changes, %{tidbit_uuid: tidbit_uuid}}) do
       # new_radix_state = radix_state |> update(tidbit, updates)
 
@@ -125,6 +124,18 @@ defmodule Memelex.Reducers.TidbitReducer do
       {:ok, new_radix_state}
    end
 
+   def process(radix_state, {:close_tidbit, %{tidbit_uuid: tidbit_uuid}}) do
+      updated_tidbits =
+         radix_state.story_river.open_tidbits
+         |> Enum.reject(& &1.uuid == tidbit_uuid)
+
+      new_radix_state = radix_state
+      |> put_in([:story_river, :open_tidbits], updated_tidbits)
+      |> put_in([:story_river, :focussed_tidbit], nil)
+
+      {:ok, new_radix_state}
+   end
+
    def process(radix_state, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}) do
 
       updated_tidbits = radix_state.story_river.open_tidbits |> Enum.map(fn
@@ -141,14 +152,21 @@ defmodule Memelex.Reducers.TidbitReducer do
       {:ok, new_radix_state}
    end
 
-   def process(radix_state, {:close_tidbit, %{tidbit_uuid: tidbit_uuid}}) do
+   def process(radix_state, {:delete_tidbit, %{tidbit_uuid: tidbit_uuid}}) do
+
       updated_tidbits =
          radix_state.story_river.open_tidbits
-         |> Enum.reject(& &1.uuid == tidbit_uuid)
-
+         |> Enum.map(fn
+            %{uuid: ^tidbit_uuid} = tidbit ->
+               :ok = GenServer.call(Memelex.WikiServer, {:delete_tidbit, tidbit})
+               :deleted
+            other_tidbit ->
+               other_tidbit # make no changes to other TidBits...
+         end)
+         |> Enum.reject(& &1 == :deleted)
+   
       new_radix_state = radix_state
       |> put_in([:story_river, :open_tidbits], updated_tidbits)
-      |> put_in([:story_river, :focussed_tidbit], nil)
 
       {:ok, new_radix_state}
    end

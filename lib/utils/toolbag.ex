@@ -14,7 +14,7 @@ defmodule Memelex.Utils.ToolBag do
 
   def memex_directory do
     {:ok, dir} =
-       Memelex.Env.WikiManager |> GenServer.call(:whats_the_current_memex_directory?)
+       Memelex.WikiServer |> GenServer.call(:whats_the_current_memex_directory?)
     dir
   end
 
@@ -31,12 +31,17 @@ defmodule Memelex.Utils.ToolBag do
     :ok
   end
 
-  def open_external_textfile(%{type: ["external", "textfile"], data: %{"filepath" => fp}}) do
-    open_external_textfile(fp)
-  end
+  # def open_external_textfile(%{type: ["external", "textfile"], data: %{"filepath" => fp}}) do
+  #   open_external_textfile(fp)
+  # end
 
   def open_text_editor_cmd do
-    Application.get_env(:memelex, :text_editor_shell_command)
+    case Application.get_env(:memelex, :text_editor_shell_command) do
+      nil ->
+        raise "No `:text_editor_shell_command` configured."
+      c when is_bitstring(c) ->
+        c
+    end
   end
 
   def open_vs_code(filepath) do

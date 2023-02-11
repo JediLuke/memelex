@@ -25,31 +25,11 @@ defmodule Memelex.Keymaps.UserInputHandler do
 
    def process(radix_state, key) when key in @valid_text_input_characters do
       case find_focussed_tidbit(radix_state) do
-         %{gui: %{focus: :title, cursors: %{title: c}}} = t ->
-            #TODO THIS IS IT!!!!
-            # Memelex.My.Wiki.update(t, {:append_to_title, key2string(key)})
-            # :ok = Memelex.My.Wiki.update(t, {:insert_text, key2string(key), in: :title, at: {:cursor, c}})
-            # :ok = Memelex.My.Wiki.update(t, {:insert_text, key2string(key), :at_cursor})
-
+         %Memelex.TidBit{} = t ->
             :ok = Memelex.My.Wiki.edit(t, {:insert_text, key2string(key), :at_cursor})
-         %{gui: %{focus: :body, cursors: %{body: c}}} = t ->
-            #TODO HERE
-            # Memelex.My.Wiki.update(t, {:append_to_body, key2string(key)})
-
-            #TODO need to both update the cursor, AND the body, where should this live??
-            # new_body = 
-
-            # Memelex.GUI.Control.move_cursor(t, :one_forward})
-
-            #NOTE what I dont love about this is that Memelex.Update should be decoupled from the UI...
-            # updating the textbox is a single action & should encapsulate updating the cursor
-
-            # HOWEVER we also will need a seperate GUIControl for just moving the cursor, without editing the text
-
-            :ok = Memelex.My.Wiki.update(t, {:insert_text, key2string(key), in: :body, at: {:cursor, c}})
          nil ->
-               Logger.warn "No `focussed` TidBit in the StoryRiver."
-               :ok
+            Logger.warn "No `focussed` TidBit in the StoryRiver."
+            :ok
       end
    end
 

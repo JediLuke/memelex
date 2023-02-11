@@ -37,6 +37,9 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
       status:  nil,     # an internal flag - we can "archive" TidBits this way
 
       history: nil,     # each time a TidBit changes, we track the history #TODO
+
+      deleted?: false,  # a flag for allowing soft-delete
+      deleted_at: nil,  # timestamp for deletion, if it has been soft-deleted
       
       caption: nil,     # the text to be displayed in a tab or button
       meta:    [],      # a place to put extra data, e.g. `due_date`
@@ -52,25 +55,25 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
 
   @doc ~s(This is here for the sake of the nice API: TidBit.new/1)
   def new(params) do
-    Memelex.My.Wiki.new_tidbit(params)
+    Memelex.My.Wiki.new(params)
   end
 
-  @doc ~s(This is here for the sake of the nice API: TidBit.update/2)
-  def update(tidbit, params) do
-    Memelex.My.Wiki.update(tidbit, params)
-  end
+  # @doc ~s(This is here for the sake of the nice API: TidBit.update/2)
+  # def update(tidbit, params) do
+  #   Memelex.My.Wiki.update(tidbit, params)
+  # end
 
-  def list do
-    Memelex.My.Wiki.list()
-  end
+  # def list do
+  #   Memelex.My.Wiki.list()
+  # end
 
-  def find(search_term) do
-    Memelex.My.Wiki.find(search_term)
-  end
+  # def find(search_term) do
+  #   Memelex.My.Wiki.find(search_term)
+  # end
 
-  def find(exact: search_term) do
-    Memelex.My.Wiki.find(exact: search_term)
-  end
+  # def find(exact: search_term) do
+  #   Memelex.My.Wiki.find(exact: search_term)
+  # end
 
   def open(%{type: ["external"|_rest]} = tidbit) do
     Memelex.Utils.ToolBag.open_external_textfile(tidbit)
@@ -140,17 +143,17 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
     end
 
     current_text = Map.get(tidbit, tidbit_field)
-    cursor_2_move = Map.get(tidbit.gui.cursors, focus)
+    current_crsr = Map.get(tidbit.gui.cursors, focus)
 
     {new_text, new_cursor} =
       QuillEx.Tools.TextEdit.insert_text_at_cursor(%{
             old_text: current_text,
-            cursor: tidbit.cursor_2_move,
+            cursor: current_crsr,
             text_2_insert: txt
         })
 
-    put_in(tidbit.gui.cursors.title, new_cursor)
-    |> Map.put(:title, new_text)
+    put_in(tidbit.gui.cursors[focus], new_cursor)
+    |> Map.put(tidbit_field, new_text)
   end
 
   def modify(
@@ -171,10 +174,25 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
     put_in(tidbit.gui.cursors[section], new_cursor)
   end
 
+  def modify(%__MODULE__{} = tidbit, {:set_gui_mode, new_mode = :edit, focus: new_focus}) do
+    new_tidbit_gui =
+      tidbit.gui |> Map.merge(%{
+        mode: new_mode,
+        focus: new_focus,
+        # stash the current saved contents, incase we discard these edits
+        stash: %{
+            title: tidbit.title,
+            body: tidbit.data
+        }
+      })
+
+    put_in(tidbit.gui, new_tidbit_gui)
+  end
+
   def modify(tidbit, modification) do
     Logger.error "Unrecognised modification: #{inspect modification}. No TidBit modification occured..."
     tidbit
- end
+  end
 
 end
 

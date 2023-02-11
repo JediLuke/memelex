@@ -33,8 +33,14 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
         {:ok, new_scene}
     end
 
-    def handle_cast({:click, :add}, scene) do
+    def handle_cast({:click, :new_tidbit}, scene) do
         Memelex.My.Wiki.new()
+        {:noreply, scene}
+    end
+
+    def handle_cast({:click, :journal}, scene) do
+        #TODO if we're in memelex view maybe show in memelex, otherwise Journal.today should open in text editor???
+        Memelex.My.Journal.today()
         {:noreply, scene}
     end
 
@@ -78,9 +84,10 @@ defmodule Memelex.GUI.Component.Memex.SideBar do
             graph
             |> Scenic.Primitives.rect({args.frame.dimens.width, 50}, fill: :forest_green)
             # |> render_tool_button(args)
-            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {0, 0}, size: {50, 50}), icon: "ionicons/black_32/add-circle.png"}, id: :add)
-            |> ScenicWidgets.IconButton.add_to_graph(%{frame: Frame.new(pin: {50, 0}, size: {50, 50}), hover_highlight?: false}, id: :cog)
-            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {100, 0}, size: {50, 50}), icon: "ionicons/black_32/search.png"}, id: :edit)
+            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {0*50, 0}, size: {50, 50}), icon: "ionicons/black_32/add-circle.png"}, id: :new_tidbit)
+            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {1*50, 0}, size: {50, 50}), icon: "ionicons/black_32/today.png"}, id: :journal)
+            |> Memelex.GUI.Components.IconButton.add_to_graph(%{frame: Frame.new(pin: {2*50, 0}, size: {50, 50}), icon: "ionicons/black_32/search.png"}, id: :edit)
+            |> ScenicWidgets.IconButton.add_to_graph(%{frame: Frame.new(pin: {3*50, 0}, size: {50, 50}), hover_highlight?: false}, id: :cog)
             # |> Scenic.Primitives.rect({32, 32}, fill: {:image, "icons/add.png"}) 
         end, [
             translate: {0, ((1-@split)*args.frame.dimens.height)-50}

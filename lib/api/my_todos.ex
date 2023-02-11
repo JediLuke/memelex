@@ -1,5 +1,5 @@
 defmodule Memelex.My.TODOs do
-  alias Memelex.Env.WikiManager
+  alias Memelex.WikiServer
 
 
   # This function should return some helpful advice for the user on how
@@ -29,7 +29,7 @@ defmodule Memelex.My.TODOs do
     validate_tag_list!(tlist)
     params
     |> Map.merge(%{tags: tlist ++ ["#TODO"]})
-    |> Memelex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new()
   end
 
   # this is a nice convenience function, make a TODO in one line
@@ -40,7 +40,7 @@ defmodule Memelex.My.TODOs do
   def new(params) do
     params
     |> Map.merge(%{tags: ["#TODO"]})
-    |> Memelex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new()
   end
 
   # more convenient to use keyword lists on the CLI

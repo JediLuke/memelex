@@ -1,18 +1,18 @@
 defmodule Memelex.My.Bills do
-  alias Memelex.Env.WikiManager
+  alias Memelex.WikiServer
 
 
   def new(%{tags: tlist} = params) when is_list(tlist) do
     validate_tag_list!(tlist)
     params
     |> Map.merge(%{tags: tlist ++ ["my_bills"]})
-    |> Memelex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new()
   end
 
   def new(params) when is_map(params) do
     params
     |> Map.merge(%{tags: ["my_bills"]})
-    |> Memelex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new()
   end
 
   @doc ~s(Fetch the whole list of TODOs)

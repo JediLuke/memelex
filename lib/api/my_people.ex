@@ -1,9 +1,9 @@
 defmodule Memelex.My.People do
-  alias Memelex.Env.WikiManager
+  alias Memelex.WikiServer
 
   def new(params) do
     new_person = params |> Memelex.Person.construct()
-    Memelex.My.Wiki.new_tidbit(params |> Map.merge(%{type: :person, data: new_person}))
+    Memelex.My.Wiki.new(params |> Map.merge(%{type: :person, data: new_person}))
   end
 
   def add(params) do

@@ -156,6 +156,29 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
    # 		|> render_tags_box(%{mode: :read_only, tidbit: tidbit, frame: frame})
    # 		|> show_unrenderable_box(%{tidbit: tidbit, frame: frame})
 
+   #TODO render edit / normal modes aswell...
+   def render_body(graph, frame, %{type: ["external", "textfile"]} = tidbit) do
+      %{"filepath" => fp} = tidbit.data
+      
+      graph
+      #TODO this could be cleaned up, why is it a single component inside a group??
+      |> Scenic.Primitives.group(fn graph ->
+         graph
+         |> ScenicWidgets.TextPad.add_to_graph(%{
+            frame: body_frame(frame),
+            state: ScenicWidgets.TextPad.new(%{
+               mode: :read_only,
+               text: fp,
+               font: body_font()
+            })
+         }, id: {:hypercard, :body, :text_pad, tidbit.uuid})
+      end, [
+         id: {:hypercard, :body, tidbit.uuid},
+         translate: {@margin, @margin+@header_height}
+         ]
+      )
+   end
+
    def render_body(graph, frame, %{gui: %{mode: :edit, focus: :title}} = tidbit) do
       graph
       #TODO this could be cleaned up, why is it a single component inside a group??

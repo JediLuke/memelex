@@ -1,5 +1,5 @@
 defmodule Memelex.My.Snippets do
-  alias Memelex.Env.WikiManager
+  alias Memelex.WikiServer
   alias Memelex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
   @snippets_tag "my_snippets"
 
@@ -9,7 +9,7 @@ defmodule Memelex.My.Snippets do
     |> Map.merge(%{type: ["external", "textfile"]})
     |> TidBitUtils.apply_tag(@snippets_tag)
     |> Memelex.TidBit.construct()
-    |> Memelex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new()
   end
 
   def list do
@@ -17,15 +17,15 @@ defmodule Memelex.My.Snippets do
     wiki |> Enum.filter(&is_snippet?/1)
   end
 
-  def open(%{type: ["external", "textfile"], data: %{"filepath" => filepath}}) do
-    {:ok, _pid} = Memelex.Utils.ToolBag.open_external_textfile(filepath)
-    :ok
-  end
+  # def open(%{type: ["external", "textfile"], data: %{"filepath" => filepath}}) do
+  #   {:ok, _pid} = Memelex.Utils.ToolBag.open_external_textfile(filepath)
+  #   :ok
+  # end
   
-  def open(%{type: ["text_snippet"], data: %{"filename" => filename}}) do
-    snippet = Memelex.Utils.ToolBag.text_snippets_directory() <> "/#{filename}"
-    Memelex.Utils.ToolBag.open_external_textfile(snippet)
-  end
+  # def open(%{type: ["text_snippet"], data: %{"filename" => filename}}) do
+  #   snippet = Memelex.Utils.ToolBag.text_snippets_directory() <> "/#{filename}"
+  #   Memelex.Utils.ToolBag.open_external_textfile(snippet)
+  # end
 
 
   def list(:text_snippets) do

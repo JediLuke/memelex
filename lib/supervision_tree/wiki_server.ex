@@ -95,6 +95,18 @@ defmodule Memelex.WikiServer do
       {:reply, {:ok, saved_tidbit}, %{state|wiki: new_wiki}}
    end
 
+   def handle_call({:delete_tidbit, tidbit}, _from, state) do
+    Logger.warn "Not really deleting any tidbits..."
+
+    {:reply, :ok, state}
+    # {:ok, saved_tidbit, new_wiki} =
+    #    WikiManagement.save_tidbit(state, tidbit)
+
+    #    Memelex.Utils.PubSub.broadcast({:wiki_server, :memex_saved_to_disc})
+    #    #TODO broadcast update to wiki here
+    # {:reply, {:ok, saved_tidbit}, %{state|wiki: new_wiki}}
+ end
+
   def handle_call({:update_tidbit, tidbit, %{add_tag: tag}}, _from, state) do
     {:ok, updated_tidbit, new_wiki} =
        WikiManagement.add_tag(%{tag: tag, state: state, tidbit: tidbit})

@@ -29,7 +29,7 @@ defmodule Memelex.My.Collections do
   collection is important.
   
   """
-  alias Memelex.Env.WikiManager
+  alias Memelex.WikiServer
   alias Memelex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
   @snippets_tag "my_snippets"
 
@@ -38,7 +38,7 @@ defmodule Memelex.My.Collections do
     |> TidBitUtils.sanitize_conveniences()
     |> Map.merge(%{type: ["collection"], data: tidbits |> create_tidref_list()})
     |> Memelex.TidBit.construct()
-    |> Memelex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new()
   end
 
   # appends a tidbit to a collection

@@ -120,7 +120,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
    end
 
    def handle_cast(:render_next_component, %{assigns: %{render_queue: []}} = scene) do
-      Logger.debug "#{__MODULE__} ignoring a request to render a component, there's nothing to render"
+      #Logger.debug "#{__MODULE__} ignoring a request to render a component, there's nothing to render"
       {:noreply, scene}
    end
 
@@ -692,12 +692,6 @@ end
 #   #   Logger.warn "Trying to add tidbit, bad bad"
 #   #   {:reply, :ok, scene}
 #   # end
-
-#   def handle_cast(:render_next_component, %{assigns: %{state: %{render_queue: []}}} = scene) do
-#     Logger.debug "#{__MODULE__} ignoring a request to render a component, there's nothing to render"
-#     {:noreply, scene}
-#   end
-
 
 
 #     # def render_push_graph(scene) do

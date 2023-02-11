@@ -2,7 +2,7 @@ defmodule Memelex.Utils.Backups do
   @moduledoc """
   Utilities for managing Memex backups.
   """
-  alias Memelex.Env.WikiManager
+  alias Memelex.WikiServer
   require Logger
 
   def perform_backup_procedure() do

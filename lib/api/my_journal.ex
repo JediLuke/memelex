@@ -1,33 +1,41 @@
 defmodule Memelex.My.Journal do
-  alias Memelex.Env.WikiManager
+  alias Memelex.WikiServer
   alias Memelex.Facts.GregorianCalendar
   alias Memelex.Utils.StringifyDateTimes
   require Logger
 
-  @doc ~s(Opens today's Journal entry, with a fresh timestamp appended.)
-  def now do
-    now = Memelex.My.current_time()
-    {:ok, t} = now |> find_entry()
-    Logger.warn "#TODO we should be appending a timestamp here..."
-    #TidBit.append(t, journal_timestamp(now)) #TODO and update modified time
-    open(t)
-  end
+  # @doc ~s(Opens today's Journal entry, with a fresh timestamp appended.)
+  # def now do
+  #   now = Memelex.My.current_time()
+  #   {:ok, t} = now |> find_journal_entry()
+  #   Logger.warn "#TODO we should be appending a timestamp here..."
+  #   #TidBit.append(t, journal_timestamp(now)) #TODO and update modified time
+  #   open(t)
+  # end
 
   @doc ~s(Open today's Journal entry.)
   def today() do
-    {:ok, t} = Memelex.My.current_time() |> find_entry()
-    open(t)
+    {:ok, t = %{data: %{"filepath" => _journal_entry_filepath}}} =
+      Memelex.My.current_time() |> find_journal_entry()
+
+    # NOTE - it's possible that the above code, while executing, called
+    # Wiki.new, which will auto-magically cause it to be rendered in the
+    # memex & potentially even the Editor... for this reason we are going to
+    # need a clause which handles :open_tidbit getting called on a tidbit which
+    # is already open, which shouldn't be such a hack really as we can just
+    # explicitely ignore it
+    Memelex.Fluxus.action({Memelex.Reducers.TidbitReducer, {:open_tidbit, t}})
   end
 
-  def yesterday do
-    {:ok, t} = find_relative_page_tidbit(-1) # negative values move backwards in time
-    open(t)
-  end
+  # def yesterday do
+  #   {:ok, t} = find_relative_page_tidbit(-1) # negative values move backwards in time
+  #   open(t)
+  # end
 
-  def tomorrow do
-    {:ok, t} = find_relative_page_tidbit(1) # one page forward in the journal
-    open(t)
-  end
+  # def tomorrow do
+  #   {:ok, t} = find_relative_page_tidbit(1) # one page forward in the journal
+  #   open(t)
+  # end
 
   def open_relative_entry(x) when is_integer(x) do
     {:ok, t} = find_relative_page_tidbit(x)
@@ -40,16 +48,16 @@ defmodule Memelex.My.Journal do
     
     Memelex.My.current_time()
     |> DateTime.add(x*one_day, :second)
-    |> find_entry()
+    |> find_journal_entry()
   end
 
   # either finds, or creates, the TidBit & text file for a Journal entry
-  def find_entry(datetime) do
+  defp find_journal_entry(datetime) do
 
     tidbit_title = journal_page_title(datetime)
 
     {:ok, tidbits} =
-      WikiManager |> GenServer.call(:list_all_tidbits)
+      Memelex.WikiServer |> GenServer.call(:list_all_tidbits)
 
     # look for todays journal entry in the Wiki
     # e.g. tagged "my_journal" & title is "Journal of JediLuke ~ Wednesday 29th of June, 2021")
@@ -70,13 +78,14 @@ defmodule Memelex.My.Journal do
   def new_journal_tidbit(datetime) do
     new_title = journal_page_title(datetime)
     Logger.info "creating new Journal entry `#{new_title}`..."
-    Memelex.TidBit.construct(%{
-      title: new_title,
-      type: {:external, :textfile},
-      tags: ["my_journal"],
-      data: {:filepath, journal_entry_filepath(datetime)}
-    })
-    |> Memelex.My.Wiki.new_tidbit()
+    t = Memelex.TidBit.construct(%{
+          title: new_title,
+          type: {:external, :textfile},
+          tags: ["my_journal"],
+          data: {:filepath, journal_entry_filepath(datetime)}
+        })
+        |> Memelex.My.Wiki.new()
+    {:ok, t}
   end
 
   @doc ~s(Contruct a title string for my Journal for a given datetime.)
@@ -86,7 +95,8 @@ defmodule Memelex.My.Journal do
     year =
       datetime |> StringifyDateTimes.format("year_as_XXXX")
 
-    "Journal of #{Memelex.My.nickname()} ~ #{day_and_month}, #{year}"
+    # "Journal of #{Memelex.My.nickname()} ~ #{day_and_month}, #{year}"
+    "#{day_and_month}, #{year}"
   end
 
 
@@ -127,10 +137,10 @@ defmodule Memelex.My.Journal do
   end
 
   #NOTE: Filter on both atom and String keys here (why?)
-  def open(%{data: %{filepath: page}}) when is_bitstring(page) do
-    Memelex.Utils.ToolBag.open_external_textfile(page)
-  end
-  def open(%{data: %{"filepath" => page}}) when is_bitstring(page) do
-    Memelex.Utils.ToolBag.open_external_textfile(page)
-  end
+  # def open(%{data: %{filepath: page}}) when is_bitstring(page) do
+  #   Memelex.Utils.ToolBag.open_external_textfile(page)
+  # end
+  # def open(%{data: %{"filepath" => page}}) when is_bitstring(page) do
+  #   Memelex.Utils.ToolBag.open_external_textfile(page)
+  # end
 end

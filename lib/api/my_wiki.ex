@@ -2,7 +2,7 @@ defmodule Memelex.My.Wiki do
   @moduledoc """
   W.I.K.I. = What I Know is...
   """
-  alias Memelex.Env.WikiManager
+  alias Memelex.WikiServer
   alias Memelex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
   require Logger
 
@@ -12,6 +12,11 @@ defmodule Memelex.My.Wiki do
 
   def new do
     new(%{title: ""})
+  end
+
+  def new(%Memelex.TidBit{} = new_tidbit) do
+    Memelex.Fluxus.action({TidbitReducer, {:create_tidbit, new_tidbit}})
+    new_tidbit
   end
 
   def new(params) do

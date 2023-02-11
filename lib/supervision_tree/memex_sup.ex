@@ -9,7 +9,7 @@ defmodule Memelex.Supervisor do
   def init(env) do
 
     children = [
-      # {Task.Supervisor, name: Memelex.Env.TaskSupervisor},
+      {Task.Supervisor, name: Memelex.Env.TaskSupervisor},
       # {Memelex.Env.ExecutiveManager, env_map},
       # Memelex.MoneyPenny # agents are started after the main Memex, since they need access to it
 

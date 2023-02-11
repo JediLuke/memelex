@@ -1,5 +1,5 @@
 defmodule Memelex.My.Meetings do
-  alias Memelex.Env.WikiManager
+  alias Memelex.WikiServer
   alias Memelex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
 
   @my_meetings "my_meetings"
@@ -9,7 +9,7 @@ defmodule Memelex.My.Meetings do
     |> TidBitUtils.sanitize_conveniences()
     |> TidBitUtils.apply_tag(@my_meetings)
     |> Memelex.TidBit.construct()
-    |> Memelex.My.Wiki.new_tidbit()
+    |> Memelex.My.Wiki.new()
   end
 
   # API sugar, I like to "record" meetings, or "take a record" ~ My.Meetings.record %{title: "Something"}
