@@ -24,7 +24,7 @@ defmodule Memelex.My.Journal do
     # need a clause which handles :open_tidbit getting called on a tidbit which
     # is already open, which shouldn't be such a hack really as we can just
     # explicitely ignore it
-    Memelex.Fluxus.action({Memelex.Reducers.TidbitReducer, {:open_tidbit, t}})
+    Memelex.Fluxus.action({Memelex.Fluxus.Reducers.TidbitReducer, {:open_tidbit, t}})
   end
 
   # def yesterday do

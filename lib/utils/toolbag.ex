@@ -23,12 +23,18 @@ defmodule Memelex.Utils.ToolBag do
   end
 
   def open_external_textfile(filepath) when is_bitstring(filepath) do
-    # run this in a separate process so we never lock the IEx console
-    {:ok, _pid} = Task.Supervisor.start_child(Memelex.Env.TaskSupervisor, fn ->
-      {"", 0} = System.cmd(open_text_editor_cmd(), [filepath])
+    # if we detect flamelex is running, use that
+    if Code.ensure_compiled?(Flamelex.App) do
+      # raise "need to open it with Flamelex"
+      Flamelex.API.Buffer.open(filepath)
+    else
+      # run this in a separate process so we never lock the IEx console
+      {:ok, _pid} = Task.Supervisor.start_child(Memelex.Env.TaskSupervisor, fn ->
+        {"", 0} = System.cmd(open_text_editor_cmd(), [filepath])
+        :ok
+      end)
       :ok
-    end)
-    :ok
+    end
   end
 
   # def open_external_textfile(%{type: ["external", "textfile"], data: %{"filepath" => fp}}) do

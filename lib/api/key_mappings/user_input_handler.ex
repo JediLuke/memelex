@@ -1,6 +1,6 @@
 defmodule Memelex.Keymaps.UserInputHandler do
    use ScenicWidgets.ScenicEventsDefinitions
-   alias Memelex.Reducers.TidbitReducer
+   alias Memelex.Fluxus.Reducers.TidbitReducer
    require Logger
 
    #TODO @shift_tab make focus move backwards

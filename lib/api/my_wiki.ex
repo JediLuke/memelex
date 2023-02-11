@@ -7,7 +7,7 @@ defmodule Memelex.My.Wiki do
   require Logger
 
   alias Memelex.Fluxus.Structs.RadixState
-  alias Memelex.Reducers.TidbitReducer
+  alias Memelex.Fluxus.Reducers.TidbitReducer
 
 
   def new do
@@ -56,7 +56,7 @@ defmodule Memelex.My.Wiki do
   #   #TODO use declare here somehow, so the actual TidBit gets returned...
 
   #   Memelex.Fluxus.action({
-  #     Memelex.Reducers.TidbitReducer,
+  #     Memelex.Fluxus.Reducers.TidbitReducer,
   #     {:update, tidbit, updates}
   #   })
   # end

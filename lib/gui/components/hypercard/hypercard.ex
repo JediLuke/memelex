@@ -1,17 +1,29 @@
 defmodule Memelex.GUI.Components.HyperCard do
    use Scenic.Component
-   alias Memelex.GUI.Components.HyperCard.Render
-   #TODO do we want fluxus in these module names??
    alias Memelex.Fluxus.Reducers.RadixReducer
-   alias Memelex.Reducers.TidbitReducer
-   
+   alias Memelex.Fluxus.Reducers.TidbitReducer
+
+
+   #TODO document this point
+	#TODO good idea: render each sub-component as a seperate graph,
+   #                calculate their heights, then use Scenic.Graph.add_to
+   #                to put them into the `:hypercard_itself` group
+   #                -> Unfortunately, this doesn't work because Scenic
+   #                doesn't seem to support "merging" 2 graphs, or
+   #                if I return a graph (each component), no way to
+   #                simply add that to another graph, as a sub-component
+
+   #REMINDER: Here we call back to the outer-component with out size, since
+   # 		     HyperCards are flexible in size 
+
 
    def validate(%{frame: _frame, state: %{uuid: _uuid}} = data) do
       {:ok, data}
    end
 
    def init(scene, args, opts) do
-      init_graph = Render.hyper_card(args)
+      init_graph =
+         Memelex.GUI.Components.HyperCard.Render.hyper_card(args)
 
       init_scene = scene
       |> assign(graph: init_graph)
@@ -22,17 +34,7 @@ defmodule Memelex.GUI.Components.HyperCard do
       {:ok, init_scene}
    end
 
-   	#TODO document this point
-	#TODO good idea: render each sub-component as a seperate graph,
-    #                calculate their heights, then use Scenic.Graph.add_to
-    #                to put them into the `:hypercard_itself` group
-    #                -> Unfortunately, this doesn't work because Scenic
-    #                doesn't seem to support "merging" 2 graphs, or
-    #                if I return a graph (each component), no way to
-    #                simply add that to another graph, as a sub-component
 
-# 	#REMINDER: Here we call back to the outer-component with out size, since
-# 	# 		   HyperCards are flexible in size 
 # 	def handle_continue(:publish_bounds, scene) do
 #         bounds = Scenic.Graph.bounds(scene.assigns.graph)
 
@@ -78,8 +80,13 @@ defmodule Memelex.GUI.Components.HyperCard do
       {:noreply, scene}
    end
 
+   def handle_event({:click, {:open_external_textfile, filepath}}, _from, scene) do
+      IO.puts("Sample button was clicked! #{filepath}")
+      Memelex.Utils.ToolBag.open_external_textfile(filepath)
+      {:noreply, scene}
+    end
+
    def handle_info({:radix_state_change, new_radix_state}, scene) do
-      # IO.puts "GOT THE THINGY"
       #TODO would be better if we caught spcific TidBit changes here, rather
       # than re-rendering the entire StoryRiver...
       {:noreply, scene}

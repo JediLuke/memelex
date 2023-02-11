@@ -1,4 +1,4 @@
-defmodule Memelex.Reducers.TidbitReducer do
+defmodule Memelex.Fluxus.Reducers.TidbitReducer do
    require Logger
    alias Memelex.TidBit
 

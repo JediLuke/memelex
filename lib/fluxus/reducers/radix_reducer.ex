@@ -1,6 +1,6 @@
 defmodule Memelex.Fluxus.Reducers.RadixReducer do
    require Logger
-   alias Memelex.Reducers.TidbitReducer
+   alias Memelex.Fluxus.Reducers.TidbitReducer
 
 
    def process(radix_state, {reducer, action}) when is_atom(reducer) do

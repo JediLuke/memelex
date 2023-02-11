@@ -164,14 +164,7 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       #TODO this could be cleaned up, why is it a single component inside a group??
       |> Scenic.Primitives.group(fn graph ->
          graph
-         |> ScenicWidgets.TextPad.add_to_graph(%{
-            frame: body_frame(frame),
-            state: ScenicWidgets.TextPad.new(%{
-               mode: :read_only,
-               text: fp,
-               font: body_font()
-            })
-         }, id: {:hypercard, :body, :text_pad, tidbit.uuid})
+         |> render_external_text_file_button(frame, tidbit)
       end, [
          id: {:hypercard, :body, tidbit.uuid},
          translate: {@margin, @margin+@header_height}
@@ -235,6 +228,22 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       end, [
          id: {:hypercard, :body, tidbit.uuid},
          translate: {@margin, @margin+@header_height}
+         ]
+      )
+   end
+
+   def render_external_text_file_button(graph, frame, tidbit) do
+
+      %{type: ["external", "textfile"], data: %{"filepath" => journal_entry_filepath}} = tidbit
+
+      graph
+      |> Scenic.Primitives.group(fn graph ->
+         graph
+         # |> Scenic.Primitives.rect({@header_height, @header_height}, fill: :gold)
+         |> Scenic.Components.button("Open external text-file", id: {:open_external_textfile, journal_entry_filepath}, t: {10, 10})
+      end, [
+         id: {:hypercard, :body, :external_tidbit_btn, tidbit.uuid}
+         # translate: {@header_height, @header_height}
          ]
       )
    end
