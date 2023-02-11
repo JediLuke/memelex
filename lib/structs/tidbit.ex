@@ -157,6 +157,27 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
   end
 
   def modify(
+    %__MODULE__{gui: %{mode: :edit, focus: :title}} = tidbit,
+    {:move_cursor, _section, {_delta_line, _delta_col} = delta}
+  ) do
+    new_cursor = QuillEx.Tools.TextEdit.move_cursor(
+        tidbit.title,
+        tidbit.gui.cursors.title,
+        delta
+      )
+
+    put_in(tidbit.gui.cursors.title, new_cursor)
+  end
+
+  def modify(
+    %__MODULE__{gui: %{focus: :body}, type: ["external", "textfile"]} = tidbit,
+    {:move_cursor, _section, _delta}
+  ) do
+    Logger.warn "unable to apply modification: `:move_cursor` to tidbit of type: #{inspect tidbit.type}"
+    tidbit
+  end
+
+  def modify(
     %__MODULE__{gui: %{mode: :edit}} = tidbit,
     {:move_cursor, section, {_d_line, _d_col} = delta})
   do

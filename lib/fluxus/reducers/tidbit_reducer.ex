@@ -51,6 +51,7 @@ defmodule Memelex.Reducers.TidbitReducer do
       case fetch_tidbit(t) do
          nil ->
             {:error, "No such TidBit `#{t.title}` exists in the Memex."}
+
          %TidBit{} = t ->
             new_tidbit =
                Map.merge(t, %{
@@ -65,6 +66,7 @@ defmodule Memelex.Reducers.TidbitReducer do
                      }
                   }
                })
+
             new_radix_state =
                radix_state
                |> put_in(
@@ -78,7 +80,6 @@ defmodule Memelex.Reducers.TidbitReducer do
         
             {:ok, new_radix_state}
       end
-
    end
 
    def process(radix_state, {:set_gui_mode, new_mode, %{tidbit_uuid: t_uuid}}) do
@@ -100,23 +101,21 @@ defmodule Memelex.Reducers.TidbitReducer do
    end
 
    def process(radix_state, {:discard_changes, %{tidbit_uuid: tidbit_uuid}}) do
-      # new_radix_state = radix_state |> update(tidbit, updates)
-
-
-      # fetch TidBit from memory
-      updated_tidbits = radix_state.story_river.open_tidbits |> Enum.map(fn
-         %{uuid: ^tidbit_uuid, gui: %{stash: %{title: old_title, body: old_body}}} = tidbit ->
-            #  {:ok, _saved_tidbit} = GenServer.call(Memelex.WikiServer, {:save_tidbit, tidbit})
-            #  put_in(tidbit.gui.mode, :normal)
-            t = %{tidbit|title: old_title, data: old_body}
-            put_in(t.gui.mode, :normal)
-          other_tidbit ->
-             other_tidbit # make no changes to other TidBits...
-       end)
 
       # check saved_content, if it's nil then delete the TidBit
-
       # if it's not nil, reset changes back to that saved content
+      updated_tidbits =
+         radix_state.story_river.open_tidbits
+         |> Enum.map(fn
+            %{uuid: ^tidbit_uuid, gui: %{stash: %{title: old_title, body: old_body}}} = tidbit ->
+               t = %{tidbit|title: old_title, data: old_body}
+               put_in(t.gui.mode, :normal)
+            %{uuid: ^tidbit_uuid} = tidbit ->
+               :discarded_unsaved_tidbit
+            other_tidbit ->
+               other_tidbit # make no changes to other TidBits...
+         end)
+         |> Enum.reject(& &1 == :discarded_unsaved_tidbit)
 
       new_radix_state = radix_state
       |> put_in([:story_river, :open_tidbits], updated_tidbits)
@@ -178,8 +177,9 @@ defmodule Memelex.Reducers.TidbitReducer do
       {:ok, new_radix_state}
    end
 
-   def process(radix_state, {:move_cursor, tidbit, section, delta}) when section in [:title, :body] do
-      {:ok, radix_state |> apply_mod(tidbit, {:move_cursor, section, delta})}
+   def process(radix_state, {:move_cursor, tidbit, section, delta})
+      when section in [:title, :body] do
+         {:ok, radix_state |> apply_mod(tidbit, {:move_cursor, section, delta})}
    end
 
    @doc """
