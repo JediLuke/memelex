@@ -2,6 +2,14 @@ defmodule Memelex.My.TODOs do
   alias Memelex.WikiServer
 
 
+  #TODO consider moving this into my private Memelex directory??
+
+  #TODO consider making TODos a map??
+
+  # A #TODO is any tidbit tagged with #TODO - there is always MetaData??
+
+  # We should support #TODOs as maps, lists, or text - basically anything can be a #TODO
+
   # This function should return some helpful advice for the user on how
   # to make a new TODO
   def new do

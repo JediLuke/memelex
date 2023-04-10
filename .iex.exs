@@ -8,3 +8,5 @@ alias Memelex.My.Wiki
 alias Memelex.My.TODOs
 alias Memelex.My.Passwords
 alias Memelex.TidBit
+
+import Enum

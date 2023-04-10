@@ -6,6 +6,7 @@ defmodule Memelex.Fluxus.Structs.RadixState do
     # {:ok, {_type, ibm_plex_mono_font_metrics}} = Scenic.Assets.Static.meta(:ibm_plex_mono)
 
     %{
+      name: Application.get_env(:memelex, :environment).name,
       active?: Application.get_env(:memelex, :active?), # If the Memex is disabled at the app config level, we need to ignore a lot of actions
       gui: %{
         viewport: nil,

@@ -65,15 +65,6 @@
 #         |> assign(first_render?: false)
 #     end
 
-#     def render_magnifying_glass_icon(graph, %{top_left: %{x: x, y: y}, dimensions: %{ width: w, height: h}}) do
-#        graph 
-#        |> Scenic.Primitives.circle(10,
-#                 stroke: {4, :grey},
-#                 translate: {x+17, y+17})
-#         |> Scenic.Primitives.line({{x+25, y+25}, {x+35, y+35}},
-#                 id: :sidebar_line,
-#                 stroke: {4, :grey})
-#     end
 
 #     # def render(%{assigns: %{graph: %Scenic.Graph{} = graph, frame: frame}} = scene) do
 #     #     new_graph = graph

@@ -85,15 +85,29 @@ defmodule Memelex.GUI.Components.CollectionsMantel do
      end
 
     def construct_collections_nav_tree do
-        all_tidbits = Memelex.My.Wiki.all()
+
+        #TODO note I don't think it can handle having more than one top-level right now....
+
         #TODO need to add indexes to each tidbit so we know what we clicked on (eventually)
+        all_tidbits = Memelex.My.Wiki.all()
         all_leaves = Enum.map(all_tidbits, fn t -> {:leaf, t.title, [], fn -> Memelex.My.Wiki.open(t) end} end)
 
-        [{:open_node, "All TidBits", [0], all_leaves}]
+        bepsi_tidbits = Memelex.My.Wiki.search(tagged: "bepsi")
+        bepsi_leaves = Enum.map(bepsi_tidbits, fn t -> {:leaf, t.title, [], fn -> Memelex.My.Wiki.open(t) end} end)
+
+        #TODO most recent
+
+        #TODO random selection
+
+        #TODO untagged
+
+        [
+            {:open_node, "all TidBits", [1], all_leaves},
+            {:open_node, "tagged: `bepsi`", [2], bepsi_leaves},
+        ]
     end
 
     def handle_info({:wiki_server, :memex_saved_to_disc}, scene) do
-        IO.puts "GOT MSG GOT MSG GOT MSG"
         # get child processes & cast update to SideNav
 
         new_tree = construct_collections_nav_tree()
@@ -134,21 +148,6 @@ defmodule Memelex.GUI.Components.CollectionsMantel do
     #     dir_tuples ++ file_tuples # directories get put at the top
     #  end
 
-    # def handle_event({:click, :open_random_tidbit_btn}, _from, scene) do
-    #     Flamelex.Fluxus.action({RootReducer, {:open_tidbit, :random}})
-    #     {:noreply, scene}
-    # end
-
-    # def handle_event({:click, :create_new_tidbit_btn}, _from, scene) do
-    #     Flamelex.Fluxus.action({RootReducer, :new_tidbit})
-    #     {:noreply, scene}
-    # end
-
-    # def handle_event({:value_changed, :text_pad, new_value}, _from, scene) do
-
-    #     {:noreply, scene}
-    # end
-    
 
     # def handle_info({:radix_state_change, %{memex: %{sidebar: new_sidebar_state}}}, %{assigns: %{state: current_state}} = scene)
     #     when current_state != new_sidebar_state do

@@ -61,19 +61,19 @@ defmodule Memelex.WikiServer do
     end
   end
 
-  # fetches exactly 1 TidBit
-  def handle_call({:find_tidbit, params}, _from, state) do
-    Utils.Search.one_tidbit(state.wiki, params)
-    |> case do
-      {:ok, %Memelex.TidBit{} = result} ->
-        {:reply, {:ok, result}, state}
-      {:ok, results} when is_list(results) and length(results) >= 1 ->
-        {:reply, {:error, "more than 1 TidBit found for this query"}, state}
-      otherwise ->
-        IO.inspect otherwise
-        {:reply, {:error, "unable to find TidBit for this search term"}, state}
-    end
-  end
+  # # fetches exactly 1 TidBit
+  # def handle_call({:find_tidbit, params}, _from, state) do
+  #   Utils.Search.one_tidbit(state.wiki, params)
+  #   |> case do
+  #     {:ok, %Memelex.TidBit{} = result} ->
+  #       {:reply, {:ok, result}, state}
+  #     {:ok, results} when is_list(results) and length(results) >= 1 ->
+  #       {:reply, {:error, "more than 1 TidBit found for this query"}, state}
+  #     otherwise ->
+  #       IO.inspect otherwise
+  #       {:reply, {:error, "unable to find TidBit for this search term"}, state}
+  #   end
+  # end
 
    # returns multiple tidbits, in a list (no tuple)
    def handle_call({:list_tidbits, params}, _from, state) do
@@ -86,26 +86,19 @@ defmodule Memelex.WikiServer do
       end
    end
 
-   def handle_call({:save_tidbit, tidbit}, _from, state) do
-      {:ok, saved_tidbit, new_wiki} =
-         WikiManagement.save_tidbit(state, tidbit)
+   def handle_call({:save_tidbit, %Memelex.TidBit{} = tidbit}, _from, state) do
+    {:ok, saved_tidbit, new_wiki} =
+        WikiManagement.save_tidbit(state, tidbit)
 
-         Memelex.Utils.PubSub.broadcast({:wiki_server, :memex_saved_to_disc})
-         #TODO broadcast update to wiki here
-      {:reply, {:ok, saved_tidbit}, %{state|wiki: new_wiki}}
-   end
+    {:reply, {:ok, saved_tidbit}, %{state|wiki: new_wiki}}
+  end
 
    def handle_call({:delete_tidbit, tidbit}, _from, state) do
-    Logger.warn "Not really deleting any tidbits..."
+    {:ok, new_wiki} =
+        WikiManagement.delete_tidbit(state, tidbit)
 
-    {:reply, :ok, state}
-    # {:ok, saved_tidbit, new_wiki} =
-    #    WikiManagement.save_tidbit(state, tidbit)
-
-    #    Memelex.Utils.PubSub.broadcast({:wiki_server, :memex_saved_to_disc})
-    #    #TODO broadcast update to wiki here
-    # {:reply, {:ok, saved_tidbit}, %{state|wiki: new_wiki}}
- end
+    {:reply, :deleted, %{state|wiki: new_wiki}}
+  end
 
   def handle_call({:update_tidbit, tidbit, %{add_tag: tag}}, _from, state) do
     {:ok, updated_tidbit, new_wiki} =
@@ -123,12 +116,7 @@ defmodule Memelex.WikiServer do
     end
   end
 
-  def handle_call({:delete_tidbit, %{uuid: uuid_to_be_deleted}}, _from, state) do
-    raise "cant delete until you stop writing from memory to disk! re-read, update - then refresh"
-    #new_wiki = state.wiki |> Enum.filter(& &1.uuid != uuid_to_be_deleted)
-    #wiki_file(state) |> Utils.FileIO.write_maplist(new_wiki)
-    #{:reply, :ok, %{state|wiki: new_wiki}}
-  end
+
 
   def handle_call(:whats_the_current_memex_directory?, _from, state) do
     {:reply, {:ok, state.memex_directory}, state}

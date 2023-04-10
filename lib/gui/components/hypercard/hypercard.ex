@@ -92,4 +92,9 @@ defmodule Memelex.GUI.Components.HyperCard do
       {:noreply, scene}
    end
 
+   def handle_info({:wiki_server, :memex_saved_to_disc}, scene) do
+      # get child processes & cast update to SideNav
+      {:noreply, scene}
+   end
+
 end

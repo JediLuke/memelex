@@ -66,7 +66,7 @@ defmodule Memelex.GUI.Components.StoryRiver do
 #       render_queue: [] = params.components, # we will go through this list very soon & render them...
 #       scroll: {0, 0}
 #     }
-      
+
       init_scene = scene
       |> assign(graph: init_graph)
       |> assign(frame: args.frame)
@@ -292,6 +292,12 @@ defmodule Memelex.GUI.Components.StoryRiver do
          {:noreply, new_scene}
    end
 
+   #NOTE: If `story_river_state` binds on both variables here, then they are the same, no state-change occured and we can ignore this update
+   def handle_info({:radix_state_change, %{story_river: story_river_state}}, %{assigns: %{state: story_river_state}} = scene) do
+      {:noreply, scene}
+   end
+
+
    def render(%{frame: frame, state: %{scroll: scroll} = _state}) do
       # This way the graph has a Group with the right name already, so
       # we can just use Scenic.Graph.add to add new HyperCards
@@ -315,10 +321,33 @@ defmodule Memelex.GUI.Components.StoryRiver do
       )
    end
 
+
    def handle_info({:wiki_server, :memex_saved_to_disc}, scene) do
-      # get child processes & cast update to SideNav
-  {:noreply, scene}
-  end
+      {:noreply, scene}
+   end
+
+   # def handle_info({:wiki_server, :memex_saved_to_disc}, scene) do
+   #    new_story_river_state = Memelex.Fluxus.RadixStore.get().story_river
+
+   #    next_state =
+   #       new_story_river_state
+   #       |> put_in([:open_tidbits], []) # start with no tidbits open, instead we load them into the render queue
+
+   #    new_graph = render(%{
+   #       frame: scene.assigns.frame,
+   #       state: next_state
+   #    })
+
+   #    new_scene = scene
+   #    |> assign(state: next_state)
+   #    #TODO we should render the open tidbits in the init state
+   #    |> assign(render_queue: new_story_river_state.open_tidbits) # used to buffer the rendering of flexible components (because they're flexible, so we can't render/position the next one until we know how tall the previous one is)
+   #    |> push_graph(new_graph)
+
+   #    GenServer.cast(self(), :render_next_component) # kick-start the rendering here, it will take first item in the queue & render it
+
+   #    {:noreply, new_scene}
+   # end
 
    def calc_hypercard_frame(%{assigns: %{
       frame: %Frame{coords: %{x: x, y: y}, dimens: %{width: w, height: h}},
@@ -440,10 +469,6 @@ end
 #             {:noreply, new_scene}
 #     end
 
-#     #NOTE: If `story_river_state` binds on both variables here, then they are the same, no state-change occured and we can ignore this update
-#     def handle_info({:radix_state_change, %{memex: %{story_river: story_river_state}}}, %{assigns: %{state: story_river_state}} = scene) do
-#         {:noreply, scene}
-#     end
 
 
 

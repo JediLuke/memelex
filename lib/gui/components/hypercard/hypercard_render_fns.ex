@@ -143,6 +143,90 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       )
    end
 
+
+
+
+
+#     def render_tags_box(graph, %{mode: :read_only, tidbit: tidbit, frame: hypercard_frame}) do
+# 		tags_box_frame =
+# 			Frame.new(pin: {@opts.margin, 140},
+# 					 size: {hypercard_frame.dimensions.width-(2*@opts.margin), 80})
+
+# 		graph
+# 		|> Scenic.Primitives.group(
+# 			fn graph ->
+# 				graph
+# 				|> Scenic.Primitives.rect(tags_box_frame.size, fill: :green)
+# 				|> Flamelex.GUI.Component.Layout.add_to_graph(%{
+# 					frame: tags_box_frame,
+# 					components: tags_list(tidbit),
+# 					layout: :inline_block
+# 				})
+# 			end,
+# 			translate: tags_box_frame.pin)
+# 	end
+
+# 	def render_tags_box(graph, %{mode: :edit, tidbit: tidbit, frame: hypercard_frame}) do
+# 		tags_box_frame =
+# 			Frame.new(pin: {@opts.margin, 140},
+# 					 size: {hypercard_frame.dimensions.width-(2*@opts.margin), 80})
+
+# 		graph
+# 		|> Scenic.Primitives.group(
+# 			fn graph ->
+# 				graph
+# 				|> Scenic.Primitives.rect(tags_box_frame.size, fill: :yellow)
+# 				|> Flamelex.GUI.Component.Layout.add_to_graph(%{
+# 						frame: tags_box_frame,
+# 						components: tags_list(tidbit),
+# 						layout: :inline_block
+# 				})
+# 			end,
+# 			translate: tags_box_frame.pin)
+# 	end
+
+
+# 	def tags_list(%{tags: tags}) do
+# 		tags_list([], tags)
+# 	end
+
+# 	def tags_list(acc, []), do: acc
+
+# 	def tags_list(acc, [tag|rest]) when is_bitstring(tag) do
+# 		tag_render_fn =
+# 			fn(graph, %{frame: frame}) ->
+				
+# 				{:flex_grow, %{min_width: tag_width}} = frame.dimensions.width #TODO calculate real width from text width
+
+# 				#TODO ok this needs to be it's own component, so it can call back & report it's own size
+# 				graph
+# 				|> Flamelex.GUI.Component.Layoutable.add_to_graph(%{
+# 					render_fn: fn(graph, %{frame: frame}) ->
+# 						graph
+# 						|> Scenic.Primitives.group( # render a single tag
+# 						fn graph ->
+# 							graph
+# 							|> Scenic.Primitives.rounded_rectangle({tag_width, frame.dimensions.height, 10}, fill: :yellow)
+# 							|> Scenic.Primitives.text(tag,
+# 								font: :ibm_plex_mono,
+# 								translate: {10, 15}, # text draws from bottom-left corner??
+# 								font_size: 14, #TODO get this from somewhere better
+# 								fill: :black)
+# 						end,
+# 						translate: frame.pin)
+# 					end
+# 				})
+# 			end
+
+# 		tags_list(acc ++ [tag_render_fn], rest)
+# 	end
+
+
+
+
+
+
+
    # 		#TODO here we need to pre-calculate the height of the TidBit
    # 		# body_height = calc_wrapped_text_height(%{frame: frame, text: data})
    # 		# this is a workaround because of flex_grow
@@ -306,3 +390,133 @@ defmodule Memelex.GUI.Components.HyperCard.Render do
       }
    end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 	def render_dateline(graph, tidbit) do
+# 		graph
+# 		|> Scenic.Primitives.text(
+# 				tidbit.created |> human_formatted_date(),
+# 					font: :ibm_plex_mono,
+# 					translate: {@opts.margin, 128},
+# 					font_size: 24,
+# 					fill: :dark_grey)
+# 	end
+
+# 	def render_text_pad(graph, %{mode: mode, tidbit: tidbit, frame: hypercard_frame}) do
+# 		graph
+# 		|> ScenicWidgets.TextPad.add_to_graph(%{
+# 				id: tidbit.uuid,
+# 				frame: calc_body_frame(hypercard_frame),
+# 				text: tidbit.data,
+# 				cursor: Map.get(tidbit, :cursor, 0),
+# 				mode: mode,
+# 				format_opts: %{
+# 					alignment: :left,
+# 					wrap_opts: {:wrap, :end_of_line},
+# 					show_line_num?: false
+# 				},
+# 				font: ibm_plex_mono(size: 24) #TODO use a better name like #heading_2 or something
+# 		})
+# 	end
+
+# 	def calc_body_frame(hypercard_frame) do
+# 		#REMINDER: Because we render this from within the group (which is
+# 		#		   already getting translated, we only need be concerned
+# 		#		   here with the _relative_ offset from the group. Or
+# 		#		   in other words, this is all referenced off the top-left
+# 		#		   corner of the HyperCard, not the top-left corner
+# 		#		   of the screen.
+# 		Frame.new(
+# 			pin: {@opts.margin, 225},
+# 			size: {hypercard_frame.dimensions.width-(2*@opts.margin), 270})
+# 	end
+
+# 	def show_unrenderable_box(graph, %{tidbit: tidbit, frame: hypercard_frame}) do
+# 		Logger.error "Unable to render TidBit: #{inspect tidbit}"
+# 		body_frame = calc_body_frame(hypercard_frame)
+# 		graph
+# 		|> Scenic.Primitives.rrect(
+# 			{body_frame.dimensions.width, body_frame.dimensions.height, 12},
+# 			fill: :red,
+# 			stroke: {2, :white},
+# 			scissor: body_frame.size,
+# 			translate: body_frame.pin
+# 		  )
+# 	end
+
+
+
+# 	# defp heading_font do
+# 	# 	# This is just the font details for the TidBit/HyperCard heading
+# 	# 	Flamelex.Fluxus.RadixStore.get().fonts.ibm_plex_mono
+# 	# 	|> Map.merge(%{size: 36})
+# 	# end
+
+# 	defp ibm_plex_mono(size: s) do
+# 		Flamelex.Fluxus.RadixStore.get().fonts.ibm_plex_mono
+# 		|> Map.merge(%{size: s})
+# 	end
+
+
+# 	#     @doc """
+# #     Calculates the render height of a bunch of text (after wrapping) for
+# #     a given frame (including margins!)
+# #     """
+# #     def calc_wrapped_text_height(%{frame: frame, text: unwrapped_text}) when is_bitstring(unwrapped_text) do
+
+# #         width = frame.dimensions.width
+# #         textbox_width = width-@margin.left-@margin.right
+
+# #         {:ok, metrics} = TruetypeMetrics.load("./assets/fonts/IBMPlexMono-Regular.ttf")
+# #         wrapped_text = FontMetrics.wrap(unwrapped_text, textbox_width, @font_size, metrics)
+
+# #         #NOTE: This tells us, how long the body will be - because in Scenic
+# #         #      we take the top-left corner as the origin, the bottom of
+# #         #      a bounding box is greater than the top. The total height
+# #         #      is the bottom minus the top.
+# #         {_left, top, _right, bottom} =
+# #             Scenic.Graph.build()
+# #             |> Scenic.Primitives.text(wrapped_text, font: :ibm_plex_mono, font_size: @font_size)
+# #             |> Scenic.Graph.bounds()
+        
+# #         body_height = (bottom-top)+@margin.top+@margin.bottom
+
+# #         if body_height <= @min_body_height do
+# #             @min_body_height
+# #         else
+# #             body_height
+# #         end
+# #     end
+
+# #     def calc_wrapped_text_height(_otherwise) do
+# #         @min_body_height
+# #     end
+
+
+# end

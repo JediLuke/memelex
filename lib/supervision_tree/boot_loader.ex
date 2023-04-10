@@ -26,6 +26,17 @@ defmodule Memelex.App.BootLoader do
       probe(env)
       {:noreply, state}
    end
+
+   def probe(%{name: "backups"}) do
+      stop_boot("""
+      You cannot create a Memex environment called `backups`.
+
+      This environment name is disallowed as it would cause a conflict
+      with the directory that Memelex uses to store backups.
+
+      Pick something else.
+      """)
+   end
  
    def probe(%{name: name, memex_directory: dir} = env)
       when is_bitstring(name) and is_bitstring(dir) do
@@ -93,7 +104,7 @@ defmodule Memelex.App.BootLoader do
       spawn(fn -> System.stop(1) end)
    end
  
-   # defp create_new_memex_environment() do
+   # def create_new_memex_environment() do
    #   Logger.debug "creating a new Memex environment..."
  
    #   ##TODO ideally I would like to get the User to input a name

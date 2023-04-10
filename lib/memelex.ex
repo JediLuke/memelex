@@ -1,6 +1,19 @@
 defmodule Memelex do
 
+    #TODO need to specify a buffer?? A TidBit??
     defdelegate edit, to: Memelex.My.Wiki
+
+    defdelegate find!, to: Memelex.My.Wiki
+    defdelegate find!(query), to: Memelex.My.Wiki
+
+    # defdelegate search_term(term), to: Memelex.My.Wiki
+    defdelegate search(search_term), to: Memelex.My.Wiki
+    defdelegate search(search_term, opts), to: Memelex.My.Wiki
+
+    defdelegate reload_modz, to: Memelex.Environment
+    # defdelegate search(tag: search_tags), to: Memelex.My.Wiki
+    # defdelegate search(tags: search_tags), to: Memelex.My.Wiki
+    # defdelegate search(tagged: search_tags), to: Memelex.My.Wiki
 end
 #   require Logger
 

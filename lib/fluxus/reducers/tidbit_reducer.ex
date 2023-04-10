@@ -1,17 +1,43 @@
 defmodule Memelex.Fluxus.Reducers.TidbitReducer do
    require Logger
-   alias Memelex.TidBit
+   alias Memelex.Fluxus.Reducers.TidbitReducer.Utils
 
 
-   def process(radix_state, {:edit_tidbit, %TidBit{} = tidbit, modification}) do
-      {:ok, radix_state |> apply_mod(tidbit, modification)}
+   # #NOTE - the use of :update -- (THIS IS THE FUTURE!!)
+   # instead of having all those individual calls, just keep the same functon & pattern match on the modification in modify/2
+   # def process(radix_state, {:update, tidbit, updates}) do
+   #    new_radix_state = radix_state |> update(tidbit, updates)
+   #    {:ok, new_radix_state}
+   # end
+   def process(radix_state, {:edit_tidbit, %Memelex.TidBit{} = tidbit, modification}) do
+      {:ok, radix_state |> Utils.apply_mod(tidbit, modification)}
    end
 
-   def process(radix_state, {:create_tidbit, %TidBit{} = new_tidbit}) do
+   def process(radix_state, {:update_tidbit, %Memelex.TidBit{} = t, modification}) do
+      # this one saves it in the WikiServer, so it's a proper update, not just an edit (which only occures in the RadixState memory)
+      modified_t = Memelex.TidBit.modify(t, modification)
+      process(radix_state, {:save_tidbit, modified_t})
+   end
+
+   #TODO here ok so we get a whole TidBit struct, it deserves to be saved when we create it. Even if we put it right back into edit mode...
+
+   # See we still need *some* way to distinguish because we need to know whether or not to open this TidBit up in the `OpenTidbits` (whether or not memex is the active app) and what mode to open it up in (edit or normal)
+   def process(radix_state, {act_of_creation, %Memelex.TidBit{} = new_tidbit})
+      when act_of_creation in [:add_tidbit, :new_tidbit] do
+
+      if act_of_creation == :add_tidbit do
+         {:ok, _saved_t} = GenServer.call(Memelex.WikiServer, {:save_tidbit, new_tidbit})
+      end
+
+      start_gui_mode = case act_of_creation do
+         :add_tidbit -> :normal
+         :new_tidbit -> :edit
+      end
+
       new_tidbit = new_tidbit
       |> Map.merge(%{
          gui: %{
-            mode: :edit,
+            mode: start_gui_mode,
             saved_content: nil,
             focus: :title,
             cursors: %{
@@ -47,12 +73,13 @@ defmodule Memelex.Fluxus.Reducers.TidbitReducer do
       :ignore
    end
 
+   #TODO does this mean always open a tidbit which exists on disk, which exists in WikiServer memory, or which exists in the GUI?>>?>?
    def process(radix_state, {:open_tidbit, t}) do
-      case fetch_tidbit(t) do
+      case Utils.fetch_tidbit(t) do
          nil ->
             {:error, "No such TidBit `#{t.title}` exists in the Memex."}
 
-         %TidBit{} = t ->
+         %Memelex.TidBit{} = t ->
             new_tidbit =
                Map.merge(t, %{
                   gui: %{
@@ -87,7 +114,7 @@ defmodule Memelex.Fluxus.Reducers.TidbitReducer do
          radix_state.story_river.open_tidbits
          |> Enum.map(fn
             %{uuid: ^t_uuid} = t ->
-               TidBit.modify(t, {:set_gui_mode, new_mode, focus: :title})
+               Memelex.TidBit.modify(t, {:set_gui_mode, new_mode, focus: :title})
 
             other_tidbit ->
                other_tidbit # make no changes to other TidBits...
@@ -135,10 +162,32 @@ defmodule Memelex.Fluxus.Reducers.TidbitReducer do
       {:ok, new_radix_state}
    end
 
-   def process(radix_state, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}) do
+   def process(radix_state, {:save_tidbit, %{tidbit_uuid: t_uuid}}) do
+      #TODO we implicitely assume if you're saving a tidbit with just the tidbit_uuid, and not the whole struct, then it must be an open tidbit - otherwise we have nothing to save anyway...
+      # however we should handle the case more gracefully than this pattern-match!
+      %Memelex.TidBit{} = t =
+         radix_state.story_river.open_tidbits
+         |> Utils.filter_find_tidbit(%{tidbit_uuid: t_uuid})
+
+      {:ok, new_t} = GenServer.call(Memelex.WikiServer, {:save_tidbit, t})
+
+      {:ok, radix_state |> Utils.apply_mod(new_t, {:gui, :mode, :normal})}
+   end
+   
+   def process(radix_state, {:save_tidbit, %Memelex.TidBit{} = t}) do
+      {:ok, new_t} = GenServer.call(Memelex.WikiServer, {:save_tidbit, t})
+      {:ok, radix_state |> Utils.apply_mod(new_t, {:gui, :mode, :normal})}
+   end
+
+   def process(radix_state, {:save_tidbit, %{tidbit_uuid: t_uuid}}) when is_bitstring(t_uuid) do
+      
+      # If this tidbit_uuid doesn't exist in RadixState memory, just raise
+      if not Enum.any?(radix_state.story_river.open_tidbits, & &1.uuid == t_uuid) do
+         raise "Could not save. No open TidBits with uuid: #{t_uuid}"
+      end
 
       updated_tidbits = radix_state.story_river.open_tidbits |> Enum.map(fn
-        %{uuid: ^tidbit_uuid} = tidbit ->
+        %{uuid: ^t_uuid} = tidbit ->
             {:ok, _saved_tidbit} = GenServer.call(Memelex.WikiServer, {:save_tidbit, tidbit})
             put_in(tidbit.gui.mode, :normal)
          other_tidbit ->
@@ -151,14 +200,14 @@ defmodule Memelex.Fluxus.Reducers.TidbitReducer do
       {:ok, new_radix_state}
    end
 
-   def process(radix_state, {:delete_tidbit, %{tidbit_uuid: tidbit_uuid}}) do
-
+   def process(radix_state, {:delete_tidbit, %{tidbit_uuid: t_uuid} = t_lookup}) do
+      
+      #TODO we should defer to the WikiServer here, since deleting involves the disk
       updated_tidbits =
          radix_state.story_river.open_tidbits
          |> Enum.map(fn
-            %{uuid: ^tidbit_uuid} = tidbit ->
-               :ok = GenServer.call(Memelex.WikiServer, {:delete_tidbit, tidbit})
-               :deleted
+            %{uuid: ^t_uuid} = tidbit ->
+               :deleted = GenServer.call(Memelex.WikiServer, {:delete_tidbit, tidbit})
             other_tidbit ->
                other_tidbit # make no changes to other TidBits...
          end)
@@ -172,112 +221,16 @@ defmodule Memelex.Fluxus.Reducers.TidbitReducer do
 
    def process(radix_state, {:move_tidbit_focus, tidbit, new_focus}) when new_focus in [:title, :body] do
       new_radix_state = radix_state
-      |> update(tidbit, focus: new_focus)
+      |> Utils.apply_mod(tidbit, focus: new_focus)
 
       {:ok, new_radix_state}
    end
 
    def process(radix_state, {:move_cursor, tidbit, section, delta})
       when section in [:title, :body] do
-         {:ok, radix_state |> apply_mod(tidbit, {:move_cursor, section, delta})}
-   end
-
-   @doc """
-   Updates the radix_state with specific modifications to a TidBit.
-   """
-   def apply_mod(radix_state, %TidBit{uuid: tidbit_uuid}, modification) do
-
-      # find the specific tidbit in the radix_state & apply the modification to it
-      new_tidbit_list =
-         radix_state.story_river.open_tidbits
-         |> Enum.map(fn
-               %{uuid: ^tidbit_uuid} = t ->
-                  TidBit.modify(t, modification)
-               other_tidbit ->
-                  other_tidbit # no edit
-            end)
-
-      put_in(radix_state.story_river.open_tidbits, new_tidbit_list)
-   end
-
-   # #NOTE - the use of :update -- (THIS IS THE FUTURE!!)
-   # # instead of having all those individual calls, just keep the same functon & pattern match on the modification in modify/2
-   # def process(radix_state, {:update, tidbit, updates}) do
-   #    new_radix_state = radix_state |> update(tidbit, updates)
-   #    {:ok, new_radix_state}
-   # end
-
-   #TODO refactor all below here, each function in this moduole needs to be process/2 or else move it into another module
-
-   defp fetch_tidbit(t) do
-      {:ok, full_tidbit} = GenServer.call(Memelex.WikiServer, {:fetch, t})
-      full_tidbit
-   end
-
-   def update(radix_state, %TidBit{uuid: tidbit_uuid}, modification) do
-      new_tidbit_list =
-         radix_state.story_river.open_tidbits
-         |> Enum.map(fn
-               %{uuid: ^tidbit_uuid} = t ->
-                  t |> modify(modification)
-               other_tidbit ->
-                  other_tidbit # no edit
-            end)
-
-      radix_state |> put_in([:story_river, :open_tidbits], new_tidbit_list)
-   end
-
-   def modify(%{gui: %{mode: :edit}} = tidbit, focus: new_focus) do
-      put_in(tidbit.gui.focus, new_focus)
-   end
-
-   def modify(tidbit, {:append_to_title, text}) do
-      title_cursor = tidbit.gui.cursors.title
-      put_in(tidbit.gui.cursors.title, move_cursor(title_cursor, {:columns_right, String.length(text)}))
-      |> Map.put(:title, tidbit.title <> text)
-   end
-
-   def modify(tidbit, {:append_to_body, text}) do
-      body_cursor = tidbit.gui.cursors.body
-      put_in(tidbit.gui.cursors.body, move_cursor(body_cursor, {:columns_right, String.length(text)}))
-      |> Map.put(:data, tidbit.data <> text)
-   end
-
-   def modify(tidbit, {:append_to_body, text}) do
-      body_cursor = tidbit.gui.cursors.body
-      put_in(tidbit.gui.cursors.body, move_cursor(body_cursor, {:columns_right, String.length(text)}))
-      |> Map.put(:data, tidbit.data <> text)
+         {:ok, radix_state |> Utils.apply_mod(tidbit, {:move_cursor, section, delta})}
    end
 
 
-
-   def modify(tidbit, {:insert_text, t, in: :body, at: {:cursor, c}}) do
-      {new_data, new_cursor} =
-         QuillEx.Tools.TextEdit.insert_text_at_cursor(%{
-            old_text: tidbit.data,
-            cursor: c,
-            text_2_insert: t
-         })
-
-      put_in(tidbit.gui.cursors.body, new_cursor)
-      |> Map.put(:data, new_data)
-   end
-
-   # def modify(tidbit, [move_cursor: {:body, delta}]) do
-   #    current_cursor = tidbit.gui.cursors.body
-      
-   #    new_cursor = QuillEx.Tools.TextEdit.move_cursor(tidbit.data, current_cursor, delta)
-
-   #    put_in(tidbit.gui.cursors.body, new_cursor)
-   # end
-
-   # def modify(tidbit, modification) do
-   #    Logger.error "Unrecognised modification: #{inspect modification}. No TidBit modification occured..."
-   #    tidbit
-   # end
-
-   defp move_cursor(cursor, args) do
-      ScenicWidgets.TextPad.CursorCaret.move_cursor(cursor, args)
-   end
 
 end

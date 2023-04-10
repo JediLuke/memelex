@@ -75,6 +75,16 @@ defmodule Memelex.Keymaps.UserInputHandler do
       :ok
    end
 
+   #    def handle(%{root: %{active_app: :memex}, memex: memex} = radix_state, @meta_lowercase_s) do
+#        case find_focussed_tidbit(memex) do
+#            [t = %{uuid: tidbit_uuid}] ->
+#                Flamelex.Fluxus.action({MemexReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
+#            nil ->
+#                Logger.warn "No open tidbits so we dont do anything"
+#                :ok
+#        end
+#    end
+
    def process(_radix_state, {:cursor_button, _details}) do
       :ignore
    end
@@ -219,15 +229,7 @@ end
 #        end
 #    end
 
-#    def handle(%{root: %{active_app: :memex}, memex: memex} = radix_state, @meta_lowercase_s) do
-#        case find_focussed_tidbit(memex) do
-#            [t = %{uuid: tidbit_uuid}] ->
-#                Flamelex.Fluxus.action({MemexReducer, {:save_tidbit, %{tidbit_uuid: tidbit_uuid}}})
-#            nil ->
-#                Logger.warn "No open tidbits so we dont do anything"
-#                :ok
-#        end
-#    end
+
 
 #    # def handle(%{root: %{active_app: :memex}, kommander: %{hidden?: true}} = radix_state, input) when input in @valid_text_input_characters do
 #    def handle(%{root: %{active_app: :memex}, memex: memex}, input) when input in @valid_text_input_characters do

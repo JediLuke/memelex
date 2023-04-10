@@ -83,20 +83,7 @@
 #         {{x, y+line_y+external_margin+dateline_height}, {x+w, y+line_y+external_margin+dateline_height}} # extra 50 is the external margin
 #     end
 
-#     def search_box_frame(%{top_left: %{x: x, y: y}, dimensions: %{width: w, height: h}}) do
 
-#         title_height = 60
-#         buffer_margin = 20
-#         dateline_height = 40 # from elsewhere in the app (lol)
-#         external_margin = 0
-#         line_y = 3*title_height + 2*buffer_margin
-
-#         dateline_height = 40 # from elsewhere in the app (lol)
-
-#         Frame.new(
-#             top_left: {x, y+line_y+external_margin},
-#             dimensions: {w, dateline_height})
-#     end
 
 #     def sidebar_tabs_frame(%{top_left: %{x: x, y: y}, dimensions: %{width: w, height: h}}) do
 #         title_height = 60

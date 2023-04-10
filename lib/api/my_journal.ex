@@ -24,22 +24,31 @@ defmodule Memelex.My.Journal do
     # need a clause which handles :open_tidbit getting called on a tidbit which
     # is already open, which shouldn't be such a hack really as we can just
     # explicitely ignore it
-    Memelex.Fluxus.action({Memelex.Fluxus.Reducers.TidbitReducer, {:open_tidbit, t}})
+    Flamelex.Fluxus.action({
+      Memelex.Fluxus.Reducers.TidbitReducer,
+      {:open_tidbit, t}
+    })
   end
 
-  # def yesterday do
-  #   {:ok, t} = find_relative_page_tidbit(-1) # negative values move backwards in time
-  #   open(t)
-  # end
+  def yesterday, do: open_relative_entry(-1)
 
-  # def tomorrow do
-  #   {:ok, t} = find_relative_page_tidbit(1) # one page forward in the journal
-  #   open(t)
-  # end
+  def tomorrow, do: open_relative_entry(1)
 
   def open_relative_entry(x) when is_integer(x) do
     {:ok, t} = find_relative_page_tidbit(x)
-    open(t)
+
+    # case to do
+    #   %{type: ["external", "textfile"], data: %{"filepath:" => filepath}} ->
+    #     Flamelex.API.Buffer.open()
+    #   _else ->
+    #     :ok
+    # end
+    
+    #TODO here is a problem, because we want to route the action through
+    Flamelex.Fluxus.action({
+      Memelex.Fluxus.Reducers.TidbitReducer,
+      {:open_tidbit, t}
+    })
   end
 
   @doc ~s(Open a Journal entry relative to today, e.g. open the entry for 3 days ago with `-3`.)
@@ -99,7 +108,6 @@ defmodule Memelex.My.Journal do
     "#{day_and_month}, #{year}"
   end
 
-
   @doc ~s(Return the filepath for the Journal entry for a specific DateTime. If it doesn't exist yet, then create it.)
   def journal_entry_filepath(datetime) do
 
@@ -132,9 +140,9 @@ defmodule Memelex.My.Journal do
 
   # this is here so that if we use something like Journal.find,
   # which returns an ok tuple, we can pipe right into Journal.open
-  def open({:ok, params}) do
-    open(params)
-  end
+  # def open({:ok, params}) do
+  #   open(params)
+  # end
 
   #NOTE: Filter on both atom and String keys here (why?)
   # def open(%{data: %{filepath: page}}) when is_bitstring(page) do

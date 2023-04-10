@@ -18,7 +18,7 @@ defmodule Memelex.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {Memelex.Application, []}
+      mod: {Memelex.App, []}
     ]
   end
 
@@ -34,6 +34,7 @@ defmodule Memelex.MixProject do
       {:scenic, path: "../scenic", override: true},
       {:scenic_driver_local, path: "../scenic_driver_local"},
       {:scenic_widget_contrib, path: "../scenic-widget-contrib"},
+      {:quillex, path: "../quillex"},
       {:jason, "~> 1.2"},
       {:elixir_uuid, "~> 1.2"},
       {:timex, "~> 3.7.5"},

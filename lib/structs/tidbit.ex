@@ -85,13 +85,13 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
     Memelex.My.Wiki.link(base_node, link_node)
   end
 
-  def tag(tidbit, tag) do
-    add_tag(tidbit, tag)
-  end
+  # def tag(tidbit, tag) do
+  #   add_tag(tidbit, tag)
+  # end
 
-  def add_tag(tidbit, tag) do
-    Memelex.My.Wiki.add_tag(tidbit, tag)
-  end
+  # def add_tag(tidbit, tag) do
+  #   Memelex.My.Wiki.add_tag(tidbit, tag)
+  # end
 
   @doc ~s(When we need to reference a TidBit e.g. a list of TidBits, use this function to get the reference.)
   def construct_reference(%{title: t, uuid: uuid}) do
@@ -129,6 +129,10 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
 
     put_in(tidbit.gui.cursors[focus], new_cursor)
     |> Map.put(tidbit_field, new_data)
+  end
+
+  def modify(%__MODULE__{gui: %{mode: _old_mode}} = tidbit, {:gui, :mode, new_gui_mode}) when new_gui_mode in [:edit, :normal] do
+    put_in(tidbit.gui.mode, new_gui_mode)
   end
 
   def modify(
@@ -209,6 +213,97 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
 
     put_in(tidbit.gui, new_tidbit_gui)
   end
+
+
+  def modify(%__MODULE__{gui: %{mode: :edit}} = tidbit, focus: new_focus) when new_focus in [:title, :body] do
+    put_in(tidbit.gui.focus, new_focus)
+  end
+
+  def modify(tidbit, {:add_tags, new_tag}) when is_bitstring(new_tag) do
+    %{tidbit|tags: tidbit.tags ++ [new_tag]}
+    |> IO.inspect(label: "NOW WITH TAGS")
+  end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#  def modify(tidbit, {:append_to_title, text}) do
+#     title_cursor = tidbit.gui.cursors.title
+#     put_in(tidbit.gui.cursors.title, move_cursor(title_cursor, {:columns_right, String.length(text)}))
+#     |> Map.put(:title, tidbit.title <> text)
+#  end
+
+#  def modify(tidbit, {:append_to_body, text}) do
+#     body_cursor = tidbit.gui.cursors.body
+#     put_in(tidbit.gui.cursors.body, move_cursor(body_cursor, {:columns_right, String.length(text)}))
+#     |> Map.put(:data, tidbit.data <> text)
+#  end
+
+#  def modify(tidbit, {:append_to_body, text}) do
+#     body_cursor = tidbit.gui.cursors.body
+#     put_in(tidbit.gui.cursors.body, move_cursor(body_cursor, {:columns_right, String.length(text)}))
+#     |> Map.put(:data, tidbit.data <> text)
+#  end
+
+
+
+#  def modify(tidbit, {:insert_text, t, in: :body, at: {:cursor, c}}) do
+#     {new_data, new_cursor} =
+#        QuillEx.Tools.TextEdit.insert_text_at_cursor(%{
+#           old_text: tidbit.data,
+#           cursor: c,
+#           text_2_insert: t
+#        })
+
+#     put_in(tidbit.gui.cursors.body, new_cursor)
+#     |> Map.put(:data, new_data)
+#  end
+
+
+
+
+
+
+
+
+
+
+
+
+   # def modify(tidbit, [move_cursor: {:body, delta}]) do
+   #    current_cursor = tidbit.gui.cursors.body
+      
+   #    new_cursor = QuillEx.Tools.TextEdit.move_cursor(tidbit.data, current_cursor, delta)
+
+   #    put_in(tidbit.gui.cursors.body, new_cursor)
+   # end
+
+   # def modify(tidbit, modification) do
+   #    Logger.error "Unrecognised modification: #{inspect modification}. No TidBit modification occured..."
+   #    tidbit
+   # end
+
+
+
+
+
+
+
+
+
+
+
+
 
   def modify(tidbit, modification) do
     Logger.error "Unrecognised modification: #{inspect modification}. No TidBit modification occured..."
