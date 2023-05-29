@@ -21,50 +21,60 @@ defmodule Memelex.My.Collections do
   - Computed (a function returns a list, could use tags or any other mechanism to compute the collection)
   - Recorded (a list of references)
 
-  
+
 
   In the Memex, we represent Collections as list of lists - they can be
   heirarchical trees, but they can't be cyclical - that would be a graph,
   which is something different from a Collection - the ordering of a
   collection is important.
-  
+
   """
   alias Memelex.WikiServer
-  alias Memelex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
-  @snippets_tag "my_snippets"
+  alias Memelex.Utils.TidBits
 
-  def form_new(params, tidbits) when is_list(tidbits) do
+  #   # note - collections, and tags, are the same thing! What we need is this https://tiddlywiki.com/#Order%20of%20Tagged%20Tiddlers
+
+  def new(params, tidbits), do: form(params, tidbits)
+
+  def form(params, tidbits) when is_list(tidbits) do
     params
-    |> TidBitUtils.sanitize_conveniences()
+    |> TidBits.ConstructorLogic.sanitize_conveniences()
     |> Map.merge(%{type: ["collection"], data: tidbits |> create_tidref_list()})
     |> Memelex.TidBit.construct()
     |> Memelex.My.Wiki.new()
   end
 
   # appends a tidbit to a collection
-  def add(%{uuid: uuid} = collection, tidbit) do
+  # def add(%{uuid: uuid} = collection, tidbit) do
 
-  end
+  # end
 
   def create_tidref_list(tidbits) do
     recursively_create_list(tidbits, [])
   end
 
+  # def fetch(collection) do
+
+  # end
+
   def recursively_create_list([], tidrefs), do: tidrefs
 
-  def recursively_create_list([tidbit|rest], tidrefs) do
+  def recursively_create_list([tidbit | rest], tidrefs) do
     recursively_create_list(rest, tidrefs ++ [tidbit |> Memelex.TidBit.construct_reference()])
   end
 
-  #NOTE - ok so, we could just do Collections as heirarchies of tags...
+  def list do
+    {:ok, tidbits} = Memelex.WikiServer |> GenServer.call(:list_all_tidbits)
 
+    tidbits
+    |> Enum.filter(fn tidbit -> tidbit.type |> Enum.member?("collection") end)
+  end
+
+  # NOTE - ok so, we could just do Collections as heirarchies of tags...
 
   # ok so - collections, are tags, are tidbits. When you open the TidBit
   # for a tag (all tags are TidBits) if you call My.Collections(tag) it
   # will attempt to list & order all the TidBits it finds:
 
-
-
   # https://tiddlywiki.narkive.com/mCC7sDrU/tw-tw5-question-about-tocs-trees-and-hierarchies-using-fields
-
 end

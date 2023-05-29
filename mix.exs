@@ -24,20 +24,16 @@ defmodule Memelex.MixProject do
 
   defp aliases do
     [
-      test: "test --no-start" #(2)
+      # test: "test --no-start" #(2)
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:scenic, path: "../scenic", override: true},
-      {:scenic_driver_local, path: "../scenic_driver_local"},
-      {:scenic_widget_contrib, path: "../scenic-widget-contrib"},
-      {:quillex, path: "../quillex"},
       {:jason, "~> 1.2"},
       {:elixir_uuid, "~> 1.2"},
-      {:timex, "~> 3.7.5"},
+      {:timex, "~> 3.7.5"}
     ]
   end
 
@@ -45,5 +41,4 @@ defmodule Memelex.MixProject do
     {sha_hash, 0} = System.cmd("git", ["rev-parse", "--short", "HEAD"])
     sha_hash |> String.trim()
   end
-
 end

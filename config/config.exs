@@ -1,18 +1,16 @@
 import Config
 
+# we need to start any applications we depend on in Config files
+# {:ok, _} = Application.ensure_all_started(:jason)
 
-config :elixir,
-  :time_zone_database, Tzdata.TimeZoneDatabase
+config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
 config :logger,
-  :console,
-     format: "[$level] $message $metadata\n" # I like to remove the newline, which is there by default
-
-config :scenic, :assets,
-  module: Memelex.App.Scenic.Assets
+       :console,
+       # no additional newline
+       format: "[$level] $message $metadata\n"
 
 config :memelex,
-  run_in_gui_mode?: false, # this way, we can still execute Memelex as a command line application... we can still use RadicStore / WikiManager, nothing should really change...
   text_editor_shell_command: "subl"
 
 import_config "#{config_env()}.exs"

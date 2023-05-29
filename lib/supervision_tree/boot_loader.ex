@@ -1,120 +1,139 @@
 defmodule Memelex.App.BootLoader do
-   use GenServer
-   require Logger
+  use GenServer
+  require Logger
 
-   def start_link(params)  do
-      GenServer.start_link(__MODULE__, params, name: __MODULE__)
-   end
-  
-   @impl GenServer
-   def init(env) do
-      Logger.info "#{__MODULE__} initializing..."
+  def start_link(params) do
+    GenServer.start_link(__MODULE__, params, name: __MODULE__)
+  end
 
-      #REMINDER: By default, Flamelex boots with the memelex config [active?: false]
-      case Application.get_env(:memelex, :active?) do
-         false ->
-            Logger.warn "Memelex booted into mode: `:inactive` -- not starting the Memelex."
-            {:ok, %{}}
-         _otherwise ->
-            {:ok, %{}, {:continue, :check_for_memex_environment}}
-      end
-   end
+  @impl GenServer
+  def init(_args) do
+    Logger.info("#{__MODULE__} initializing...")
 
-   @impl GenServer
-   def handle_continue(:check_for_memex_environment, state) do
-      env = Application.get_env(:memelex, :environment)
+    # REMINDER: By default, Flamelex boots with the memelex config [active?: false]
+    case Application.get_env(:memelex, :active?) do
+      false ->
+        Logger.warn("Memelex booted into mode: `:inactive` -- not starting the Memex.")
+        {:ok, %{}}
+
+      true ->
+        {:ok, %{}, {:continue, :check_for_memex_environment}}
+    end
+  end
+
+  @impl GenServer
+  def handle_continue(:check_for_memex_environment, state) do
+    case Application.get_env(:memelex, :environment) do
+      nil ->
+        Logger.warn("booting Memex with no environment configured...")
+        # TODO ask to start a new environment here??
+        {:noreply, state}
+
+      env = %{name: name} when is_bitstring(name) and name != "" ->
+        probe(env)
+        {:noreply, state}
+
+      otherwise ->
+        Logger.error(
+          "Memex environment is not configured correctly. Got environment: #{inspect(otherwise)}"
+        )
+
+        raise "Memex environment is not configured correctly"
+    end
+  end
+
+  # def search_for_environment do
+  #    case Application.get_env(:memelex, :environment) do
+
+  # case search_for_environment() do
+  #    {:found_memex_env, env} ->
+  #       probe(env)
+  #       {:noreply, state}
+  #    :no_env_found ->
+  #       # Logger.error "Unable to detect a Memex environment."
+  #       # {:noreply, state}
+  #       raise "Unable to detect a Memex environment."
+  # end
+  #    end
+  # end
+
+  def boot_env(env) do
+    # this function is mainly used when we boot into an inactive memex mode (like in development) and want to boot into a known memex
+    if Application.get_env(:memelex, :active?) do
+      raise "cannot boot into a new Memex environment as there is already an active Memex environment."
+    else
+      # just pick up where the bootloader left off...
       probe(env)
-      {:noreply, state}
-   end
+    end
+  end
 
-   def probe(%{name: "backups"}) do
+  @forbidden_memex_names ["backups", "test"]
+
+  def probe(%{name: forbidden_name}) when forbidden_name in @forbidden_memex_names do
+    stop_boot("""
+    You cannot create a Memex environment called `#{forbidden_name}`.
+
+    This environment name is disallowed.
+
+    Pick something else.
+    """)
+  end
+
+  def probe(%{name: name, memex_directory: dir} = env)
+      when is_bitstring(name) and
+             is_bitstring(dir) do
+    if File.dir?(dir) do
+      Memelex.Utils.EnviroTools.load_env(env)
+    else
+      # start_new_memex(env)
       stop_boot("""
-      You cannot create a Memex environment called `backups`.
+      The Memex directory defined in `config.exs` does not exist.
 
-      This environment name is disallowed as it would cause a conflict
-      with the directory that Memelex uses to store backups.
+      The directory #{inspect(dir)} does not exist. Please create it before running the Memelex. For example, on Linux:
 
-      Pick something else.
-      """)
-   end
- 
-   def probe(%{name: name, memex_directory: dir} = env)
-      when is_bitstring(name) and is_bitstring(dir) do
-         if File.dir?(dir) do
-            load_existing_memex(env)
-         else
-            # start_new_memex(env)
-            stop_boot("""
-            The Memex directory defined in `config.exs` does not exist.
+      mkdir -p #{dir}
 
-            The directory #{inspect dir} does not exist. Please create it before running the Memelex. For example, on Linux:
+      Note that the full path must be declared in the config.
 
-            mkdir -p #{dir}
-
-            Note that the full path must be declared in the config.
-
-            As we cannot continue, Memelex will now exit. Once you have performed the necessary config changes, simply restart the Memex and try again.
-            """)
-         end
-   end
- 
-   def probe(_invalid_env) do
-      #NOTE: This isn't the same msg as other scenarios, don't try to refactor `stop_boot/1` to include the msg...
-      stop_boot("""
-      Memelex has detected an invalid configuration.
-   
-      To run the Memex, you need to set up a valid Memex directory in the `config.exs` file. For example, if you wanted the name of the memex to be `JediLuke` (my GitHub name), you would have a config like this:
-
-      config :memelex,
-         environment: %{
-            name: "JediLuke",
-            memex_directory: "~/memex/JediLuke",
-            backups_directory: "~/memex/backups/JediLuke"
-         }
-   
       As we cannot continue, Memelex will now exit. Once you have performed the necessary config changes, simply restart the Memex and try again.
       """)
-   end
- 
-   # def start_new_memex(env) do
-   #    Logger.info "No `#{env.name}` Memex environment detected."
-   #    Logger.info "Creating new memex directory: #{env.memex_directory}..."
-   #    :ok = File.mkdir_p!(env.memex_directory)
-   #    # Memelex.Environment.start_link(env)
-   # end
- 
-   def load_existing_memex(env) do
-      Logger.info "Loading `#{env.name}` Memex..."
-      Memelex.Supervisor.start_link(env)
-   end
- 
-   def stop_boot(msg) do
-      Logger.error(msg)
+    end
+  end
 
-      # Exit in a separate process, so we don't get a warning in console
-      # about not having correct return for handle_continue/2
-      
-      #TODO if we're just running Memelex then fine, die here,
-      # but if we're running Flamelex we should just do:
+  def probe(_invalid_env) do
+    # NOTE: This isn't the same msg as other scenarios, don't try to refactor `stop_boot/1` to include the msg...
+    stop_boot("""
+    Memelex has detected an invalid configuration.
 
-      # Application.put_env(:memelex, :active?, false)
+    To run the Memex, you need to set up a valid Memex directory in the `config.exs` file. For example, if you wanted the name of the memex to be `JediLuke` (my GitHub name), you would have a config like this:
 
-      # and let Flamelex boot as normal (for this mode)
+    config :memelex,
+       environment: %{
+          name: "JediLuke",
+          memex_directory: "~/memex/JediLuke",
+          backups_directory: "~/memex/backups/JediLuke"
+       }
 
-      spawn(fn -> System.stop(1) end)
-   end
- 
-   # def create_new_memex_environment() do
-   #   Logger.debug "creating a new Memex environment..."
- 
-   #   ##TODO ideally I would like to get the User to input a name
-   #   #      here, unfortunately, that was tricker than I would like...
- 
-   #   new_env_map  = %{"name" => "my_env"}
-   #   new_env_file = "./environments/#{new_env_map["name"]}.memex-env"
- 
-   #   Utils.FileIO.writemap(new_env_file, new_env_map)
-   #   Logger.info "Loading `#{new_env_map["name"]}` environment..."
-   #   :ok
-   # end
+    Alternatively, you can place ` `~/.memex` file in your root directory, which is a JSON containing the same details as above.
+
+    The function `Memelex.initialize_environment()` will help you set up a brand new Memex.
+
+    As we cannot continue, Memelex will now exit. Once you have performed the necessary config changes, simply restart the Memex and try again.
+    """)
+  end
+
+  def stop_boot(msg) do
+    Logger.error(msg)
+
+    # TODO if we're just running Memelex then fine, die here,
+    # but if we're running Flamelex we should just do:
+
+    # Application.put_env(:memelex, :active?, false)
+
+    # and let Flamelex boot as normal (for this mode)
+
+    # Exit in a separate process, so we don't get a warning in console
+    # about not having correct return for handle_continue/2
+    spawn(fn -> System.stop(1) end)
+  end
 end

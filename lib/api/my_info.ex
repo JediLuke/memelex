@@ -1,4 +1,4 @@
-defmodule Memelex.My do
+defmodule Memelex.My do #TODO get each persons custom module to import these functions, e.g. JediLuke.current_time()
   require Logger
 
   #TODO so, this should be calling ExecMgr, which opens whoami.txt...

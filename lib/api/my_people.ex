@@ -1,9 +1,13 @@
 defmodule Memelex.My.People do
-  alias Memelex.WikiServer
 
-  def new(params) do
-    new_person = params |> Memelex.Person.construct()
-    Memelex.My.Wiki.new(params |> Map.merge(%{type: :person, data: new_person}))
+  def new(name) when is_bitstring(name) do
+    new_person = Memelex.Person.construct(name)
+
+    Memelex.My.Wiki.new(%{
+      title: name,
+      type: {:struct, Memelex.Person},
+      data: new_person
+    })
   end
 
   def add(params) do
@@ -13,7 +17,7 @@ defmodule Memelex.My.People do
   @doc ~s(Fetch the whole list of TODOs)
   def list do
     {:ok, tidbits} =
-      WikiManager |> GenServer.call(:list_all_tidbits)
+      Memelex.WikiServer |> GenServer.call(:list_all_tidbits)
 
     tidbits
     |> Enum.filter(fn(tidbit) -> tidbit.type |> Enum.member?("person") end)

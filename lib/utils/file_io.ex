@@ -31,7 +31,7 @@ defmodule Memelex.Utils.FileIO do
   def read_maplist(filepath) when is_bitstring(filepath) do
     case File.read(filepath) do
       {:ok, ""}   ->
-        [] # empty files == empty List
+        [] # empty file == empty List
       {:ok, data} ->
         data |> Jason.decode!() |> convert_to_structs()
       {:error, reason} ->
@@ -43,7 +43,7 @@ defmodule Memelex.Utils.FileIO do
   def read_maplist(filepath, [encrypted?: true, key: key]) when is_bitstring(filepath) do
     case File.read(filepath) do
       {:ok, ""} ->
-         [] # empty files == empty List
+         [] # empty file == empty List
       {:ok, data} ->
         case Memelex.Utils.Encryption.decrypt(data, key) do
           :error ->
@@ -94,45 +94,41 @@ defmodule Memelex.Utils.FileIO do
       :ok = File.close(file)
    end
 
-  # each entry in the maplist ought to have a Struct it can map to
   def convert_to_structs(list_of_maps) do
-    _a = Memex.TidBit
     list_of_maps
+    |> convert_whole_list_to_tidbit_structs()
+    |> structify_data()
+  end
+
+  def convert_whole_list_to_tidbit_structs(list) do
+    list
     |> Enum.map(
          fn(map_with_string_keys) ->
               struct_params = map_with_string_keys |> convert_to_keyword_list()
-              struct_module =
-                #TODO temporary workaround for migrating types of struct
-                if struct_params[:module] == "Elixir.Memex.TidBit" do
-                  Memelex.TidBit
-                else
-                  struct_params[:module] |> String.to_existing_atom()
-                end
-              Kernel.struct(struct_module, struct_params)
-         end 
+              Kernel.struct(Memelex.TidBit, struct_params)
+         end
          )
-    # |> Enum.map(
-    #      fn
-    #        %Memelex.TidBit{}  = t ->
-    #             # if the TidBit contains a Struct in it's data field, we want to reconstruct it here 
-    #             case t.data do
-    #               %{"module" => "Memex.Person"} ->
-    #                 Logger.warn "Found an old TidBit type..."
-    #                 new_data = Kernel.struct(Memelex.Person, t.data |> convert_to_keyword_list())
-    #                 t |> Map.merge(%{data: new_data})
-    #               %{"module" => mod} ->
-    #                 new_data = Kernel.struct(String.to_atom(mod), t.data |> convert_to_keyword_list())
-    #                 t |> Map.merge(%{data: new_data})
-    #               _else ->
-    #                   t
-    #             end
-          
-    #        #TODO probably should be ONLY TidBits, dont have multiple types of struct in the Memex
-    #        other ->
-    #             Logger.warn "FOund something weird in the memex: #{inspect other}"
-    #             other
-    #      end
-    #      )
+  end
+
+  def structify_data(list) do
+    list
+    |> Enum.map(fn
+      %Memelex.TidBit{type: ["struct", _struct_mod]} = t ->
+        structify_tidbit(t)
+      any_non_struct_tidbit ->
+        any_non_struct_tidbit # pass through unchanged
+    end)
+  end
+
+  def structify_tidbit(%Memelex.TidBit{type: ["struct", struct_mod_string], data: data} = t) when is_bitstring(struct_mod_string) do
+    struct_mod = String.to_existing_atom(struct_mod_string)
+    # all supported Memex structs must export this construct function...
+    if function_exported?(struct_mod, :construct, 1) do
+      structified_data = struct_mod.construct(data) # use constructor, to validate incoming data
+      %{t|type: ["struct", struct_mod], data: structified_data}
+    else
+      raise "unable to interpret struct TidBit for: #{inspect struct_mod}"
+    end
   end
 
   defp convert_to_keyword_list(map) do
@@ -140,3 +136,7 @@ defmodule Memelex.Utils.FileIO do
     map |> Keyword.new(fn {k,v} -> {String.to_atom(k),v} end) #TODO figure out how to use `to_existing_atom` here (maybe? Maybe not worth it? just don't blow up the atom table :D)
   end
 end
+
+
+
+env = %{ backups_directory: "/home/luke/memex/backups/Rob", memex_directory: "/home/luke/memex/Rob", my_modz: :Rob, name: "Rob" }

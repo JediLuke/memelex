@@ -15,19 +15,12 @@ defmodule Memelex.My.Journal do
 
   @doc ~s(Open today's Journal entry.)
   def today() do
-    {:ok, t = %{data: %{"filepath" => _journal_entry_filepath}}} =
+    {:ok, todays_journal_entry_tidbit = %{}} =
       Memelex.My.current_time() |> find_journal_entry()
 
-    # NOTE - it's possible that the above code, while executing, called
-    # Wiki.new, which will auto-magically cause it to be rendered in the
-    # memex & potentially even the Editor... for this reason we are going to
-    # need a clause which handles :open_tidbit getting called on a tidbit which
-    # is already open, which shouldn't be such a hack really as we can just
-    # explicitely ignore it
-    Flamelex.Fluxus.action({
-      Memelex.Fluxus.Reducers.TidbitReducer,
-      {:open_tidbit, t}
-    })
+    Memelex.Utils.EventWrapper.event({:open_text_snippet, todays_journal_entry_tidbit})
+
+    todays_journal_entry_tidbit
   end
 
   def yesterday, do: open_relative_entry(-1)
@@ -36,25 +29,13 @@ defmodule Memelex.My.Journal do
 
   def open_relative_entry(x) when is_integer(x) do
     {:ok, t} = find_relative_page_tidbit(x)
-
-    # case to do
-    #   %{type: ["external", "textfile"], data: %{"filepath:" => filepath}} ->
-    #     Flamelex.API.Buffer.open()
-    #   _else ->
-    #     :ok
-    # end
-    
-    #TODO here is a problem, because we want to route the action through
-    Flamelex.Fluxus.action({
-      Memelex.Fluxus.Reducers.TidbitReducer,
-      {:open_tidbit, t}
-    })
+    Memelex.Utils.EventWrapper.event({:open_text_snippet, t})
   end
 
   @doc ~s(Open a Journal entry relative to today, e.g. open the entry for 3 days ago with `-3`.)
   def find_relative_page_tidbit(x) when is_integer(x) do
     one_day = 24*60*60 # number of seconds in 24 hours
-    
+
     Memelex.My.current_time()
     |> DateTime.add(x*one_day, :second)
     |> find_journal_entry()
@@ -76,9 +57,10 @@ defmodule Memelex.My.Journal do
       end
 
     case tidbits |> Enum.filter(find_todays_journal_entry) do
-      [todays_tidbit = %Memelex.TidBit{}] ->
+      [todays_tidbit = %Memelex.TidBit{data: %{"filepath" => _journal_entry_filepath}}] ->
         {:ok, todays_tidbit}
-      _else ->
+      [] ->
+        # if we can't find an existing Journal entry then just make a new one
         new_journal_tidbit(datetime)
     end
   end
@@ -134,15 +116,9 @@ defmodule Memelex.My.Journal do
       IO.binwrite(file, journal_page_title(datetime) <> "\n\n")
       File.close(file)
     end
-      
+
     journal_entry_file
   end
-
-  # this is here so that if we use something like Journal.find,
-  # which returns an ok tuple, we can pipe right into Journal.open
-  # def open({:ok, params}) do
-  #   open(params)
-  # end
 
   #NOTE: Filter on both atom and String keys here (why?)
   # def open(%{data: %{filepath: page}}) when is_bitstring(page) do
