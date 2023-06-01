@@ -9,7 +9,6 @@ defmodule Memelex.My.Wiki do
   alias Memelex.Fluxus.Structs.RadixState
   alias Memelex.Fluxus.Reducers.TidbitReducer
 
-
   # def add(args) when is_map(args) do
   #   %Memelex.TidBit{} = t =
   #     # |> TidBiztUtils.sanitize_conveniences()
@@ -45,7 +44,6 @@ defmodule Memelex.My.Wiki do
     # Memelex.Fluxus.action({TidbitReducer, {:edit_tidbit, t, modification}})
   end
 
-
   # def update(%Memelex.TidBit{} = tidbit, updates) do
   #   #TODO this might actually be a good idea, serialize this operation inside a GenServer??
   #   # Memelex.WikiServer |> GenServer.call({:update_tidbit, tidbit_being_updated, updates})
@@ -58,10 +56,9 @@ defmodule Memelex.My.Wiki do
   #   })
   # end
 
-
   def close(tidbit) do
-    # radix_state = Memelex.Fluxus.RadixStore.get()
-    IO.puts "HER HER NEXT WE NEED TO CLOSE TIDBITS"
+    # radix_state = Flamelex.Fluxus.MemexStore.get()
+    IO.puts("HER HER NEXT WE NEED TO CLOSE TIDBITS")
   end
 
   # def new(param_one, param_two) do
@@ -76,15 +73,14 @@ defmodule Memelex.My.Wiki do
   #   |> __MODULE__.new_tidbit()
   # end
 
-  #TODO there's a bug making new TidBits
+  # TODO there's a bug making new TidBits
   #     they get saved with a ~U[2021-11-09 02:45:44.567300Z] as "created",
   #     it needs to be a saved string timestamp
   # def new_tidbit(%Memelex.TidBit{} = t) do
   #   Memelex.WikiServer |> GenServer.call({:new_tidbit, t})
   # end
 
-
-  #TODO TEMPORARILY - for the DEMO - I'm putting this here, but it should be deleted
+  # TODO TEMPORARILY - for the DEMO - I'm putting this here, but it should be deleted
   # def new_tidbit(p) do
   #   new(p)
   # end
@@ -108,7 +104,7 @@ defmodule Memelex.My.Wiki do
   end
 
   def home do
-    #TODO we can throw an event here & make it a convenience function - but we're not implementing this...
+    # TODO we can throw an event here & make it a convenience function - but we're not implementing this...
     raise "this returns all the Tidbits on the home carousel"
   end
 
@@ -133,7 +129,7 @@ defmodule Memelex.My.Wiki do
 
     GenServer.call(WikiServer, {:save_tidbit, t})
 
-    #TODO here we want to broadcast an event - saving this TidBit - on the Memelex
+    # TODO here we want to broadcast an event - saving this TidBit - on the Memelex
     # channel of the event bus - this will work in Flamelex, when we run as pure Memelex
     # we may need to route around this somehow or whatever.. there will be a way
   end
@@ -175,13 +171,14 @@ defmodule Memelex.My.Wiki do
   #   tidbits |> Enum.filter(&Memelex.Utils.Search.typed_and_tagged?(&1, params))
   # end
 
-  #TODO `find` always tried to get exactly one tidbit returned
+  # TODO `find` always tried to get exactly one tidbit returned
 
   def find(%{tidbit_uuid: t_uuid}) when is_bitstring(t_uuid) do
-    case Enum.find(all(), :not_found, & &1.uuid == t_uuid) do
+    case Enum.find(all(), :not_found, &(&1.uuid == t_uuid)) do
       :not_found ->
-        Logger.error "Could not find a TidBit with uuid: #{t_uuid}"
+        Logger.error("Could not find a TidBit with uuid: #{t_uuid}")
         nil
+
       %Memelex.TidBit{} = tidbit ->
         tidbit
     end
@@ -192,34 +189,33 @@ defmodule Memelex.My.Wiki do
   end
 
   def find!(%{tidbit_uuid: t_uuid}) when is_bitstring(t_uuid) do
-
   end
 
   def find!(t_title) when is_bitstring(t_title) do
-    case Enum.find(all(), :not_found, & &1.title == t_title) do
+    case Enum.find(all(), :not_found, &(&1.title == t_title)) do
       :not_found ->
         raise "Could not find a TidBit with title: #{t_title}"
+
       %Memelex.TidBit{} = tidbit ->
         tidbit
     end
   end
+
   %{}
 
   def update([%Memelex.TidBit{type: ["text"], data: body} = tidbit], _updates = %{append: note})
-    when is_bitstring(body) and is_bitstring(note) do
+      when is_bitstring(body) and is_bitstring(note) do
+    now =
+      Memelex.My.current_time()
+      |> Memelex.Utils.StringifyDateTimes.format("XXmonYY-HH:mm")
 
-      now =
-        Memelex.My.current_time()
-        |> Memelex.Utils.StringifyDateTimes.format("XXmonYY-HH:mm")
-
-      new_body =
-        body <> ~s|\n
+    new_body = body <> ~s|\n
           \n
           Addendum ~ #{now} : #{note}
           |
 
-      new_tidbit = %{tidbit|data: new_body}
-      save(new_tidbit)
+    new_tidbit = %{tidbit | data: new_body}
+    save(new_tidbit)
   end
 
   # `search` can return multiple tidbits
@@ -239,7 +235,7 @@ defmodule Memelex.My.Wiki do
   #   tidbit
   # end
 
-  #TODO do a more intricate search & ranking algorithm in the future, but for now just look through the titles
+  # TODO do a more intricate search & ranking algorithm in the future, but for now just look through the titles
   # In the future look for tags, & look in the content
   def search(tag: search_tag), do: search(tagged: search_tag)
   def search(tags: search_tag), do: search(tagged: search_tag)
@@ -258,9 +254,8 @@ defmodule Memelex.My.Wiki do
 
     if tidbits_with_a_title_containing_the_keyword == [] do
       # look a bit wider
-      Memelex.Utils.Search.title_search(tidbits, search_term)
-       ++
-      Memelex.Utils.Search.data_search(tidbits, search_term)
+      Memelex.Utils.Search.title_search(tidbits, search_term) ++
+        Memelex.Utils.Search.data_search(tidbits, search_term)
     else
       tidbits_with_a_title_containing_the_keyword
     end
@@ -269,11 +264,9 @@ defmodule Memelex.My.Wiki do
   def search(generic: search_term) do
     {:ok, tidbits} = Memelex.WikiServer |> GenServer.call(:list_all_tidbits)
 
-    similar_title_tidbits =
-      Memelex.Utils.Search.title_search(tidbits, search_term)
+    similar_title_tidbits = Memelex.Utils.Search.title_search(tidbits, search_term)
 
-    similar_data_tidbits =
-      Memelex.Utils.Search.data_search(tidbits, search_term)
+    similar_data_tidbits = Memelex.Utils.Search.data_search(tidbits, search_term)
 
     similar_title_tidbits ++ similar_data_tidbits
   end
@@ -287,8 +280,6 @@ defmodule Memelex.My.Wiki do
     search(generic: search_term)
   end
 
-
-
   # def open(params) do
   #   find(params) |> Memelex.Utils.ToolBag.open_external_textfile()
   # end
@@ -301,7 +292,7 @@ defmodule Memelex.My.Wiki do
   def tag(%Memelex.TidBit{} = t, new_tags) do
     # add_tag(tidbit, tag)
 
-    #TODO should we put this tidbit into edit mode, considering we aren't saving it???
+    # TODO should we put this tidbit into edit mode, considering we aren't saving it???
 
     # we can't call edit & get back a tidbit, so we cant pass this tidbit into save
     # we can't call save after the fact, because then we will pass in the old tidbit & it wont save
@@ -313,22 +304,31 @@ defmodule Memelex.My.Wiki do
     # Memelex.Fluxus.action({TidbitReducer, {:update_tidbit, t, {:add_tags, new_tags}}})
   end
 
-  #TODO I think this was created just to make it unique, but then it still adds clutter to list of functions so now I say remove it - it's a style change
+  # TODO I think this was created just to make it unique, but then it still adds clutter to list of functions so now I say remove it - it's a style change
   # def add_tag(tidbit, tag) when is_bitstring(tag) do
   #   edit(tidbit, %{add_tag: tag})
   # end
 
+  def open(%Memelex.TidBit{} = t) do
+    # this is inside Memelex, and `open` only has any effect in GUI mode, so fire an event
+    Memelex.Utils.EventWrapper.event({:open_tidbit, t})
+  end
+
   @doc ~s(Create a link between two TidBits.)
   def link(base_node, link_node) do
-
     # links/backlinks are just saved lists of references to other TidBits
     # so first, we simply compute what those new lists will be
     new_base_node_links = base_node.links ++ [link_node |> Memelex.TidBit.construct_reference()]
-    new_link_node_bases = link_node.backlinks ++ [base_node |> Memelex.TidBit.construct_reference()]
+
+    new_link_node_bases =
+      link_node.backlinks ++ [base_node |> Memelex.TidBit.construct_reference()]
 
     # then we update each seperately - with the correct list of course!!
-    Memelex.WikiServer |> GenServer.call({:update_tidbit, base_node, %{links: new_base_node_links}})
-    Memelex.WikiServer |> GenServer.call({:update_tidbit, link_node, %{backlinks: new_link_node_bases}})
+    Memelex.WikiServer
+    |> GenServer.call({:update_tidbit, base_node, %{links: new_base_node_links}})
+
+    Memelex.WikiServer
+    |> GenServer.call({:update_tidbit, link_node, %{backlinks: new_link_node_bases}})
 
     :ok
   end

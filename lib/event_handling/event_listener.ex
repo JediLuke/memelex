@@ -33,7 +33,8 @@ defmodule Memelex.EventListener do
   # we may not want to react to all events, especially ones which may be primarily
   # there to send up to Flamelex when running embedded within that application
   @ignored_events [
-    :loaded_memex
+    :loaded_memex,
+    :open_tidbit
   ]
 
   def do_process({ignored_event, _data}) when ignored_event in @ignored_events do
