@@ -31,9 +31,11 @@ defmodule Memelex.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:jason, "~> 1.2"},
+      {:jason, "~> 1.4"},
       {:elixir_uuid, "~> 1.2"},
-      {:timex, "~> 3.7.5"}
+      {:timex, "~> 3.7.5"},
+      {:event_bus, "~> 1.7.0"},
+      {:openai, "~> 0.5.2"}
     ]
   end
 
