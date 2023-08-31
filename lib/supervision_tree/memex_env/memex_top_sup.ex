@@ -10,7 +10,9 @@ defmodule Memelex.Environment.TopSupervisor do
   @impl true
   def init(memex_env) do
     children = [
+      # TODO don't directly name this TaskSup, we want to be able to start multiple environments at the same time...
       {Task.Supervisor, name: Memelex.Environment.TaskSupervisor},
+      # Memelex.MiddleSupervisor,
       {Memelex.Environment, memex_env}
     ]
 

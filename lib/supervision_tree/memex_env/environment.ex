@@ -46,14 +46,14 @@ defmodule Memelex.Environment do
   # end
 
   @impl GenServer
-  def handle_cast(:reload_modz, %{name: memex_name} = memex_env) do
+  def handle_cast(:reload_modz, %{name: _memex_name} = memex_env) do
     # TODO reload all custom agents here aswell
 
     modz_file = my_modz_filepath(memex_env)
 
     if File.exists?(modz_file) do
       Logger.info("loading my_modz file... #{inspect(modz_file)}")
-      task = reload_modz_file(modz_file)
+      task = reload_modz_file(memex_env, modz_file)
       {:noreply, memex_env |> Map.merge(%{async_task_ref: task.ref})}
     else
       Logger.warn("No Customizations found for this environment...")
@@ -76,6 +76,9 @@ defmodule Memelex.Environment do
       %{state | async_task_ref: nil}
       |> Map.put(:env_module, env_module)
 
+    # TODO fire an event saying we reloaded the memex modz file
+    Memelex.Utils.EventWrapper.event({:reloaded_my_modz, new_state})
+
     {:noreply, new_state}
   end
 
@@ -86,7 +89,9 @@ defmodule Memelex.Environment do
 
   def load_memex_from_disk(memex_env) do
     with :ok <- build_environment(memex_env),
-         {:ok, _wiki_pid} <- Memelex.WikiServer.start_link(memex_env),
+         # TODO here, we should do better, start this under a proper supervisor!
+         #  {:ok, _wiki_pid} <- Memelex.WikiServer.start_link(memex_env),
+         :environment_loading_complete <- load_environment_into_memory(memex_env),
          # Memelex.Env.PasswordManager.start_link(memex_env)
          # TODO check for backups directory, look in memex for backups records
          #  :ok <- GenServer.cast(self(), :check_backups),
@@ -102,10 +107,29 @@ defmodule Memelex.Environment do
     :ok
   end
 
+  def load_environment_into_memory(memex_env) do
+    # TODO figure out the names/process registry or whatever, so we can start the wiki server under a supervisor
+    # {:ok, _pid} = Memelex.Environment.MiddleSupervisor.start_link(memex_env)
+    # TODO here start an intermediate, middle supervisor, and start the wiki server under that
+    {:ok, _wiki_pid} = Memelex.WikiServer.start_link(memex_env)
+    # {:ok, _wiki_pid} <- Memelex.MoneyPenny.start_link(memex_env)
+    {:ok, _wiki_pid} = Memelex.AgentHandler.start_link(memex_env)
+
+    :environment_loading_complete
+  end
+
   # def new_modz_file(env_name) do
   #   new_my_modz = Memelex.Utils.GenerateMyModz.new(%{name: env_name})
   #   Memelex.Utils.FileIO.write(my_modz_file(), new_my_modz)
   # end
+
+  def state do
+    Memelex.Utils.EnviroTools.environment_details().name
+    |> Memelex.Utils.EnviroTools.environment_details()
+
+    # find_memex_pid!()
+    # |> GenServer.call(:get_state)
+  end
 
   def reload_modz do
     Memelex.Utils.EnviroTools.environment_details()
@@ -140,6 +164,13 @@ defmodule Memelex.Environment do
     dir <> "/my_modz.ex"
   end
 
+  # TODO watch my_modz and if it gets saved, automatically reload it
+  # - make it configurable though, and add a way of doing it manually
+
+  def my_modz_filepath(_memex_env) do
+    nil
+  end
+
   # def handle_cast(:on_boot, memex_env) do
   #    # #TODO check if this function is exported, and only run it if it is
   #    # case Memelex.My.Modz.on_boot(memex_env) do #NOTE: This module is/must be defined in the `my_customizations.ex` file, which is what we're reloading
@@ -157,7 +188,7 @@ defmodule Memelex.Environment do
   #    {:noreply, memex_env}
   # end
 
-  def reload_modz_file(modz_file) when is_binary(modz_file) do
+  def reload_modz_file(_memex_env, modz_file) when is_binary(modz_file) do
     # reload the modz_file in a Task, so that it doesn't bring down this part of the Sup tree...
     Task.Supervisor.async_nolink(
       Memelex.Environment.TaskSupervisor,

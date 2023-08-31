@@ -25,7 +25,10 @@ defmodule Memelex.App.BootLoader do
   def handle_continue(:check_for_memex_environment, state) do
     case Application.get_env(:memelex, :environment) do
       nil ->
-        Logger.warn("booting Memex with no environment configured...")
+        Logger.warn(
+          "booting Memex with no environment configured...\n\nConsider using `Memelex.load_env/1` to load a Memex environment."
+        )
+
         # TODO ask to start a new environment here??
         {:noreply, state}
 

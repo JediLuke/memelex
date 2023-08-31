@@ -30,8 +30,10 @@ defmodule Memelex.Utils.EnviroTools do
     Application.get_env(:memelex, :environment)
   end
 
+  # Registry.lookup(Memelex.EnviroRegistry, {Memelex.Environment, "JediLuke"})
+
   def environment_details(memex_name) when is_binary(memex_name) do
-    case Registry.lookup(Memelex.EnviroRegistry, memex_name) do
+    case Registry.lookup(Memelex.EnviroRegistry, {Memelex.Environment, memex_name}) do
       [{pid, _value}] when is_pid(pid) ->
         case GenServer.call(pid, :get_environment_details, 5000) do
           {:ok, memex_env} ->
@@ -119,8 +121,8 @@ defmodule Memelex.Utils.EnviroTools do
 
   def load_env(
         %{
-          name: env_name,
-          memex_directory: memex_env_directory
+          name: env_name
+          # memex_directory: memex_env_directory
         } = memex_env
       )
       when is_bitstring(env_name) do
@@ -130,6 +132,7 @@ defmodule Memelex.Utils.EnviroTools do
     Application.put_env(:memelex, :environment, memex_env)
 
     # push an event so other parts of the application can react to booting into the new Memex environment
+    # Memelex.Utils.EventWrapper.event({:starting_mexex, memex_env})
     Memelex.Utils.EventWrapper.event({:loaded_memex, memex_env})
 
     {:ok, _pid} = Memelex.App.EnvironmentSupervisor.start_env(memex_env)
