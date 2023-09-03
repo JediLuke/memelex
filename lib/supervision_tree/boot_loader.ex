@@ -23,7 +23,7 @@ defmodule Memelex.App.BootLoader do
 
   @impl GenServer
   def handle_continue(:check_for_memex_environment, state) do
-    case Application.get_env(:memelex, :environment) do
+    case Memelex.Environment.get_environment() do
       nil ->
         Logger.warn(
           "booting Memex with no environment configured...\n\nConsider using `Memelex.load_env/1` to load a Memex environment."
