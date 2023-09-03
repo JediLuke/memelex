@@ -34,7 +34,8 @@ defmodule Memelex.EventListener do
   # there to send up to Flamelex when running embedded within that application
   @ignored_events [
     :loaded_memex,
-    :open_tidbit
+    :open_tidbit,
+    :reloaded_my_modz
   ]
 
   def do_process({ignored_event, _data}) when ignored_event in @ignored_events do
