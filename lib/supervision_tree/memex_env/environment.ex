@@ -8,6 +8,14 @@ defmodule Memelex.Environment do
     )
   end
 
+  def get_environment do
+    Application.get_env(:memelex, :environment)
+  end
+
+  # def get_environment(name) do
+  #   GenServer.call({:via, Registry, {Memelex.EnviroRegistry, {__MODULE__, name}}}, :your_call_message)
+  # end
+
   @impl GenServer
   def init(
         %{
@@ -63,7 +71,7 @@ defmodule Memelex.Environment do
 
   # The task completed successfully - note all the same-name variable matching in this header
   def handle_info(
-        {ref, {:reloaded_modz_file, [env_module | _rest]}},
+        {ref, {:reloaded_modz_file, [env_modz_module | _rest]}},
         %{name: env_name, async_task_ref: ref} = state
       ) do
     Logger.info("Successfully reloaded my_modz!")
@@ -71,10 +79,10 @@ defmodule Memelex.Environment do
     # We don't care about the soon-incoming DOWN message now, so let's demonitor and flush it
     Process.demonitor(ref, [:flush])
 
-    # TODO ensure that env_name as a string, is same as env_module, and probably save env_module here...
+    # TODO ensure that env_name as a string, is same as env_modz_module, and probably save env_modz_module here...
     new_state =
       %{state | async_task_ref: nil}
-      |> Map.put(:env_module, env_module)
+      |> Map.put(:env_modz_module, env_modz_module)
 
     # TODO fire an event saying we reloaded the memex modz file
     Memelex.Utils.EventWrapper.event({:reloaded_my_modz, new_state})
@@ -101,6 +109,8 @@ defmodule Memelex.Environment do
   end
 
   def build_environment(%{memex_directory: dir}) do
+    # create directories if they don't exist
+    :ok = File.mkdir_p(dir <> "/agents")
     :ok = File.mkdir_p(dir <> "/images")
     :ok = File.mkdir_p(dir <> "/docs")
     :ok = File.mkdir_p(dir <> "/textfiles")
@@ -123,13 +133,18 @@ defmodule Memelex.Environment do
   #   Memelex.Utils.FileIO.write(my_modz_file(), new_my_modz)
   # end
 
-  def state do
-    Memelex.Utils.EnviroTools.environment_details().name
-    |> Memelex.Utils.EnviroTools.environment_details()
+  # def state do
+  #   Memelex.Utils.EnviroTools.environment_details().name
+  #   |> Memelex.Utils.EnviroTools.environment_details()
 
-    # find_memex_pid!()
-    # |> GenServer.call(:get_state)
-  end
+  #   # find_memex_pid!()
+  #   # |> GenServer.call(:get_state)
+  # end
+
+  # def load_system_agents do
+  #   Memelex.Utils.EnviroTools.environment_details()
+  #   |> load_system_agents()
+  # end
 
   def reload_modz do
     Memelex.Utils.EnviroTools.environment_details()

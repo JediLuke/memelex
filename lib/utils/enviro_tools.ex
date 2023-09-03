@@ -4,6 +4,8 @@ defmodule Memelex.Utils.EnviroTools do
   """
   require Logger
 
+  alias Memelex.Lib.Structs.MemexConcepts.MemexEnv
+
   def initialize_new_environment do
     Logger.info("creating a new Memex environment...")
 
@@ -36,7 +38,7 @@ defmodule Memelex.Utils.EnviroTools do
     case Registry.lookup(Memelex.EnviroRegistry, {Memelex.Environment, memex_name}) do
       [{pid, _value}] when is_pid(pid) ->
         case GenServer.call(pid, :get_environment_details, 5000) do
-          {:ok, memex_env} ->
+          {:ok, %MemexEnv{} = memex_env} ->
             memex_env
 
           {:error, reason} ->
@@ -116,17 +118,24 @@ defmodule Memelex.Utils.EnviroTools do
 
   def load_env(%{dir: memex_env_directory}) do
     name = get_last_directory_part(memex_env_directory)
-    load_env(%{name: name, memex_directory: memex_env_directory})
+
+    memex_env =
+      Memelex.Lib.Structs.MemexConcepts.MemexEnv.new(%{
+        name: name,
+        memex_directory: memex_env_directory
+      })
+
+    load_env(memex_env)
   end
 
   def load_env(
-        %{
+        %Memelex.Lib.Structs.MemexConcepts.MemexEnv{
           name: env_name
           # memex_directory: memex_env_directory
         } = memex_env
       )
       when is_bitstring(env_name) do
-    Logger.info("Loading `#{memex_env[:name] || "unnamed"}` Memex...")
+    Logger.info("Loading `#{memex_env.name || "unnamed"}` Memex...")
 
     # update the app config so we have the details of the current memex loaded
     Application.put_env(:memelex, :environment, memex_env)
