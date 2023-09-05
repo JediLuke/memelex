@@ -132,9 +132,9 @@ defmodule Memelex.Utils.FileIO do
       String.to_existing_atom(struct_mod_string)
       |> Code.ensure_loaded()
 
-    if function_exported?(struct_mod, :construct, 1) do
+    if function_exported?(struct_mod, :new, 1) do
       # use constructor, to validate incoming data
-      structified_data = struct_mod.construct(data)
+      structified_data = struct_mod.new(data)
 
       if not is_struct(structified_data) do
         raise "structified data is not a struct: #{inspect(structified_data)}"

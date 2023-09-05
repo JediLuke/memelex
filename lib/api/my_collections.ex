@@ -40,7 +40,7 @@ defmodule Memelex.My.Collections do
     params
     |> TidBits.ConstructorLogic.sanitize_conveniences()
     |> Map.merge(%{type: ["collection"], data: tidbits |> create_tidref_list()})
-    |> Memelex.TidBit.construct()
+    |> Memelex.TidBit.new()
     |> Memelex.My.Wiki.new()
   end
 

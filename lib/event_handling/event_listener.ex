@@ -26,7 +26,7 @@ defmodule Memelex.EventListener do
         EventBus.mark_as_completed({__MODULE__, event_shadow})
 
       err ->
-        raise "#{__MODULE__} failed to process an event: #{inspect(memelex_event)}"
+        raise "#{__MODULE__} failed to process an event: #{inspect(memelex_event)}, error: #{inspect(err)}"
     end
   end
 
@@ -35,6 +35,7 @@ defmodule Memelex.EventListener do
   @ignored_events [
     :loaded_memex,
     :open_tidbit,
+    :saved_tidbit,
     :reloaded_my_modz
   ]
 

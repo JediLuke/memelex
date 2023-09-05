@@ -15,8 +15,7 @@ defmodule Memelex.My.Journal do
 
   @doc ~s(Open today's Journal entry.)
   def today() do
-    {:ok, todays_journal_entry_tidbit = %{}} =
-      Memelex.My.current_time() |> find_journal_entry()
+    {:ok, todays_journal_entry_tidbit = %{}} = Memelex.My.current_time() |> find_journal_entry()
 
     Memelex.Utils.EventWrapper.event({:open_text_snippet, todays_journal_entry_tidbit})
 
@@ -34,31 +33,30 @@ defmodule Memelex.My.Journal do
 
   @doc ~s(Open a Journal entry relative to today, e.g. open the entry for 3 days ago with `-3`.)
   def find_relative_page_tidbit(x) when is_integer(x) do
-    one_day = 24*60*60 # number of seconds in 24 hours
+    # number of seconds in 24 hours
+    one_day = 24 * 60 * 60
 
     Memelex.My.current_time()
-    |> DateTime.add(x*one_day, :second)
+    |> DateTime.add(x * one_day, :second)
     |> find_journal_entry()
   end
 
   # either finds, or creates, the TidBit & text file for a Journal entry
   defp find_journal_entry(datetime) do
-
     tidbit_title = journal_page_title(datetime)
 
-    {:ok, tidbits} =
-      Memelex.WikiServer |> GenServer.call(:list_all_tidbits)
+    {:ok, tidbits} = Memelex.WikiServer |> GenServer.call(:list_all_tidbits)
 
     # look for todays journal entry in the Wiki
     # e.g. tagged "my_journal" & title is "Journal of JediLuke ~ Wednesday 29th of June, 2021")
-    find_todays_journal_entry =
-      fn(tidbit) ->
-        (tidbit.title == tidbit_title) and (tidbit.tags |> Enum.member?("my_journal"))
-      end
+    find_todays_journal_entry = fn tidbit ->
+      tidbit.title == tidbit_title and tidbit.tags |> Enum.member?("my_journal")
+    end
 
     case tidbits |> Enum.filter(find_todays_journal_entry) do
-      [todays_tidbit = %Memelex.TidBit{data: %{"filepath" => _journal_entry_filepath}}] ->
+      [todays_tidbit = %Memelex.TidBit{data: %{"file_path" => _journal_entry_filepath}}] ->
         {:ok, todays_tidbit}
+
       [] ->
         # if we can't find an existing Journal entry then just make a new one
         new_journal_tidbit(datetime)
@@ -68,23 +66,24 @@ defmodule Memelex.My.Journal do
   @doc ~s(Makes a new Journal TidBit for a datetime, including the file for the entry itself.)
   def new_journal_tidbit(datetime) do
     new_title = journal_page_title(datetime)
-    Logger.info "creating new Journal entry `#{new_title}`..."
-    t = Memelex.TidBit.construct(%{
-          title: new_title,
-          type: {:external, :textfile},
-          tags: ["my_journal"],
-          data: {:filepath, journal_entry_filepath(datetime)}
-        })
-        |> Memelex.My.Wiki.new()
+    Logger.info("creating new Journal entry `#{new_title}`...")
+
+    t =
+      Memelex.TidBit.construct(%{
+        title: new_title,
+        type: {:external, :textfile},
+        tags: ["my_journal"],
+        data: {:filepath, journal_entry_filepath(datetime)}
+      })
+      |> Memelex.My.Wiki.new()
+
     {:ok, t}
   end
 
   @doc ~s(Contruct a title string for my Journal for a given datetime.)
   def journal_page_title(datetime) do
-    day_and_month =
-      datetime |> StringifyDateTimes.format("day_xx_of_month")
-    year =
-      datetime |> StringifyDateTimes.format("year_as_XXXX")
+    day_and_month = datetime |> StringifyDateTimes.format("day_xx_of_month")
+    year = datetime |> StringifyDateTimes.format("year_as_XXXX")
 
     # "Journal of #{Memelex.My.nickname()} ~ #{day_and_month}, #{year}"
     "#{day_and_month}, #{year}"
@@ -92,7 +91,6 @@ defmodule Memelex.My.Journal do
 
   @doc ~s(Return the filepath for the Journal entry for a specific DateTime. If it doesn't exist yet, then create it.)
   def journal_entry_filepath(datetime) do
-
     # we save Journal files in a structure, `memex/environment/journal/year/month/xx-day.txt`
     journal_directory =
       Memelex.Utils.ToolBag.memex_directory()
@@ -104,11 +102,10 @@ defmodule Memelex.My.Journal do
       File.mkdir_p(journal_directory)
     end
 
-    filename =
-      StringifyDateTimes.format(datetime, :journal_format) <> ".txt" # e.g. "23-Fri.txt"
+    # e.g. "23-Fri.txt"
+    filename = StringifyDateTimes.format(datetime, :journal_format) <> ".txt"
 
-    journal_entry_file =
-      journal_directory |> Path.join("/#{filename}")
+    journal_entry_file = journal_directory |> Path.join("/#{filename}")
 
     # make a new text file if one hasn't been created yet
     if not File.exists?(journal_entry_file) do
@@ -120,7 +117,7 @@ defmodule Memelex.My.Journal do
     journal_entry_file
   end
 
-  #NOTE: Filter on both atom and String keys here (why?)
+  # NOTE: Filter on both atom and String keys here (why?)
   # def open(%{data: %{filepath: page}}) when is_bitstring(page) do
   #   Memelex.Utils.ToolBag.open_external_textfile(page)
   # end

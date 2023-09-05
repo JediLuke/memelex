@@ -1,32 +1,34 @@
 defmodule Memelex.My.Projects do
   alias Memelex.WikiServer
+  alias Memelex.Lib.Structs.MemexConcepts.V01.Project
 
-  def new(title) when is_bitstring(title) do
-    new(%{title: title})
+  # TODO we should accept args here, maybe we want to be able to accept extra tags or something
+  def new(%Project{} = project) do
+    # IO.inspect(project, label: "PPPP")
+
+    # require IEx
+    # IEx.pry()
+    # title = "Project: #{project.name}"
+
+    Memelex.My.Wiki.new(%{
+      title: "Project: #{project.name}",
+      data: project,
+      tags: ["my_projects"],
+      type: {:struct, Project}
+    })
   end
 
-  def new(%{tags: tlist} = params) when is_list(tlist) do
-    Memelex.Utils.Tags.validate_tag_list!(tlist)
-    params
-    |> Map.merge(%{tags: tlist ++ ["my_projects"]})
-    |> Memelex.My.Wiki.new()
+  def new(name) when is_bitstring(name) do
+    %Project{} = proj = Project.new(%{name: name})
+    new(proj)
   end
 
-  def new(params) do
-    params
-    |> Map.merge(%{tags: ["my_projects"]})
-    |> Memelex.My.Wiki.new()
-  end
+  # def new(args) do
+  #   args |> Project.new() |> new()
+  # end
 
-  def new(title, keyword_list) when is_bitstring(title) and is_list(keyword_list) do
-    new(%{title: title} |> Map.merge(keyword_list |> Enum.into(%{})))
+  def all do
+    {:ok, wiki} = GenServer.call(WikiServer, :list_all_tidbits)
+    wiki |> Enum.filter(fn tidbit -> tidbit.tags |> Enum.member?("my_projects") end)
   end
-
-  def list do
-    {:ok, wiki} = GenServer.call(WikiManager, :list_all_tidbits)
-    wiki |> Enum.filter(
-      fn tidbit -> tidbit.tags |> Enum.member?("my_projects") end
-    )
-  end
-
 end

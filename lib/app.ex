@@ -1,6 +1,7 @@
 defmodule Memelex.App do
   @moduledoc false
   use Application
+  require Logger
 
   def start(_type, _args) do
     IO.puts("Starting Memex application...")
@@ -22,6 +23,12 @@ defmodule Memelex.App do
       Memelex.App.EnvironmentSupervisor,
       Memelex.App.BootLoader
     ]
+
+    if is_nil(System.get_env("XLA_TARGET")) do
+      Logger.warn(
+        "no `XLA_TARGET` env variable found - Memelex can't use the GPU for neural-network tasks!!"
+      )
+    end
 
     children =
       if started_by_flamelex? do

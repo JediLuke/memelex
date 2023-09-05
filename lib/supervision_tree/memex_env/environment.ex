@@ -12,6 +12,11 @@ defmodule Memelex.Environment do
     Application.get_env(:memelex, :environment)
   end
 
+  # def reload_modz do
+  #   Memelex.Utils.EnviroTools.environment_details()
+  #   |> reload_modz()
+  # end
+
   # def get_environment(name) do
   #   GenServer.call({:via, Registry, {Memelex.EnviroRegistry, {__MODULE__, name}}}, :your_call_message)
   # end
@@ -111,6 +116,7 @@ defmodule Memelex.Environment do
   def build_environment(%{memex_directory: dir}) do
     # create directories if they don't exist
     :ok = File.mkdir_p(dir <> "/agents")
+    :ok = File.mkdir_p(dir <> "/plugins")
     :ok = File.mkdir_p(dir <> "/images")
     :ok = File.mkdir_p(dir <> "/docs")
     :ok = File.mkdir_p(dir <> "/textfiles")
@@ -118,6 +124,11 @@ defmodule Memelex.Environment do
   end
 
   def load_environment_into_memory(memex_env) do
+    # first we load & compile all the plugins, so that they can be used by the wiki server
+    # if we don't have e.g. a custom struct loaded, we won't be able to decode the memex
+    compile_and_load_files_in_sub_dir(memex_env, "/plugins")
+    compile_and_load_files_in_sub_dir(memex_env, "/agents")
+
     # TODO figure out the names/process registry or whatever, so we can start the wiki server under a supervisor
     # {:ok, _pid} = Memelex.Environment.MiddleSupervisor.start_link(memex_env)
     # TODO here start an intermediate, middle supervisor, and start the wiki server under that
@@ -126,6 +137,67 @@ defmodule Memelex.Environment do
     {:ok, _wiki_pid} = Memelex.AgentHandler.start_link(memex_env)
 
     :environment_loading_complete
+  end
+
+  def compile_and_load_files_in_sub_dir(%{memex_directory: memex_dir}, sub_dir) do
+    (memex_dir <> sub_dir)
+    |> get_elixir_files()
+    |> Enum.each(fn file ->
+      case compile_and_load_file(file) do
+        :ok ->
+          :ok
+
+        {:error, _reason} = error ->
+          Logger.error("Failed to load file: #{file}, errror: #{inspect(error)}")
+          error
+      end
+    end)
+  end
+
+  defp get_elixir_files(dir) do
+    File.ls!(dir)
+    |> Enum.filter(&String.ends_with?(&1, ".ex"))
+    |> Enum.map(&Path.join(dir, &1))
+  end
+
+  # defp compile_and_load_file(file_path) do
+  #   case File.read(file_path) do
+  #     {:ok, source_code} ->
+  #       case Code.compile_string(source_code, file_path) do
+  #         {module, _bytecode} ->
+  #           Logger.info("Successfully loaded: #{module}...")
+  #           # If you want to load the compiled module, use Code.load_binary
+  #           # However, compiling with compile_string automatically loads the module, so it's not necessary in most cases
+  #           :ok
+
+  #         error ->
+  #           Logger.error("Error compiling: #{file_path}, #{inspect(error)}")
+  #           {:error, error}
+  #       end
+
+  #     error ->
+  #       Logger.error("Could not open file: #{file_path}, #{inspect(error)}")
+  #       {:error, error}
+  #   end
+  # end
+
+  def compile_and_load_file(file_path) do
+    case Code.compile_file(file_path) do
+      [{module, _bytecode}] ->
+        Logger.info("Successfully loaded: #{module}...")
+        :ok
+
+      {:error, error_tuples} ->
+        Enum.each(error_tuples, fn {_, error_msg} ->
+          Logger.error("Error compiling: #{file_path}, #{error_msg}")
+        end)
+
+        {:error, error_tuples}
+
+      :error ->
+        Logger.error("Unknown error compiling: #{file_path}")
+        {:error, :unknown}
+    end
   end
 
   # def new_modz_file(env_name) do

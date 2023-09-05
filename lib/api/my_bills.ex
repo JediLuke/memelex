@@ -1,9 +1,20 @@
 defmodule Memelex.My.Bills do
   alias Memelex.WikiServer
 
+  #   defmodule Memelex.My.Billz do
+
+  #     @tag "my_billz"
+
+  #     def new(params) when is_map(params) do
+  #       params
+  #       |> Map.merge(%{tags: [@tag]})
+  #       |> Memelex.My.Wiki.new()
+  #     end
+  # end
 
   def new(%{tags: tlist} = params) when is_list(tlist) do
     validate_tag_list!(tlist)
+
     params
     |> Map.merge(%{tags: tlist ++ ["my_bills"]})
     |> Memelex.My.Wiki.new()
@@ -17,22 +28,23 @@ defmodule Memelex.My.Bills do
 
   @doc ~s(Fetch the whole list of TODOs)
   def list do
-    {:ok, tidbits} =
-      WikiManager |> GenServer.call(:list_all_tidbits)
+    {:ok, tidbits} = WikiManager |> GenServer.call(:list_all_tidbits)
 
     tidbits
-    |> Enum.filter(fn(tidbit) -> tidbit.tags |> Enum.member?("my_bills") end)
+    |> Enum.filter(fn tidbit -> tidbit.tags |> Enum.member?("my_bills") end)
   end
 
   defp validate_tag_list!([]) do
     true
   end
-  defp validate_tag_list!([tag|rest]) when is_bitstring(tag) do
+
+  defp validate_tag_list!([tag | rest]) when is_bitstring(tag) do
     validate_tag_list!(rest)
   end
-  defp validate_tag_list!([tag|_rest]) do # matches anything besides a string 
-    context = %{invalid_tag: tag}
-    raise "an invalid tag was passed in via the tag list. #{inspect context}"
-  end
 
+  # matches anything besides a string
+  defp validate_tag_list!([tag | _rest]) do
+    context = %{invalid_tag: tag}
+    raise "an invalid tag was passed in via the tag list. #{inspect(context)}"
+  end
 end

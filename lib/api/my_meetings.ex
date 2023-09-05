@@ -8,7 +8,7 @@ defmodule Memelex.My.Meetings do
     params
     |> TidBitUtils.sanitize_conveniences()
     |> TidBitUtils.apply_tag(@my_meetings)
-    |> Memelex.TidBit.construct()
+    |> Memelex.TidBit.new()
     |> Memelex.My.Wiki.new()
   end
 
@@ -20,7 +20,6 @@ defmodule Memelex.My.Meetings do
   @doc ~s(Fetch the whole list of TODOs)
   def list do
     Memelex.My.Wiki.list()
-    |> Enum.filter(fn(tidbit) -> tidbit.type |> Enum.member?(@my_meetings) end)
+    |> Enum.filter(fn tidbit -> tidbit.type |> Enum.member?(@my_meetings) end)
   end
-
 end

@@ -1,4 +1,4 @@
-defmodule Memelex.Lib.Structs.MemexConcepts.Agent do
+defmodule Memelex.Lib.Structs.MemexConcepts.V01.Agent do
   @moduledoc """
   Represents an Agent within the Memex framework.
 
@@ -36,48 +36,40 @@ defmodule Memelex.Lib.Structs.MemexConcepts.Agent do
   # NOTE this has to go *after* we've defined the struct
   use Memelex.Utils.JsonEncodable
 
-  # TODO remove this when FileIO line 130 changes to checking for a `new` function rather than `construct`
-  def construct(args) do
-    new(args)
-  end
-
-  def new(%{"name" => name} = args) do
-    config =
-      case args["config"] do
-        nil ->
-          %{}
-
-        cfg_with_mfa = %{"mfa" => [mod, fun, args]} ->
-          Map.put(
-            cfg_with_mfa,
-            "mfa",
-            # we might need to only use `to_atom` in the future, if we haven't
-            # loaded a particular struct yet (maybe we should do that first??)
-            {String.to_existing_atom(mod), String.to_existing_atom(fun), args}
-          )
-
-        cfg when is_map(cfg) ->
-          cfg
-      end
+  def new(%{"name" => name} = args) when is_binary(name) do
+    name = to_camel_case(name)
 
     %__MODULE__{
       name: name,
       status: :active,
       last_activity: DateTime.utc_now(),
-      config: config
+      config: agent_config(args)
     }
   end
 
-  # def add_to_memex(%__MODULE__{} = agent) do
-  #   # Memelex.WikiServer.add_agent(agent)
-  # end
+  defp agent_config(args) do
+    case Map.get(args, "config") do
+      nil ->
+        %{}
 
-  # def new(params) do
-  #   valid_params =
-  #     params
-  #     |> Map.merge(%{last_activity: Memelex.My.current_time() |> DateTime.to_unix()})
-  #     |> Memelex.Utils.ToolBag.generate_uuid()
+      %{"mfa" => [mod, fun, args]} = config_with_mfa ->
+        # override the `mfa` list-of-strings with a normal MFA tuple
+        Map.put(
+          config_with_mfa,
+          "mfa",
+          # should be able to use `to_existing_atom` because Agent structs should have been loaded by now...
+          {String.to_existing_atom(mod), String.to_existing_atom(fun), args}
+        )
 
-  #   Kernel.struct(__MODULE__, valid_params |> convert_to_keyword_list())
-  # end
+      config_without_mfa when is_map(config_without_mfa) ->
+        config_without_mfa
+    end
+  end
+
+  defp to_camel_case(string) do
+    string
+    |> String.split(~r/[^a-zA-Z0-9]+/)
+    |> Enum.map(&String.capitalize(&1))
+    |> Enum.join("")
+  end
 end

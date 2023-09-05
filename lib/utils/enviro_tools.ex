@@ -128,13 +128,7 @@ defmodule Memelex.Utils.EnviroTools do
     load_env(memex_env)
   end
 
-  def load_env(
-        %Memelex.Lib.Structs.MemexConcepts.MemexEnv{
-          name: env_name
-          # memex_directory: memex_env_directory
-        } = memex_env
-      )
-      when is_bitstring(env_name) do
+  def load_env(%Memelex.Lib.Structs.MemexConcepts.MemexEnv{} = memex_env) do
     Logger.info("Loading `#{memex_env.name || "unnamed"}` Memex...")
 
     # update the app config so we have the details of the current memex loaded

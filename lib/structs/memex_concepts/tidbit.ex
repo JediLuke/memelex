@@ -1,4 +1,5 @@
-defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
+# TODO Memelex.Lib.Structs.TidBit
+defmodule Memelex.TidBit do
   @moduledoc """
   modelled after the `tiddler` of TiddlyWiki.
 
@@ -19,40 +20,50 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
   require Logger
 
   defstruct [
-
-      uuid:  nil,       # each tiddler has a UUID
-      title: nil,       # the unique name for this tidbit
-      data:  nil,       # the body of the tidbit
-
-      modified: nil,    # The time this tidbit was last modified
-      modifier: nil,    # The name of the last person to modify this TidBit
-      created:  nil,    # the date this tidbit was created
-      creator:  nil,    # the name of the person who created ths TidBit
-
-      type:      [],    # the type of a tidbit - could be a "text" for normal text tidbit, or point to an external text snippet, or be a Struct...
-      tags:      [],    # a list of tags associated with a TidBit
-      links:     [],    # a list of all the linked TidBits
-      backlinks: [],    # a list of all the Tidbits which link to this one
-
-      status:  nil,     # an internal flag - we can "archive" TidBits this way
-
-      history: nil,     # each time a TidBit changes, we track the history #TODO
-
-      deleted?: false,  # a flag for allowing soft-delete
-      deleted_at: nil,  # timestamp for deletion, if it has been soft-deleted
-
-      caption: nil,     # the text to be displayed in a tab or button
-      meta:    [],      # a place to put extra data, e.g. `due_date`
+    # each tiddler has a UUID
+    uuid: nil,
+    # the unique name for this tidbit
+    title: nil,
+    # the body of the tidbit
+    data: nil,
+    # The time this tidbit was last modified
+    modified: nil,
+    # The name of the last person to modify this TidBit
+    modifier: nil,
+    # the date this tidbit was created
+    created: nil,
+    # the name of the person who created ths TidBit
+    creator: nil,
+    # the type of a tidbit - could be a "text" for normal text tidbit, or point to an external text snippet, or be a Struct...
+    type: [],
+    # a list of tags associated with a TidBit
+    tags: [],
+    # a list of all the linked TidBits
+    links: [],
+    # a list of all the Tidbits which link to this one
+    backlinks: [],
+    # an internal flag - we can "archive" TidBits this way
+    status: nil,
+    # each time a TidBit changes, we track the history #TODO
+    history: nil,
+    # a flag for allowing soft-delete
+    deleted?: false,
+    # timestamp for deletion, if it has been soft-deleted
+    deleted_at: nil,
+    # the text to be displayed in a tab or button
+    caption: nil,
+    # a place to put extra data, e.g. `due_date`
+    meta: []
   ]
 
-  def construct(params) do
+  def new(params) do
     Memelex.Utils.TidBits.ConstructorLogic.construct(params)
   end
 
   @doc ~s(This is here for the sake of the nice API: TidBit.new/1)
-  def new(params) do
-    Memelex.My.Wiki.new(params)
-  end
+  # def new(params) do
+  #   Memelex.My.Wiki.new(params)
+  # end
 
   # @doc ~s(This is here for the sake of the nice API: TidBit.update/2)
   # def update(tidbit, params) do
@@ -71,11 +82,9 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
   #   Memelex.My.Wiki.find(exact: search_term)
   # end
 
-  def open(%{type: ["external"|_rest]} = tidbit) do
+  def open(%{type: ["external" | _rest]} = tidbit) do
     Memelex.Utils.ToolBag.open_external_textfile(tidbit)
   end
-
-
 
   def link(base_node, link_node) do
     Memelex.My.Wiki.link(base_node, link_node)
@@ -105,6 +114,7 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
   This function does NOT save the TidBit in the Memexex permanent memory!
   It *only* casts from one struct to another based on a known modification.
   """
+
   # def modify(
   #   %__MODULE__{gui: %{mode: :edit}} = tidbit,
   #   {:backspace, 1 = x, :at_cursor}
@@ -210,117 +220,66 @@ defmodule Memelex.TidBit do #TODO Memelex.Lib.Structs.TidBit
   #   put_in(tidbit.gui, new_tidbit_gui)
   # end
 
-
   # def modify(%__MODULE__{gui: %{mode: :edit}} = tidbit, focus: new_focus) when new_focus in [:title, :body] do
   #   put_in(tidbit.gui.focus, new_focus)
   # end
 
   def modify(tidbit, {:add_tags, new_tag}) when is_bitstring(new_tag) do
-    %{tidbit|tags: tidbit.tags ++ [new_tag]}
+    %{tidbit | tags: tidbit.tags ++ [new_tag]}
     |> IO.inspect(label: "NOW WITH TAGS")
   end
 
+  #  def modify(tidbit, {:append_to_title, text}) do
+  #     title_cursor = tidbit.gui.cursors.title
+  #     put_in(tidbit.gui.cursors.title, move_cursor(title_cursor, {:columns_right, String.length(text)}))
+  #     |> Map.put(:title, tidbit.title <> text)
+  #  end
 
+  #  def modify(tidbit, {:append_to_body, text}) do
+  #     body_cursor = tidbit.gui.cursors.body
+  #     put_in(tidbit.gui.cursors.body, move_cursor(body_cursor, {:columns_right, String.length(text)}))
+  #     |> Map.put(:data, tidbit.data <> text)
+  #  end
 
+  #  def modify(tidbit, {:append_to_body, text}) do
+  #     body_cursor = tidbit.gui.cursors.body
+  #     put_in(tidbit.gui.cursors.body, move_cursor(body_cursor, {:columns_right, String.length(text)}))
+  #     |> Map.put(:data, tidbit.data <> text)
+  #  end
 
+  #  def modify(tidbit, {:insert_text, t, in: :body, at: {:cursor, c}}) do
+  #     {new_data, new_cursor} =
+  #        QuillEx.Tools.TextEdit.insert_text_at_cursor(%{
+  #           old_text: tidbit.data,
+  #           cursor: c,
+  #           text_2_insert: t
+  #        })
 
+  #     put_in(tidbit.gui.cursors.body, new_cursor)
+  #     |> Map.put(:data, new_data)
+  #  end
 
+  # def modify(tidbit, [move_cursor: {:body, delta}]) do
+  #    current_cursor = tidbit.gui.cursors.body
 
+  #    new_cursor = QuillEx.Tools.TextEdit.move_cursor(tidbit.data, current_cursor, delta)
 
+  #    put_in(tidbit.gui.cursors.body, new_cursor)
+  # end
 
-
-
-
-
-
-#  def modify(tidbit, {:append_to_title, text}) do
-#     title_cursor = tidbit.gui.cursors.title
-#     put_in(tidbit.gui.cursors.title, move_cursor(title_cursor, {:columns_right, String.length(text)}))
-#     |> Map.put(:title, tidbit.title <> text)
-#  end
-
-#  def modify(tidbit, {:append_to_body, text}) do
-#     body_cursor = tidbit.gui.cursors.body
-#     put_in(tidbit.gui.cursors.body, move_cursor(body_cursor, {:columns_right, String.length(text)}))
-#     |> Map.put(:data, tidbit.data <> text)
-#  end
-
-#  def modify(tidbit, {:append_to_body, text}) do
-#     body_cursor = tidbit.gui.cursors.body
-#     put_in(tidbit.gui.cursors.body, move_cursor(body_cursor, {:columns_right, String.length(text)}))
-#     |> Map.put(:data, tidbit.data <> text)
-#  end
-
-
-
-#  def modify(tidbit, {:insert_text, t, in: :body, at: {:cursor, c}}) do
-#     {new_data, new_cursor} =
-#        QuillEx.Tools.TextEdit.insert_text_at_cursor(%{
-#           old_text: tidbit.data,
-#           cursor: c,
-#           text_2_insert: t
-#        })
-
-#     put_in(tidbit.gui.cursors.body, new_cursor)
-#     |> Map.put(:data, new_data)
-#  end
-
-
-
-
-
-
-
-
-
-
-
-
-   # def modify(tidbit, [move_cursor: {:body, delta}]) do
-   #    current_cursor = tidbit.gui.cursors.body
-
-   #    new_cursor = QuillEx.Tools.TextEdit.move_cursor(tidbit.data, current_cursor, delta)
-
-   #    put_in(tidbit.gui.cursors.body, new_cursor)
-   # end
-
-   # def modify(tidbit, modification) do
-   #    Logger.error "Unrecognised modification: #{inspect modification}. No TidBit modification occured..."
-   #    tidbit
-   # end
-
-
-
-
-
-
-
-
-
-
-
-
+  # def modify(tidbit, modification) do
+  #    Logger.error "Unrecognised modification: #{inspect modification}. No TidBit modification occured..."
+  #    tidbit
+  # end
 
   def modify(tidbit, modification) do
-    Logger.error "Unrecognised modification: #{inspect modification}. No TidBit modification occured..."
+    Logger.error(
+      "Unrecognised modification: #{inspect(modification)}. No TidBit modification occured..."
+    )
+
     tidbit
   end
-
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # defmodule Flamelex.Structs.TidBit do
 #   @moduledoc false
@@ -352,10 +311,8 @@ end
 #     reminder |> Map.replace!(:tags, new_tags)
 #   end
 
-
 #   ## private functions
 #   ## -------------------------------------------------------------------
-
 
 #   defp validate(%{title: t, tags: tags, content: c} = data)
 #     when is_binary(t) and is_list(tags) and is_binary(c) do

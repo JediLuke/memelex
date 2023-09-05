@@ -26,7 +26,7 @@ defmodule Memelex.My.Wiki do
   def new(args) when is_map(args) do
     args
     # |> TidBiztUtils.sanitize_conveniences()
-    |> Memelex.TidBit.construct()
+    |> Memelex.TidBit.new()
     |> new()
   end
 
@@ -69,7 +69,7 @@ defmodule Memelex.My.Wiki do
   #   But right now, who knows!"
   #   params
   #   # |> TidBitUtils.sanitize_conveniences()
-  #   |> Memelex.TidBit.construct()
+  #   |> Memelex.TidBit.new()
   #   |> __MODULE__.new_tidbit()
   # end
 
@@ -88,14 +88,14 @@ defmodule Memelex.My.Wiki do
   def new_tidbit(params) do
     params
     |> TidBitUtils.sanitize_conveniences()
-    |> Memelex.TidBit.construct()
+    |> Memelex.TidBit.new()
     |> new_tidbit()
   end
 
   def new_linked_tidbit(%{} = tidbit, params) do
     {:ok, new_tidbit} =
       params
-      |> Memelex.TidBit.construct()
+      |> Memelex.TidBit.new()
       |> new_tidbit()
 
     link(tidbit, new_tidbit)

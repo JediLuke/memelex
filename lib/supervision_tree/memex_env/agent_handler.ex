@@ -1,51 +1,46 @@
 defmodule Memelex.AgentHandler do
   use GenServer
   require Logger
+  alias Memelex.Lib.Structs.MemexConcepts.V01.Agent
 
-  # 5 minutes in milliseconds
-  @time_gap 300_000
-
-  # Client API
+  # don't immediately try to boot all the agents, wait this long first
+  @boot_lag :timer.seconds(5)
 
   def start_link(initial_state \\ %{}) do
     GenServer.start_link(__MODULE__, initial_state, name: __MODULE__)
   end
 
-  def get_state(pid) do
-    GenServer.call(pid, :get_state)
+  def boot_agent(agent) do
+    GenServer.cast(__MODULE__, {:boot_agent, agent})
   end
 
   def boot_agents_under_handler() do
-    GenServer.call(__MODULE__, :boot_under_handler)
+    GenServer.call(__MODULE__, :boot_agents)
   end
 
-  # Server Callbacks
-
   def init(initial_state) do
-    # Schedule a message to be sent to this process after the time gap
-    Process.send_after(self(), :scheduled_message, @time_gap)
+    Process.send_after(self(), :boot_agents, @boot_lag)
     {:ok, initial_state}
   end
 
-  def handle_call(:get_state, _from, state) do
-    {:reply, state, state}
-  end
-
-  def handle_call(:boot_under_handler, _from, state) do
+  def handle_call(:boot_agents, _from, state) do
     Logger.debug("#{__MODULE__} is booting all agents in the memex...")
     :ok = boot_agents()
     {:reply, :ok, state}
   end
 
-  # TODO next, we want to look in the memex, for "agents" and then start them all up
-
-  def handle_info(:scheduled_message, state) do
-    IO.puts("#{__MODULE__} Received scheduled message after #{@time_gap} milliseconds.")
-    :ok = boot_agents()
-    IO.puts("ALL AGENTS BOOTED!")
-    # Process.send_after(self(), :scheduled_message, @time_gap)
+  def handle_cast({:boot_agent, %Agent{} = agent}, state) do
+    {:ok, _pid} = boot_agent(agent)
     {:noreply, state}
   end
+
+  def handle_info(:boot_agents, state) do
+    :ok = boot_agents()
+    {:noreply, state}
+  end
+
+  # TODO where do we actually get this?? Maybe from Memex itself??
+  def booting_custom_agents?(), do: false
 
   defp boot_agents do
     # NOTE - this function isn't public because we need to
@@ -54,11 +49,34 @@ defmodule Memelex.AgentHandler do
     # which starts all these agents linked to it
     memex_env = Memelex.Environment.get_environment()
 
-    Memelex.Agent.all()
-    |> Enum.each(fn %Memelex.TidBit{data: agent} ->
-      {:ok, _pid} = Memelex.Agent.start_agent(memex_env, agent)
-    end)
+    with :ok <- boot_system_agents(),
+         :ok <- boot_custom_agents(memex_env) do
+      :ok
+    end
+  end
+
+  defp boot_system_agents do
+    # NOTE NO sYSTEM AGENTS FOR NOW...
+    :ok
+  end
+
+  # look in the Memex for all the agents, and boot them
+  defp boot_custom_agents(memex_env) do
+    if booting_custom_agents?() do
+      Memelex.My.Agents.all()
+      |> Enum.each(fn %Memelex.TidBit{data: %Agent{} = agent} ->
+        {:ok, _pid} = boot_agent(agent)
+      end)
+    else
+      Logger.warn("Not booting custom agents because `booting_custom_agents?()` returned false.")
+    end
 
     :ok
+  end
+
+  defp boot_agent(%Agent{config: %{"mfa" => {agent_mod, :start_link, [[]]}}} = agent) do
+    Logger.info("#{__MODULE__} is booting agent #{agent.name}...")
+    {:module, ^agent_mod} = Code.ensure_loaded(agent_mod)
+    {:ok, _pid} = GenServer.start_link(agent_mod, %{})
   end
 end
