@@ -333,7 +333,14 @@ defmodule Memelex.My.Wiki do
     :ok
   end
 
+  @spec delete(any) :: any
+  def delete([tidbit | rest]) do
+    GenServer.call(Memelex.WikiServer, {:delete_tidbit, tidbit})
+    delete(rest)
+  end
+
   def delete(tidbit) do
+    # TODO if they're an external tidbit e.g. a Journal entry or an Agent, delete that too!!
     GenServer.call(Memelex.WikiServer, {:delete_tidbit, tidbit})
   end
 end

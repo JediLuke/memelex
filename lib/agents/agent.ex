@@ -34,38 +34,14 @@ defmodule Memelex.Agent do
           "type" => "gen_server"
         }
       }) do
-    # IO.puts("here we should start: #{inspect(agent)}")
-
-    # raise "not implemented yet"
-    IO.puts("STARTING AGENT: #{inspect(agent_mod)}")
-
     agent_elixir_file =
       memex_env.memex_directory
       |> Path.join(file_path)
-      |> IO.inspect(label: "agent_elixir_file")
 
     [^agent_mod] = IEx.Helpers.c(agent_elixir_file)
-
-    IO.puts("COMPILED")
-    # TODO here we need to load the module, and then call the start_link function
     {:module, _mod} = Code.ensure_loaded(agent_mod)
-    IO.puts("LOADED")
 
-    {:ok, _pid} = res = GenServer.start_link(agent_mod, %{})
-
-    IO.puts("STARTED")
-
-    res
-    # %Memelex.Lib.Structs.MemexConcepts.Agent{
-    #   name: "YesMan",
-    #   status: :active,
-    #   last_activity: ~U[2023-09-02 15:53:21.151335Z],
-    #   config: %{
-    #     "filepath" => "agents/yes_men.ex",
-    #     "mfa" => {Memelex.My.Agents.YesMan, :start_link, [[]]},
-    #     "type" => "gen_server"
-    #   }
-    # }
+    GenServer.start_link(agent_mod, %{})
   end
 
   def start_agent(_memex_env, agent) do
@@ -73,11 +49,24 @@ defmodule Memelex.Agent do
     :error
   end
 
+  # what do I want the first agent to do?? Improve the memex...
+  # def new_agent(%{name: name}) do
+
+  # end
+
   def save_system_agent(%MemexConcepts.MemexEnv{} = memex_env, :yes_man) do
     save_system_agent(memex_env, %{
       name: "YesMan",
       module: Memelex.My.Agents.YesMan,
       file_path: "agents/yes_man.ex"
+    })
+  end
+
+  def save_system_agent(%MemexConcepts.MemexEnv{} = memex_env, :moneypenny) do
+    save_system_agent(memex_env, %{
+      name: "MoneyPenny",
+      module: Memelex.My.Agents.MoneyPenny,
+      file_path: "agents/moneypenny.ex"
     })
   end
 

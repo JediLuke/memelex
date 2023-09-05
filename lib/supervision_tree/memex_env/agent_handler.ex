@@ -1,5 +1,6 @@
 defmodule Memelex.AgentHandler do
   use GenServer
+  require Logger
 
   # 5 minutes in milliseconds
   @time_gap 300_000
@@ -31,7 +32,7 @@ defmodule Memelex.AgentHandler do
   end
 
   def handle_call(:boot_under_handler, _from, state) do
-    IO.puts("#{__MODULE__} Received boot message.")
+    Logger.debug("#{__MODULE__} is booting all agents in the memex...")
     :ok = boot_agents()
     {:reply, :ok, state}
   end
@@ -48,19 +49,15 @@ defmodule Memelex.AgentHandler do
 
   defp boot_agents do
     # NOTE - this function isn't public because we need to
-    # make sure Agent processes are booted under the AgentHandler
+    # make sure Agent processes are booted under the AgentHandler,
+    # and the process which calls this function will be the one
+    # which starts all these agents linked to it
     memex_env = Memelex.Environment.get_environment()
-
-    IO.puts("Booting agents under #{__MODULE__}...")
 
     Memelex.Agent.all()
     |> Enum.each(fn %Memelex.TidBit{data: agent} ->
-      IO.puts("Starting agent: #{inspect(agent)}")
-      r = Memelex.Agent.start_agent(memex_env, agent)
-      IO.inspect(r, label: "DONE BOOT")
+      {:ok, _pid} = Memelex.Agent.start_agent(memex_env, agent)
     end)
-
-    IO.puts("BOOT FINISHED")
 
     :ok
   end
