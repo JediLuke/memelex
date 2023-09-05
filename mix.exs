@@ -35,7 +35,11 @@ defmodule Memelex.MixProject do
       {:elixir_uuid, "~> 1.2"},
       {:timex, "~> 3.7.5"},
       {:event_bus, "~> 1.7.0"},
-      {:openai, "~> 0.5.2"}
+      {:openai, "~> 0.5.2"},
+      {:nx, "~> 0.5"},
+      {:exla, ">= 0.0.0"},
+      {:bumblebee, "~> 0.3.0"}
+      # {:openai, "~> 0.5.2"}
     ]
   end
 
