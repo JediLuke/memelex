@@ -30,7 +30,7 @@ defmodule Memelex.AgentHandler do
   end
 
   def handle_cast({:boot_agent, %Agent{} = agent}, state) do
-    {:ok, _pid} = boot_agent(agent)
+    {:ok, _pid} = do_boot_agent(agent)
     {:noreply, state}
   end
 
@@ -65,7 +65,7 @@ defmodule Memelex.AgentHandler do
     if booting_custom_agents?() do
       Memelex.My.Agents.all()
       |> Enum.each(fn %Memelex.TidBit{data: %Agent{} = agent} ->
-        {:ok, _pid} = boot_agent(agent)
+        {:ok, _pid} = do_boot_agent(agent)
       end)
     else
       Logger.warn("Not booting custom agents because `booting_custom_agents?()` returned false.")
@@ -74,7 +74,7 @@ defmodule Memelex.AgentHandler do
     :ok
   end
 
-  defp boot_agent(%Agent{config: %{"mfa" => {agent_mod, :start_link, [[]]}}} = agent) do
+  defp do_boot_agent(%Agent{config: %{"mfa" => {agent_mod, :start_link, [[]]}}} = agent) do
     Logger.info("#{__MODULE__} is booting agent #{agent.name}...")
     {:module, ^agent_mod} = Code.ensure_loaded(agent_mod)
     {:ok, _pid} = GenServer.start_link(agent_mod, %{})

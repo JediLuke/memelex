@@ -10,6 +10,8 @@ config :logger,
        # no additional newline
        format: "[$level] $message $metadata\n"
 
+config :nx, default_backend: EXLA.Backend
+
 config :memelex,
   text_editor_shell_command: "subl"
 
