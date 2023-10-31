@@ -36,9 +36,10 @@ defmodule Memelex.MixProject do
       {:timex, "~> 3.7.5"},
       {:event_bus, "~> 1.7.0"},
       {:openai, "~> 0.5.2"},
-      {:nx, "~> 0.5"},
-      {:exla, ">= 0.0.0"},
-      {:bumblebee, "~> 0.3.0"}
+      {:nx, "~> 0.6.1"},
+      {:exla, "~> 0.6.1"},
+      # {:bumblebee, "~> 0.4.2"},
+      {:bumblebee, github: "elixir-nx/bumblebee", branch: "main"}
       # {:openai, "~> 0.5.2"}
     ]
   end
