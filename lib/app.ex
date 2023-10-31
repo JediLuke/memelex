@@ -21,6 +21,7 @@ defmodule Memelex.App do
     base_children = [
       {Registry, keys: :unique, name: Memelex.EnviroRegistry},
       Memelex.App.EnvironmentSupervisor,
+      Memelex.LLModels.AsyncBooter,
       Memelex.App.BootLoader
     ]
 

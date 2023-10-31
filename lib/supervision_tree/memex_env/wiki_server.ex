@@ -36,6 +36,11 @@ defmodule Memelex.WikiServer do
     {:reply, {:ok, full_tidbit}, state}
   end
 
+  # def handle_call({:custom_settings, %{tidbit_uuid: t_uuid}}, _from, state) do
+  #   full_tidbit = Enum.find(state.wiki, &(&1.uuid == t_uuid))
+  #   {:reply, {:ok, full_tidbit}, state}
+  # end
+
   def handle_call({:fetch, %{uuid: t_uuid}}, _from, state) do
     full_tidbit = Enum.find(state.wiki, &(&1.uuid == t_uuid))
     {:reply, {:ok, full_tidbit}, state}
@@ -93,7 +98,7 @@ defmodule Memelex.WikiServer do
   def handle_call({:delete_tidbit, tidbit}, _from, state) do
     {:ok, new_wiki} = WikiManagement.delete_tidbit(state, tidbit)
 
-    {:reply, :deleted, %{state | wiki: new_wiki}}
+    {:reply, :ok, %{state | wiki: new_wiki}}
   end
 
   def handle_call({:update_tidbit, tidbit, %{add_tag: tag}}, _from, state) do
@@ -143,7 +148,10 @@ defmodule Memelex.WikiServer do
   def check_wiki_file_exists_and_if_it_doesnt_exist_create_it(state) do
     # make new wiki file if one doesn't exist
     if not File.exists?(wiki_file(state)) do
-      Logger.warn("Could not find a Wiki file for this environment. Creating one now...")
+      Logger.warn(
+        "Could not find a Wiki file for this environment. Creating one now... #{inspect(wiki_file(state))}"
+      )
+
       # TODO use a Utils function here, don't werite directly to a file
       {:ok, file} = File.open(wiki_file(state), [:write])
       IO.binwrite(file, [] |> Jason.encode!())

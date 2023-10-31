@@ -101,12 +101,35 @@ defmodule Memelex.Utils.WikiManagement do
   #   end
   # end
 
-  def delete_tidbit(state, %Memelex.TidBit{uuid: uuid_to_be_deleted}) do
+  def delete_tidbit(state, %Memelex.TidBit{uuid: uuid_to_be_deleted} = t) do
     # TODO remove from focussed_tidbit if that;s the one that got deleted (probably is)
 
     new_wiki = state.wiki |> Enum.reject(&(&1.uuid == uuid_to_be_deleted))
     :ok = write_wiki_to_disk(state, new_wiki)
+
+    # if they're an external tidbit e.g. a Journal entry or an Agent, delete that too!!
+    if has_external_files_to_cleanup?(t) do
+      cleanup_external_files(state, t)
+    end
+
     {:ok, new_wiki}
+  end
+
+  def has_external_files_to_cleanup?(%{
+        data: %Memelex.Lib.Structs.MemexConcepts.V01.Agent{},
+        tags: ["my_agents"]
+      }) do
+    true
+  end
+
+  def cleanup_external_files(
+        state,
+        %{
+          data: %Memelex.Lib.Structs.MemexConcepts.V01.Agent{},
+          tags: ["my_agents"]
+        } = tidbit
+      ) do
+    Memelex.Utils.AgentUtils.delete_agent_file(state, tidbit.data)
   end
 
   def write_wiki_to_disk(state, wiki) do

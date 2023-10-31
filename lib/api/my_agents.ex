@@ -38,8 +38,27 @@ defmodule Memelex.My.Agents do
     new(%{"name" => name})
   end
 
+  def new do
+    raise "Must at least give the agent a name!"
+  end
+
   def all do
     Memelex.My.Wiki.search(tagged: "my_agents")
+  end
+
+  def delete(%Memelex.TidBit{} = tidbit) do
+    # shut down the process
+    Memelex.AgentHandler.shutdown_agent(tidbit)
+
+    # delete the tidbit (which should also delete the file)
+    Memelex.My.Wiki.delete(tidbit)
+  end
+
+  # this function specifically loads up the Agents page in the GUI
+  def show do
+    # fire an event which will be ignored by Memelex but picked up by Flamelex
+    # TODO print a warning if we're not in GUI mode or whatever
+    Memelex.Utils.EventWrapper.event(:show_agents)
   end
 
   defp to_camel_case(string) do

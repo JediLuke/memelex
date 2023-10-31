@@ -13,8 +13,8 @@ defmodule Memelex.Utils.AgentUtils do
           }
         } = agent
       ) do
-    agent_filepath = "agents/#{to_snake_case(agent.name)}.ex"
-    full_file_path = Path.join(memex_env.memex_directory, agent_filepath)
+    # agent_filepath = "agents/#{to_snake_case(agent.name)}.ex"
+    full_file_path = Path.join(memex_env.memex_directory, agent_filepath(agent))
 
     if File.exists?(full_file_path) do
       raise "The agent file already exists: #{full_file_path}"
@@ -28,6 +28,18 @@ defmodule Memelex.Utils.AgentUtils do
       # load the file into our BEAM runtime
       Memelex.Environment.compile_and_load_file(full_file_path)
     end
+  end
+
+  def delete_agent_file(memex_env, %Agent{} = agent) do
+    File.rm!(full_agent_filepath(memex_env, agent))
+  end
+
+  def full_agent_filepath(%MemexEnv{memex_directory: dir}, agent) do
+    Path.join(dir, agent_filepath(agent))
+  end
+
+  def agent_filepath(%Agent{name: name}) do
+    "agents/#{to_snake_case(name)}.ex"
   end
 
   # def add_to_memex(%MemexConcepts.V01.Agent{} = agent) do
@@ -198,6 +210,15 @@ defmodule Memelex.Utils.AgentUtils do
         {:ok, %{}}
       end
 
+      def handle_call(:shutdown, _from, state) do
+        # Perform cleanup operations or any other logic you need before shutting down
+        # ...
+
+        # Then, stop the GenServer
+        {:stop, :normal, state}
+      end
+
+
       def handle_info(:work, state) do
         Logger.info("#{module_name} ready.")
         schedule_work(thirty_seconds())
@@ -212,6 +233,11 @@ defmodule Memelex.Utils.AgentUtils do
       defp thirty_seconds(), do: :timer.seconds(30)
     end
     """
+  end
+
+  # fire the action to trigger changing us to the agents screen
+  def show_agents do
+    Flamelex.Fluxus.action({Flamelex.Fluxus.RadixReducer, :show_agents})
   end
 
   defp to_snake_case(string) do

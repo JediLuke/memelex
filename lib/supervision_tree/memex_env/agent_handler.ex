@@ -40,7 +40,7 @@ defmodule Memelex.AgentHandler do
   end
 
   # TODO where do we actually get this?? Maybe from Memex itself??
-  def booting_custom_agents?(), do: false
+  def boot_custom_agents?(), do: true
 
   defp boot_agents do
     # NOTE - this function isn't public because we need to
@@ -62,21 +62,33 @@ defmodule Memelex.AgentHandler do
 
   # look in the Memex for all the agents, and boot them
   defp boot_custom_agents(memex_env) do
-    if booting_custom_agents?() do
+    if boot_custom_agents?() do
       Memelex.My.Agents.all()
       |> Enum.each(fn %Memelex.TidBit{data: %Agent{} = agent} ->
         {:ok, _pid} = do_boot_agent(agent)
       end)
     else
-      Logger.warn("Not booting custom agents because `booting_custom_agents?()` returned false.")
+      Logger.warn("Not booting custom agents because `boot_custom_agents?()` returned false.")
     end
 
     :ok
   end
 
-  defp do_boot_agent(%Agent{config: %{"mfa" => {agent_mod, :start_link, [[]]}}} = agent) do
+  defp do_boot_agent(%Agent{config: %{"mfa" => {agent_mod, :start_link, [args]}}} = agent) do
     Logger.info("#{__MODULE__} is booting agent #{agent.name}...")
     {:module, ^agent_mod} = Code.ensure_loaded(agent_mod)
-    {:ok, _pid} = GenServer.start_link(agent_mod, %{})
+    {:ok, _pid} = agent_mod.start_link(args)
+  end
+
+  def shutdown_agent(%Memelex.TidBit{
+        data: %{config: %{"mfa" => {agent_mod, :start_link, _args}}}
+      }) do
+    case Process.whereis(agent_mod) do
+      nil ->
+        Logger.warn("Unable to shutdown agent #{agent_mod} because it's not running.")
+
+      pid ->
+        GenServer.call(pid, :shutdown)
+    end
   end
 end
