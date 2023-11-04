@@ -8,7 +8,7 @@ defmodule Memelex.App.BootLoader do
 
   @impl GenServer
   def init(_args) do
-    Logger.info("#{__MODULE__} initializing...")
+    Logger.debug("#{__MODULE__} initializing...")
 
     # REMINDER: By default, Flamelex boots with the memelex config [active?: false]
     case Application.get_env(:memelex, :active?) do
@@ -33,7 +33,9 @@ defmodule Memelex.App.BootLoader do
         {:noreply, state}
 
       env = %{name: name} when is_bitstring(name) and name != "" ->
+        # initiate the boot process for this environment, then this process simply goes into idle
         probe(env)
+
         {:noreply, state}
 
       otherwise ->
@@ -103,6 +105,8 @@ defmodule Memelex.App.BootLoader do
     end
   end
 
+  @example_memex_name "JediLuke"
+  @root_dir "/home/os_user"
   def probe(_invalid_env) do
     # NOTE: This isn't the same msg as other scenarios, don't try to refactor `stop_boot/1` to include the msg...
     stop_boot("""
@@ -112,12 +116,12 @@ defmodule Memelex.App.BootLoader do
 
     config :memelex,
        environment: %{
-          name: "JediLuke",
-          memex_directory: "~/memex/JediLuke",
-          backups_directory: "~/memex/backups/JediLuke"
+          name: #{@example_memex_name},
+          memex_directory: "#{@root_dir}/memex/#{@example_memex_name}",
+          backups_directory: "#{@root_dir}/memex/backups/#{@example_memex_name}"
        }
 
-    Alternatively, you can place ` `~/.memex` file in your root directory, which is a JSON containing the same details as above.
+    Alternatively, you can place `#{@root_dir}/.memex` file in your root directory, which is a JSON containing the same details as above.
 
     The function `Memelex.initialize_environment()` will help you set up a brand new Memex.
 
