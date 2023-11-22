@@ -8,18 +8,33 @@ defmodule Memelex.Environment do
     )
   end
 
+  # This loads the "default" or "system" environment - we may be able to boot
+  # up other "environments", in order to get access to other Memexi, but
+  # we will always want our own Memex to be the default one, so we just use
+  # the Application config to set that
+  def get_env, do: get_environment()
+
   def get_environment do
+    # need to call the actual Memex Environment process, because what
+    # if we called Memelex.load_env here instead of booting it - well,
+    # it should still get loaded in, but... ??
     Application.get_env(:memelex, :environment)
   end
+
+  # def get_memex_dir do
+  #   GenServer.call(find_memex_pid!(get_environment()), :get_memex_dir)
+  # end
 
   # def reload_modz do
   #   Memelex.Utils.EnviroTools.environment_details()
   #   |> reload_modz()
   # end
 
-  # def get_environment(name) do
-  #   GenServer.call({:via, Registry, {Memelex.EnviroRegistry, {__MODULE__, name}}}, :your_call_message)
-  # end
+  # if we want to interact with a loaded environment, not necessarily the system one, we can use this
+  def call_env(env_name, msg) do
+    registered_env = {:via, Registry, {Memelex.EnviroRegistry, {__MODULE__, env_name}}}
+    GenServer.call(registered_env, msg)
+  end
 
   @impl GenServer
   def init(
@@ -29,7 +44,7 @@ defmodule Memelex.Environment do
         } = memex_env
       )
       when is_binary(memex_environment_name) do
-    Logger.info("#{__MODULE__} initializing...")
+    Logger.debug("#{__MODULE__} initializing...")
     {:ok, memex_env, {:continue, :load_memex_from_disk}}
   end
 

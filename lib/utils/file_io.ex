@@ -156,9 +156,9 @@ defmodule Memelex.Utils.FileIO do
   end
 end
 
-env = %{
-  backups_directory: "/home/luke/memex/backups/Rob",
-  memex_directory: "/home/luke/memex/Rob",
-  my_modz: :Rob,
-  name: "Rob"
-}
+# env = %{
+#   backups_directory: "/home/luke/memex/backups/Rob",
+#   memex_directory: "/home/luke/memex/Rob",
+#   my_modz: :Rob,
+#   name: "Rob"
+# }

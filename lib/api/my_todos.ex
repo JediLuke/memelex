@@ -67,6 +67,7 @@ defmodule Memelex.My.TODOs do
 
   @doc ~s(Fetch the whole list of all TODOs)
   def all do
+    # TODO don't use list_all & filter... do it inside WIkiServer
     {:ok, tidbits} = GenServer.call(WikiServer, :list_all_tidbits)
     Enum.filter(tidbits, &Enum.member?(&1.tags, @tag))
   end

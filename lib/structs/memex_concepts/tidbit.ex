@@ -98,10 +98,10 @@ defmodule Memelex.TidBit do
   #   Memelex.My.Wiki.add_tag(tidbit, tag)
   # end
 
-  @doc ~s(When we need to reference a TidBit e.g. a list of TidBits, use this function to get the reference.)
-  def construct_reference(%{title: t, uuid: uuid}) do
-    %{title: t, uuid: uuid}
-  end
+  # @doc ~s(When we need to reference a TidBit e.g. a list of TidBits, use this function to get the reference.)
+  # def construct_reference(%{title: t, uuid: uuid}) do
+  #   %{title: t, uuid: uuid}
+  # end
 
   @doc ~s(This is the string format used to reference TidBits inside other TidBits.)
   def construct_link_string(%{title: t, uuid: uuid}) do
@@ -224,9 +224,27 @@ defmodule Memelex.TidBit do
   #   put_in(tidbit.gui.focus, new_focus)
   # end
 
-  def modify(tidbit, {:add_tags, new_tag}) when is_bitstring(new_tag) do
+  # def update([%Memelex.TidBit{type: ["text"], data: body} = tidbit], _updates = %{append: note})
+  #     when is_bitstring(body) and is_bitstring(note) do
+  #   now =
+  #     Memelex.My.current_time()
+  #     |> Memelex.Utils.StringifyDateTimes.format("XXmonYY-HH:mm")
+
+  #   new_body = body <> ~s|\n
+  #     \n
+  #     Addendum ~ #{now} : #{note}
+  #     |
+
+  #   new_tidbit = %{tidbit | data: new_body}
+  #   save(new_tidbit)
+  # end
+
+  def modify(%__MODULE__{} = tidbit, {:add_tags, new_tag}) when is_bitstring(new_tag) do
     %{tidbit | tags: tidbit.tags ++ [new_tag]}
-    |> IO.inspect(label: "NOW WITH TAGS")
+  end
+
+  def modify(%__MODULE__{} = tidbit, {:add_meta, new_meta}) when is_map(new_meta) do
+    %{tidbit | meta: tidbit.meta ++ [new_meta]}
   end
 
   #  def modify(tidbit, {:append_to_title, text}) do
@@ -266,19 +284,6 @@ defmodule Memelex.TidBit do
 
   #    put_in(tidbit.gui.cursors.body, new_cursor)
   # end
-
-  # def modify(tidbit, modification) do
-  #    Logger.error "Unrecognised modification: #{inspect modification}. No TidBit modification occured..."
-  #    tidbit
-  # end
-
-  def modify(tidbit, modification) do
-    Logger.error(
-      "Unrecognised modification: #{inspect(modification)}. No TidBit modification occured..."
-    )
-
-    tidbit
-  end
 end
 
 # defmodule Flamelex.Structs.TidBit do

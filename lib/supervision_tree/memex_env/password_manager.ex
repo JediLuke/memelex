@@ -22,7 +22,6 @@
 #     if key_exists_as_env_variable?() do
 #       # IO.puts "222222222222"
 #       passwords = load_init_state_from_passwords_file(state)
-#       # |> IO.inspect(label: "LLLL")
 #       {:noreply, %{state|passwords: passwords}}
 #     else
 #       Logger.error """
@@ -127,7 +126,6 @@
 #     |> Utils.FileIO.read_maplist(encrypted?: true, key: secret_key())
 #     |> Enum.find(& &1.uuid == uuid and &1.label == label)
 #   end
-
 
 #   def write_new_password({state, key}, %Memelex.Password{} = password) do
 #     #NOTE - it's important here that we go and fetch the data directly from disc

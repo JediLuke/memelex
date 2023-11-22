@@ -43,7 +43,12 @@ defmodule Memelex.My.Agents do
   end
 
   def all do
-    Memelex.My.Wiki.search(tagged: "my_agents")
+    {:ok, results} = Memelex.My.Wiki.find_all(tagged: "my_agents")
+    results
+  end
+
+  def list do
+    all() |> Enum.map(& &1.title)
   end
 
   def delete(%Memelex.TidBit{} = tidbit) do

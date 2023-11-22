@@ -35,7 +35,7 @@ defmodule Memelex.EventListener do
   @ignored_events [
     :loaded_memex,
     :open_tidbit,
-    :saved_tidbit,
+    :tidbit_saved,
     :reloaded_my_modz
   ]
 

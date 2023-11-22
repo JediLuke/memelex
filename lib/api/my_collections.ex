@@ -34,14 +34,21 @@ defmodule Memelex.My.Collections do
 
   #   # note - collections, and tags, are the same thing! What we need is this https://tiddlywiki.com/#Order%20of%20Tagged%20Tiddlers
 
-  def new(params, tidbits), do: form(params, tidbits)
+  # def new(params, tidbits), do: form(params, tidbits)
 
-  def form(params, tidbits) when is_list(tidbits) do
-    params
-    |> TidBits.ConstructorLogic.sanitize_conveniences()
-    |> Map.merge(%{type: ["collection"], data: tidbits |> create_tidref_list()})
-    |> Memelex.TidBit.new()
-    |> Memelex.My.Wiki.new()
+  # def form(params, tidbits) when is_list(tidbits) do
+  #   params
+  #   |> TidBits.ConstructorLogic.sanitize_conveniences()
+  #   |> Map.merge(%{type: ["collection"], data: tidbits |> create_tidref_list()})
+  #   |> Memelex.TidBit.new()
+  #   |> Memelex.My.Wiki.new()
+  # end
+
+  # I basically need `new` & `add_to` for MVP
+
+  def all do
+    {:ok, wiki} = GenServer.call(WikiServer, :list_all_tidbits)
+    wiki |> Enum.filter(fn tidbit -> tidbit.tags |> Enum.member?("my_collections") end)
   end
 
   # appends a tidbit to a collection
@@ -49,26 +56,30 @@ defmodule Memelex.My.Collections do
 
   # end
 
-  def create_tidref_list(tidbits) do
-    recursively_create_list(tidbits, [])
-  end
+  # def add_to(%__MODULE__{}, %Memelex.TidBit{} = t) do
+  #   # TODO
+  # end
+
+  # def create_tidref_list(tidbits) do
+  #   recursively_create_list(tidbits, [])
+  # end
 
   # def fetch(collection) do
 
   # end
 
-  def recursively_create_list([], tidrefs), do: tidrefs
+  # def recursively_create_list([], tidrefs), do: tidrefs
 
-  def recursively_create_list([tidbit | rest], tidrefs) do
-    recursively_create_list(rest, tidrefs ++ [tidbit |> Memelex.TidBit.construct_reference()])
-  end
+  # def recursively_create_list([tidbit | rest], tidrefs) do
+  #   recursively_create_list(rest, tidrefs ++ [tidbit |> Memelex.TidBit.construct_reference()])
+  # end
 
-  def list do
-    {:ok, tidbits} = Memelex.WikiServer |> GenServer.call(:list_all_tidbits)
+  # def list do
+  #   {:ok, tidbits} = Memelex.WikiServer |> GenServer.call(:list_all_tidbits)
 
-    tidbits
-    |> Enum.filter(fn tidbit -> tidbit.type |> Enum.member?("collection") end)
-  end
+  #   tidbits
+  #   |> Enum.filter(fn tidbit -> tidbit.type |> Enum.member?("collection") end)
+  # end
 
   # NOTE - ok so, we could just do Collections as heirarchies of tags...
 

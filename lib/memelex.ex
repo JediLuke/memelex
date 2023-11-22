@@ -29,8 +29,8 @@ defmodule Memelex do
   defdelegate find!, to: Memelex.My.Wiki
   defdelegate find!(query), to: Memelex.My.Wiki
 
-  defdelegate search(search_term), to: Memelex.My.Wiki
-  defdelegate search(search_term, opts), to: Memelex.My.Wiki
+  # defdelegate search(search_term), to: Memelex.My.Wiki
+  # defdelegate search(search_term, opts), to: Memelex.My.Wiki
 
   defdelegate random, to: Memelex.My.Wiki
 
@@ -47,4 +47,8 @@ defmodule Memelex do
     |> Enum.sort(&(&1.created > &2.created))
     |> Enum.take(x)
   end
+
+  # def voice_memo do
+  #   # arecord -D plughw:1,0 -d 30 -f cd -t wav recording.wav
+  # end
 end

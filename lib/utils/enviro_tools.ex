@@ -132,7 +132,7 @@ defmodule Memelex.Utils.EnviroTools do
     Logger.info("Loading `#{memex_env.name || "unnamed"}` Memex...")
 
     # update the app config so we have the details of the current memex loaded
-    Application.put_env(:memelex, :environment, memex_env)
+    :ok = Application.put_env(:memelex, :environment, memex_env)
 
     # push an event so other parts of the application can react to booting into the new Memex environment
     # Memelex.Utils.EventWrapper.event({:starting_mexex, memex_env})

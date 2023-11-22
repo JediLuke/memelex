@@ -4,12 +4,6 @@ defmodule Memelex.My.Projects do
 
   # TODO we should accept args here, maybe we want to be able to accept extra tags or something
   def new(%Project{} = project) do
-    # IO.inspect(project, label: "PPPP")
-
-    # require IEx
-    # IEx.pry()
-    # title = "Project: #{project.name}"
-
     Memelex.My.Wiki.new(%{
       title: "Project: #{project.name}",
       data: project,
@@ -19,7 +13,7 @@ defmodule Memelex.My.Projects do
   end
 
   def new(name) when is_bitstring(name) do
-    %Project{} = proj = Project.new(%{name: name})
+    %Project{} = proj = Project.new(%{"name" => name})
     new(proj)
   end
 
@@ -30,5 +24,9 @@ defmodule Memelex.My.Projects do
   def all do
     {:ok, wiki} = GenServer.call(WikiServer, :list_all_tidbits)
     wiki |> Enum.filter(fn tidbit -> tidbit.tags |> Enum.member?("my_projects") end)
+  end
+
+  def list do
+    all() |> Enum.map(& &1.title)
   end
 end

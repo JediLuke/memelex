@@ -4,6 +4,7 @@ defmodule Memelex.App.EnvironmentSupervisor do
 
   # TODO one day we should enable loading multiple memexi at the same time...
   # memexi is plural of memex
+  # for now this is here kind of of a safety net against opening up the same memex twice
   @max_open_memexi 1
 
   # Start the supervisor with the given arguments
@@ -14,7 +15,7 @@ defmodule Memelex.App.EnvironmentSupervisor do
   # Initialize the supervisor with the specified max_children and strategy
   @impl true
   def init(init_arg) do
-    Logger.info("#{__MODULE__} initializing... #{inspect(init_arg)}")
+    Logger.debug("#{__MODULE__} initializing... #{inspect(init_arg)}")
     DynamicSupervisor.init(max_children: @max_open_memexi, strategy: :one_for_one)
   end
 
@@ -23,6 +24,8 @@ defmodule Memelex.App.EnvironmentSupervisor do
   """
   def start_env(environment_details) do
     # spec = {Memelex.Environment.TopSupervisor, environment_details, restart: :transient}
+
+    # TODO here we need to register the environment somehow
 
     memex_top_mod = Memelex.Environment.TopSupervisor
 

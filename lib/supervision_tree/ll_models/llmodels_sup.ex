@@ -1,14 +1,20 @@
 defmodule Memelex.LLModels.Supervisor do
   use Supervisor
+  require Logger
 
-  def start_link(args) do
-    Supervisor.start_link(__MODULE__, args, name: __MODULE__)
+  def start_link(_args) do
+    Supervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   @impl true
   def init(_args) do
+    Logger.debug("#{__MODULE__} initializing...")
+
     children = [
-      {Nx.Serving, serving: Memelex.LLModels.Mistral.serving(), name: Mistral}
+      # Mistral - NX.Serving & the GenServer which controls access to it
+      # {Nx.Serving, serving: Memelex.LLModelServer.Mistral.serving(), name: Mistral},
+      # Memelex.LLModelServer.Mistral,
+      Memelex.NxServ.Whisper
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
@@ -27,7 +33,7 @@ end
 #   # Initialize the supervisor with the specified max_children and strategy
 #   @impl true
 #   def init(_init_arg) do
-#     Logger.info("#{__MODULE__} initializing...")
+#     Logger.debug("#{__MODULE__} initializing...")
 #     # 3? Why not 4!? Why not 2!!?!
 #     DynamicSupervisor.init(max_children: 3, strategy: :one_for_one)
 #   end

@@ -122,6 +122,12 @@ defmodule Memelex.Utils.WikiManagement do
     true
   end
 
+  def has_external_files_to_cleanup?(%{
+        type: ["external", _filetype]
+      }) do
+    true
+  end
+
   def cleanup_external_files(
         state,
         %{
@@ -132,14 +138,30 @@ defmodule Memelex.Utils.WikiManagement do
     Memelex.Utils.AgentUtils.delete_agent_file(state, tidbit.data)
   end
 
-  def write_wiki_to_disk(state, wiki) do
-    Memelex.Utils.FileIO.write(wiki_file(state), wiki)
-    # TODO this should probably be an event??
-    # Memelex.Utils.PubSub.broadcast({:wiki_server, :memex_saved_to_disc})
-    # Memelex.Utils.EventWrapper.event({:open_text_snippet, todays_journal_entry_tidbit})
+  def cleanup_external_files(
+        state,
+        %{
+          data: %{"file_path" => file_path},
+          type: ["external", _filetype]
+        } = tidbit
+      ) do
+    case File.rm(file_path) do
+      :ok ->
+        # Logger.info("Deleted external file: #{file_path}")
+        :ok
+
+      :error ->
+        # Logger.error("Could not delete external file: #{file_path}")
+        IO.puts("Could not delete external file: #{file_path}")
+        :error
+    end
   end
 
-  defp wiki_file(%{memex_directory: dir}) do
+  def write_wiki_to_disk(state, wiki) do
+    Memelex.Utils.FileIO.write(wiki_file(state), wiki)
+  end
+
+  def wiki_file(%{memex_directory: dir}) do
     "#{dir}/tidbit-db.json"
   end
 end

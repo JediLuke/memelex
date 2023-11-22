@@ -19,6 +19,7 @@ defmodule Memelex.AgentHandler do
   end
 
   def init(initial_state) do
+    # Process.flag(:trap_exit, true)
     Process.send_after(self(), :boot_agents, @boot_lag)
     {:ok, initial_state}
   end
@@ -33,6 +34,14 @@ defmodule Memelex.AgentHandler do
     {:ok, _pid} = do_boot_agent(agent)
     {:noreply, state}
   end
+
+  # TODO this should probably be a dynamic supervisor, not a GenServer...
+
+  # def handle_info({:EXIT, _pid, _reason}, state) do
+  #   # Handle the exit, for example, by restarting the agent or logging the exit
+  #   Logger.info("Agent exited.")
+  #   {:noreply, state}
+  # end
 
   def handle_info(:boot_agents, state) do
     :ok = boot_agents()
@@ -75,7 +84,7 @@ defmodule Memelex.AgentHandler do
   end
 
   defp do_boot_agent(%Agent{config: %{"mfa" => {agent_mod, :start_link, [args]}}} = agent) do
-    Logger.info("#{__MODULE__} is booting agent #{agent.name}...")
+    Logger.debug("#{__MODULE__} attempting to boot #{agent.name}...")
     {:module, ^agent_mod} = Code.ensure_loaded(agent_mod)
     {:ok, _pid} = agent_mod.start_link(args)
   end

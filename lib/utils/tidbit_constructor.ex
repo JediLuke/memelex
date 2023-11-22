@@ -57,7 +57,8 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
 
   def set_created_and_creator(params) do
     Map.merge(params, %{
-      creator: Application.get_env(:memelex, :environment).name,
+      # creator: Memelex.who_am_i(), Memelex.Environment.get_env() |> Map.get(:user)
+      creator: "JediLuke",
       # TODO use unix time here?
       created: DateTime.utc_now() |> to_string()
     })
@@ -70,10 +71,15 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
     })
   end
 
-  def validate_type!(%{type: ["external", "textfile"]} = params) do
-    params
-  end
+  # def validate_type!(%{type: ["external", "textfile"]} = params) do
+  #   params
+  # end
 
+  # def validate_type!(%{type: ["external", "wavfile"]} = params) do
+  #   params
+  # end
+
+  # convert these pseudo-types into the only real types we support, which is a list of strings
   def validate_type!(%{type: t} = params) when t in [:text, "text"] do
     params |> Map.merge(%{type: ["text"]})
   end
@@ -83,10 +89,6 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
     params |> Map.merge(%{type: ["text"]})
   end
 
-  def validate_type!(%{type: ["collection"]} = params) do
-    params
-  end
-
   def validate_type!(%{type: {:external, :textfile}} = params) do
     params
     # convert the tuple to a list, because JSON doesn't understand tuples
@@ -94,8 +96,15 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
     |> validate_type!()
   end
 
+  @valid_external_types ["textfile", "audio/mpeg"]
+  def validate_type!(%{type: ["external", external_type]} = params)
+      when external_type in @valid_external_types do
+    params |> Map.merge(%{type: ["external", external_type]})
+  end
+
   # in truth there is no such type as a `:text_snippet`, we just pretend there is for
   # the sake of maintaining a nice API
+  # TODO maybe we do the same with :voice_memo? Or maybe just ditch this idea...
   def validate_type!(%{type: snippet} = params) when snippet in [:snippet, :text_snippet] do
     params
     |> Map.merge(%{type: ["external", "textfile"]})
@@ -110,8 +119,12 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
   # end
 
   def validate_type!(%{type: {:struct, struct_module}} = params) when is_atom(struct_module) do
-    params
-    |> Map.merge(%{type: ["struct", struct_module]})
+    # TODO deprecate these tuples I think... just use lists
+    params |> Map.merge(%{type: ["struct", struct_module]})
+  end
+
+  def validate_type!(%{type: ["struct", struct_module]} = params) when is_atom(struct_module) do
+    params |> Map.merge(%{type: ["struct", struct_module]})
   end
 
   def validate_type!(%{type: unknown}) do
@@ -126,10 +139,10 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
   end
 
   def make_snippets_file_if_required(
-        %{type: ["external", "textfile"], title: title, tags: tlist} = params
+        %{type: ["external", "textfile"], title: title, tags: tags_list} = params
       )
-      when is_list(tlist) do
-    if tlist |> Enum.member?("my_snippets") do
+      when is_list(tags_list) do
+    if tags_list |> Enum.member?("my_snippets") do
       params
       |> Map.merge(%{title: "My notes on: " <> title})
       |> create_new_text_snippet_file()
@@ -187,17 +200,25 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
   end
 
   # external means, it's a file saved on the disc
-  def check_the_data_is_valid_for_the_given_type(%{type: ["external", "textfile"]} = params) do
+  def check_the_data_is_valid_for_the_given_type(%{type: ["external", _any_sub_type]} = params) do
     case params.data do
-      {:filepath, fp} when is_bitstring(fp) ->
+      %{"file_path" => fp} when is_binary(fp) ->
         if File.exists?(fp) do
-          params |> Map.merge(%{data: %{"file_path" => fp}})
+          params
         else
-          raise "the filepath appears valid, but could not file a file at: #{inspect(fp)}"
+          raise "Could not create new TidBit - the filepath appears valid, but could not file a file at: #{inspect(params.data)}"
         end
 
+      # TODO maybe just get rid of this tuple thing... what's wrong with string-key maps??
+      # {:filepath, fp} when is_bitstring(fp) ->
+      #   if File.exists?(fp) do
+      #     params |> Map.merge(%{data: %{"file_path" => fp}})
+      #   else
+      #     raise "the filepath appears valid, but could not file a file at: #{inspect(fp)}"
+      #   end
+
       _else ->
-        raise "for external textfiles, data must be in the format: `{:filepath, \"path\"}`"
+        raise "for external files, data must be in the format: `%{\"file_path\" => \"path\"}`"
     end
   end
 
@@ -206,38 +227,12 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
     if is_struct(params.data, struct_type) do
       params
     else
-      raise "when adding a new person to the Wiki, the data field must be a struct."
+      raise "A Struct-TidBit of type #{inspect(struct_type)} can only have a struct as it's data field."
     end
   end
-
-  def check_the_data_is_valid_for_the_given_type(%{type: ["collection"]} = params) do
-    # only support a linear, one-dimensional list of tidrefs for now
-    if params.data != [] and is_list(params.data) and each_item_is_a_tidref?(params.data) do
-      params
-    else
-      raise "invalid data provided to create TidBit of type `collection`."
-    end
-  end
-
-  # def check_the_data_is_valid_for_the_given_type(%{type: {:struct, struct_mod}} = params) when is_atom(struct_mod) do
-
-  # end
-
-  def each_item_is_a_tidref?([]), do: true
-  def each_item_is_a_tidref?([%{title: _t, uuid: _u} | rest]), do: each_item_is_a_tidref?(rest)
-  def each_item_is_a_tidref?(_otherwise), do: false
-
-  # def check_the_data_is_valid_for_the_given_type(%{type: ["person"]} = params) do
-  #   case params.data do
-  #     %Memelex.Person{} ->
-  #        params
-  #     _else ->
-  #        raise "when adding a new person to the Wiki, the data field must be a %Person{} struct"
-  #   end
-  # end
 
   def check_the_data_is_valid_for_the_given_type(%{type: ["text"], data: txt} = params)
-      when is_bitstring(txt) do
+      when is_binary(txt) do
     params
   end
 
@@ -251,7 +246,7 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
 
   def validate_tags(%{tags: tags} = params) when is_list(tags) do
     # TODO probably need a list of tags somewhere...
-    if Enum.any?(tags, fn tag -> not is_bitstring(tag) end) do
+    if Enum.any?(tags, fn tag -> not is_binary(tag) end) do
       raise "one or more of the tags were not bitstrings"
     else
       params

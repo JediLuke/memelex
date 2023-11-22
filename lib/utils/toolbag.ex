@@ -3,7 +3,7 @@ defmodule Memelex.Utils.ToolBag do
   A general-purpose module for general-purpose functions.
   """
 
-  def generate_uuid(params = %{uuid: _uuid}) do
+  def generate_uuid(params = %{uuid: uuid}) when is_binary(uuid) do
     params
   end
 
@@ -12,6 +12,7 @@ defmodule Memelex.Utils.ToolBag do
   end
 
   def memex_directory do
+    # TODO this should go through Memelex.Environment really...
     {:ok, dir} = Memelex.WikiServer |> GenServer.call(:whats_the_current_memex_directory?)
     dir
   end

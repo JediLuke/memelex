@@ -43,7 +43,7 @@ defmodule Memelex.App.BootLoader do
           "Memex environment is not configured correctly. Got environment: #{inspect(otherwise)}"
         )
 
-        raise "Memex environment is not configured correctly"
+        raise "Memex environment is not configured correctly."
     end
   end
 

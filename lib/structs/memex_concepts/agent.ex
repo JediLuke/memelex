@@ -14,7 +14,7 @@ defmodule Memelex.Lib.Structs.MemexConcepts.V01.Agent do
   - `config`: Configuration or settings specific to this Agent's operation.
   """
 
-  @type status :: :active | :dormant | :error
+  @type status :: :active | :inactive | :error | :paused
 
   # need to be able to captyure agents which are GenServers, and those which are powered by LLMs,
   # and for those types what the prompt is etc...
@@ -23,14 +23,20 @@ defmodule Memelex.Lib.Structs.MemexConcepts.V01.Agent do
           name: String.t(),
           status: status(),
           last_activity: DateTime.t(),
-          config: map()
+          config: map(),
+          boot_seq: list(any()) | nil,
+          cache: list(any()) | nil,
+          log_tidbit_uuid: String.t()
         }
 
   defstruct [
     :name,
     :status,
     :last_activity,
-    :config
+    :config,
+    :boot_seq,
+    :cache,
+    :log_tidbit_uuid
   ]
 
   # NOTE this has to go *after* we've defined the struct
@@ -43,7 +49,8 @@ defmodule Memelex.Lib.Structs.MemexConcepts.V01.Agent do
       name: name,
       status: :active,
       last_activity: DateTime.utc_now(),
-      config: agent_config(args)
+      config: agent_config(args),
+      boot_seq: Map.get(args, "boot_seq") || nil
     }
   end
 

@@ -1,4 +1,4 @@
-defmodule Memelex.LLModels.Mistral do
+defmodule Memelex.LLModelServer.Mistral do
   use GenServer
   require Logger
 
@@ -7,8 +7,14 @@ defmodule Memelex.LLModels.Mistral do
   end
 
   def init(_args) do
-    Logger.info("#{__MODULE__} initializing...")
+    Logger.debug("#{__MODULE__} initializing...")
     {:ok, %{}}
+  end
+
+  def handle_call(%{prompt: prompt}, _from, state) do
+    # result = Nx.Serving.batched_run(Mistral, prompt)
+    result = Nx.Serving.batched_run(Mistral, prompt)
+    {:reply, {:ok, result}, state}
   end
 
   def serving() do
@@ -38,4 +44,6 @@ defmodule Memelex.LLModels.Mistral do
       defn_options: [compiler: EXLA]
     )
   end
+
+  # https://toranbillups.com/blog/archive/2023/10/21/fine-tune-mistral-and-serve-with-nx/
 end
