@@ -1,37 +1,32 @@
 defmodule Memelex.App.EnvironmentSupervisor do
+  @moduledoc """
+  A DynamicSupervisor which manages the Memex environment processes.
+  """
   use DynamicSupervisor
   require Logger
 
-  # TODO one day we should enable loading multiple memexi at the same time...
-  # memexi is plural of memex
-  # for now this is here kind of of a safety net against opening up the same memex twice
-  @max_open_memexi 1
-
-  # Start the supervisor with the given arguments
-  def start_link(init_arg) do
-    DynamicSupervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
+  def start_link(_args) do
+    DynamicSupervisor.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
   # Initialize the supervisor with the specified max_children and strategy
   @impl true
-  def init(init_arg) do
-    Logger.debug("#{__MODULE__} initializing... #{inspect(init_arg)}")
+  # TODO one day we should enable loading multiple memexi at the same time...
+  # memexi is plural of memex
+  # for now this is here kind of of a safety net against opening up the same memex twice
+  @max_open_memexi 1
+  def init(_args) do
+    Logger.debug("#{__MODULE__} initializing...")
     DynamicSupervisor.init(max_children: @max_open_memexi, strategy: :one_for_one)
   end
 
   @doc """
   Start the process-tree for a particular Memex environment.
   """
-  def start_env(environment_details) do
-    # spec = {Memelex.Environment.TopSupervisor, environment_details, restart: :transient}
-
-    # TODO here we need to register the environment somehow
-
-    memex_top_mod = Memelex.Environment.TopSupervisor
-
+  def start_env(%Memelex.Environment{} = e) do
     DynamicSupervisor.start_child(__MODULE__, %{
-      id: memex_top_mod,
-      start: {memex_top_mod, :start_link, [environment_details]},
+      id: MemexEnvironment,
+      start: {Memelex.Environment.TreeTopSuprvsr, :start_link, [e]},
       restart: :transient,
       shutdown: :infinity,
       type: :supervisor
