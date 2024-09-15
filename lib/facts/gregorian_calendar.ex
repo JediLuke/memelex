@@ -1,22 +1,21 @@
 defmodule Memelex.Facts.GregorianCalendar do
-
   @months [
-      :january,
-      :february,
-      :march,
-      :april,
-      :may,
-      :june,
-      :july,
-      :august,
-      :september,
-      :october,
-      :november,
-      :december
+    :january,
+    :february,
+    :march,
+    :april,
+    :may,
+    :june,
+    :july,
+    :august,
+    :september,
+    :october,
+    :november,
+    :december
   ]
 
-
   # used to compute the title for today's Journal entry
+  # deprecate this I think it's part of std lib anyway
   def day_name(1), do: "Monday"
   def day_name(2), do: "Tuesday"
   def day_name(3), do: "Wednesday"
@@ -38,5 +37,4 @@ defmodule Memelex.Facts.GregorianCalendar do
   def month_name(10), do: "October"
   def month_name(11), do: "November"
   def month_name(12), do: "December"
- 
 end

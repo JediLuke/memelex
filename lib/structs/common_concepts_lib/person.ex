@@ -24,12 +24,13 @@ defmodule Memelex.Person do
   ]
 
   def new(name) when is_bitstring(name) do
-    new(%{name: name})
+    new(%{"name" => name})
   end
 
   def new(params) when is_map(params) do
-    valid_params = validate(params)
-    Kernel.struct(__MODULE__, valid_params |> convert_to_keyword_list())
+    # valid_params = validate(params)
+    # Kernel.struct(__MODULE__, valid_params |> convert_to_keyword_list())
+    Kernel.struct(__MODULE__, params |> convert_to_keyword_list())
   end
 
   def dob(), do: date_of_birth()
