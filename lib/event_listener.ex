@@ -36,20 +36,27 @@ defmodule Memelex.EventListener do
     :loaded_memex,
     :open_tidbit,
     :tidbit_saved,
-    :reloaded_my_modz
+    :reloaded_my_modz,
+    :show_todos
   ]
 
-  def do_process({ignored_event, _data}) when ignored_event in @ignored_events do
+  def do_process(ignored_event)
+      when ignored_event in @ignored_events do
+    Logger.info("Memelex ignoring an event: #{inspect(ignored_event)}...")
     :ignore
   end
 
-  def do_process({:open_text_snippet, t}) do
-    IO.inspect(t)
-    raise "here we should open it in sublime or gedit"
+  def do_process({ignored_event, _data}) do
+    do_process(ignored_event)
   end
 
-  def do_process(memelex_event) do
-    Logger.warn("#{__MODULE__} *NOT* handling event: #{inspect(memelex_event)} - ignoring...")
-    :ignore
+  def do_process({:open_text_snippet, %{data: %{"file_path" => file_path}}}) do
+    # raise "here we should open it in sublime or gedit"
+    Memelex.Utils.ToolBag.open_gedit(file_path)
   end
+
+  # def do_process(memelex_event) do
+  #   Logger.warn("#{__MODULE__} *NOT* handling event: #{inspect(memelex_event)} - ignoring...")
+  #   :ignore
+  # end
 end
