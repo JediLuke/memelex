@@ -1,10 +1,12 @@
 defmodule Memelex.Utils.WikiSearch do
   require Logger
 
-  def find_one(wiki, search_string) when is_binary(search_string) do
+  @jaro_cutoff 0.67
+
+  def find_one(wiki, search_term) when is_binary(search_term) do
     wiki
     # TODO look at things other than title eventually
-    |> Enum.sort_by(&String.jaro_distance(search_string, &1.title), :desc)
+    |> Enum.sort_by(&String.jaro_distance(search_term, &1.title), :desc)
     |> case do
       [] ->
         {:error, "Unable to find TidBit."}
@@ -12,6 +14,10 @@ defmodule Memelex.Utils.WikiSearch do
       [tidbit | _rest] ->
         {:ok, tidbit}
     end
+  end
+
+  def find_one(wiki, tagged: tag) when is_binary(tag) do
+    wiki |> tag_search(all_of: [tag])
   end
 
   @doc """
@@ -28,6 +34,28 @@ defmodule Memelex.Utils.WikiSearch do
     find_all(wiki, tagged: [tag])
   end
 
+  def find_all(wiki, tagged: tags) when is_list(tags) do
+    wiki |> tag_search(all_of: tags)
+  end
+
+  def find_all(wiki, search_term) when is_binary(search_term) do
+    find_all(wiki, search_term, %{"cutoff" => @jaro_cutoff, "max_t" => 50})
+  end
+
+  def find_all(wiki, search_term, %{"cutoff" => cutoff, "max_t" => max_t})
+      when is_binary(search_term) and is_integer(max_t) do
+    wiki
+    # # TODO look at things other than title eventually
+    # |> Enum.filter(fn tidbit ->
+    #   String.jaro_distance(search_term, tidbit.title) >= cutoff
+    # end)
+    # |> Enum.sort_by(&String.jaro_distance(search_term, &1.title), :desc)
+    # # ...
+    |> Enum.filter(&(String.jaro_distance(search_term, &1.title) >= cutoff))
+    |> Enum.sort_by(&String.jaro_distance(search_term, &1.title), :desc)
+    |> Enum.take(max_t)
+  end
+
   @doc """
   Finds elements in `wiki` tagged with any of the `tags`.
 
@@ -38,9 +66,6 @@ defmodule Memelex.Utils.WikiSearch do
       [%{tags: ["science", "math"]}, %{tags: ["art"]}, %{tags: ["science"]}]
 
   """
-  def find_all(wiki, tagged: tags) when is_list(tags) do
-    wiki |> tag_search(all_of: tags)
-  end
 
   def find_any(wiki, tags: tags) when is_list(tags) do
     wiki |> tag_search(any_of: tags)
@@ -86,14 +111,6 @@ defmodule Memelex.Utils.WikiSearch do
   def is_tagged_with?(%Memelex.TidBit{} = tidbit, tag) when is_binary(tag) do
     tidbit.tags |> Enum.member?(tag)
   end
-
-  # def find_all(wiki, tagged: tag) when is_binary(tag) do
-  #   wiki |> do_tag_search([tag], _init_results = [])
-  # end
-
-  # def find_all(wiki, tagged: tags) when is_list(tags) do
-  #   wiki |> do_tag_search(tags, _init_results = [])
-  # end
 
   # def do_tag_search(wiki, _tags = [], results), do: results
 

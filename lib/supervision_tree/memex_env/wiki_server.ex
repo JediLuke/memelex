@@ -9,7 +9,7 @@ defmodule Memelex.WikiServer do
   use GenServer
   require Logger
   alias Memelex.TidBit
-  alias Memelex.Utils.{EventWrapper, FileIO, WikiSearch, WikiManagement}
+  alias Memelex.Utils.{FileIO, WikiSearch, WikiManagement}
 
   def start_link(params) do
     GenServer.start_link(__MODULE__, params, name: __MODULE__)
@@ -97,6 +97,11 @@ defmodule Memelex.WikiServer do
   #   {:reply, {:ok, full_tidbit}, state}
   # end
 
+  # def handle_call({:delete, tidbit_list}, _from, state) when is_list(tidbit_list) do
+  #   {:ok, new_wiki, deleted_items} = WikiManagement.delete_tidbit_list(state, tidbit_list)
+  #   {:reply, {:ok, %{"deleted_items" => deleted_items}}, %{state | wiki: new_wiki}}
+  # end
+
   def handle_call(:deactivate, _from, memex_env) do
     Logger.info("deactivating...")
     # TODO update Application config, shjut down the Wiki, etc...
@@ -122,16 +127,30 @@ defmodule Memelex.WikiServer do
     {:reply, {:ok, saved_tidbit}, %{state | wiki: new_wiki}}
   end
 
-  def handle_call({:update_tidbit, tidbit, updates}, _from, state) do
-    %TidBit{} = t = TidBit.modify(tidbit, updates)
-    {:ok, saved_tidbit, new_wiki} = save_tidbit_fire_event(state, tidbit)
+  def handle_call({:modify_tidbit, %TidBit{} = tidbit, updates}, _from, state) do
+    # TODO this should at the least be done in Wormhole
+    {:ok, saved_tidbit, new_wiki} =
+      tidbit
+      |> TidBit.modify(updates)
+      |> save_tidbit_fire_event(state)
+
     {:reply, {:ok, saved_tidbit}, %{state | wiki: new_wiki}}
   end
 
-  def handle_call({:delete_tidbit, tidbit}, _from, state) do
+  def handle_call({:update_tidbit, %TidBit{} = tidbit, updates}, from, state) do
+    IO.puts("UPDATE??? CALL MODIFY!!!")
+    handle_call({:modify_tidbit, %TidBit{} = tidbit, updates}, from, state)
+  end
+
+  def handle_call({:delete, tidbit}, _from, state) do
     {:ok, new_wiki} = WikiManagement.delete_tidbit(state, tidbit)
     {:reply, :ok, %{state | wiki: new_wiki}}
   end
+
+  # def handle_call({:delete_tidbit, tidbit}, _from, state) do
+  #   {:ok, new_wiki} = WikiManagement.delete_tidbit(state, tidbit)
+  #   {:reply, :ok, %{state | wiki: new_wiki}}
+  # end
 
   def handle_call(:whats_the_current_memex_directory?, _from, state) do
     {:reply, {:ok, state.memex_directory}, state}
@@ -192,9 +211,17 @@ defmodule Memelex.WikiServer do
   #   Memelex.Fluxus.Reducers.TidbitReducer,
   #   {:update, tidbit, updates}
   # })
+
+  defp save_tidbit_fire_event(%TidBit{} = t, state) do
+    # TODO reverse order of these args... sve_tidbit(t, state) !!
+    {:ok, saved_tidbit, new_wiki} = WikiManagement.save_tidbit(state, t)
+    Memelex.Fluxus.event({:tidbit_saved, saved_tidbit})
+    {:ok, saved_tidbit, new_wiki}
+  end
+
   defp save_tidbit_fire_event(state, tidbit) do
     {:ok, saved_tidbit, new_wiki} = WikiManagement.save_tidbit(state, tidbit)
-    EventWrapper.event({:tidbit_saved, saved_tidbit})
+    Memelex.Fluxus.event({:tidbit_saved, saved_tidbit})
     {:ok, saved_tidbit, new_wiki}
   end
 

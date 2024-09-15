@@ -17,7 +17,7 @@ defmodule Memelex.My.Journal do
   def today() do
     {:ok, todays_journal_entry_tidbit = %{}} = Memelex.My.current_time() |> find_journal_entry()
 
-    Memelex.Utils.EventWrapper.event({:open_text_snippet, todays_journal_entry_tidbit})
+    Memelex.Fluxus.event({:open_text_snippet, todays_journal_entry_tidbit})
 
     todays_journal_entry_tidbit
   end
@@ -28,7 +28,7 @@ defmodule Memelex.My.Journal do
 
   def open_relative_entry(x) when is_integer(x) do
     {:ok, t} = find_relative_page_tidbit(x)
-    Memelex.Utils.EventWrapper.event({:open_text_snippet, t})
+    Memelex.Fluxus.event({:open_text_snippet, t})
   end
 
   @doc ~s(Open a Journal entry relative to today, e.g. open the entry for 3 days ago with `-3`.)
@@ -69,11 +69,12 @@ defmodule Memelex.My.Journal do
     Logger.info("creating new Journal entry `#{new_title}`...")
 
     t =
-      Memelex.TidBit.construct(%{
+      Memelex.TidBit.new(%{
         title: new_title,
         type: {:external, :textfile},
         tags: ["my_journal"],
-        data: {:filepath, journal_entry_filepath(datetime)}
+        # data: {:filepath, journal_entry_filepath(datetime)}
+        data: %{"file_path" => journal_entry_filepath(datetime)}
       })
       |> Memelex.My.Wiki.new()
 

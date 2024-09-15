@@ -6,6 +6,7 @@ defmodule Memelex.Utils.WikiManagement do
       {:error, "a TidBit with title: `#{t}` already exists"}
     else
       # TODO here we dont want to just use what's in memory, we want to re-read from disk!
+      # If we keep doing this, whatever we've got in the GenServer wiki might end up over-writing what's on disk!
       new_wiki = state.wiki ++ [t]
       wiki_file(state) |> Memelex.Utils.FileIO.write_maplist(new_wiki)
       {:ok, new_wiki}
@@ -13,7 +14,6 @@ defmodule Memelex.Utils.WikiManagement do
   end
 
   # TODO don't ever save over another TidBit's UUID!!!
-
   # I WILL ADD THIS CHECK HERE
   def save_tidbit(state, tidbit = %Memelex.TidBit{uuid: this_uuid}) do
     # if it doesn't already exist, we need to create it
@@ -103,7 +103,7 @@ defmodule Memelex.Utils.WikiManagement do
 
   def delete_tidbit(state, %Memelex.TidBit{uuid: uuid_to_be_deleted} = t) do
     # TODO remove from focussed_tidbit if that;s the one that got deleted (probably is)
-
+    # I.e. make sure we're throwing an event somewhere in the correct place...
     new_wiki = state.wiki |> Enum.reject(&(&1.uuid == uuid_to_be_deleted))
     :ok = write_wiki_to_disk(state, new_wiki)
 
@@ -114,6 +114,21 @@ defmodule Memelex.Utils.WikiManagement do
 
     {:ok, new_wiki}
   end
+
+  # handles external files
+  # moves things to trash before delete
+
+  # def delete_tidbit_list(state, tidbit_list) do
+  #   new_wiki = state.wiki |> Enum.reject(fn t -> t in tidbit_list end)
+  #   :ok = write_wiki_to_disk(state, new_wiki)
+
+  #   # if they're an external tidbit e.g. a Journal entry or an Agent, delete that too!!
+  #   tidbit_list
+  #   |> Enum.filter(&has_external_files_to_cleanup?(&1))
+  #   |> Enum.each(fn t -> cleanup_external_files(state, t) end)
+
+  #   {:ok, new_wiki}
+  # end
 
   def has_external_files_to_cleanup?(%{
         data: %Memelex.Lib.Structs.MemexConcepts.V01.Agent{},
@@ -150,9 +165,13 @@ defmodule Memelex.Utils.WikiManagement do
         # Logger.info("Deleted external file: #{file_path}")
         :ok
 
-      :error ->
-        # Logger.error("Could not delete external file: #{file_path}")
-        IO.puts("Could not delete external file: #{file_path}")
+      {:error, :enoent} ->
+        # Logger.info("Could not find external file: #{file_path}")
+        # Logger.warn(": #{file_path}")
+        IO.puts(
+          "Could not find (during cleanup!) an external file. Could not delete external file: #{file_path}"
+        )
+
         :error
     end
   end

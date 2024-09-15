@@ -64,4 +64,15 @@ defmodule Memelex.Utils.ToolBag do
 
     :ok
   end
+
+  def open_gedit(filepath) do
+    # run this in a separate process so we never lock the IEx console
+    {:ok, _pid} =
+      Task.start(fn ->
+        {"", 0} = System.cmd("gedit", [filepath])
+        :ok
+      end)
+
+    :ok
+  end
 end
