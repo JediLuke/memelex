@@ -1,4 +1,3 @@
-# TODO Memelex.Lib.Structs.TidBit
 defmodule Memelex.TidBit do
   @moduledoc """
   modelled after the `tiddler` of TiddlyWiki.
@@ -17,6 +16,7 @@ defmodule Memelex.TidBit do
 
   @derive Jason.Encoder
 
+  alias Memelex.Lib.Structs.MemexConcepts.V01.Collection
   require Logger
 
   defstruct [
@@ -45,7 +45,7 @@ defmodule Memelex.TidBit do
     # an internal flag - we can "archive" TidBits this way
     status: nil,
     # each time a TidBit changes, we track the history #TODO
-    history: nil,
+    history: [],
     # a flag for allowing soft-delete
     deleted?: false,
     # timestamp for deletion, if it has been soft-deleted
@@ -239,19 +239,294 @@ defmodule Memelex.TidBit do
   #   save(new_tidbit)
   # end
 
-  def modify(%__MODULE__{} = tidbit, {:add_tags, new_tag}) when is_bitstring(new_tag) do
-    %{tidbit | tags: tidbit.tags ++ [new_tag]}
+  def modify(%__MODULE__{} = tidbit, %{tag: new_tag}) when is_binary(new_tag) do
+    modify(tidbit, %{add_tags: [new_tag]})
+  end
+
+  def modify(%__MODULE__{} = tidbit, %{add_tags: new_tags}) when is_list(new_tags) do
+    valid_tags = validate_tags(new_tags)
+    %{tidbit | tags: tidbit.tags ++ valid_tags}
+  end
+
+  def modify(%__MODULE__{} = tidbit, %{replace_tags: new_tags}) when is_list(new_tags) do
+    valid_new_tags = validate_tags(new_tags)
+    %{tidbit | tags: valid_new_tags}
   end
 
   def modify(%__MODULE__{} = tidbit, {:add_meta, new_meta}) when is_map(new_meta) do
     %{tidbit | meta: tidbit.meta ++ [new_meta]}
   end
 
-  #  def modify(tidbit, {:append_to_title, text}) do
-  #     title_cursor = tidbit.gui.cursors.title
-  #     put_in(tidbit.gui.cursors.title, move_cursor(title_cursor, {:columns_right, String.length(text)}))
-  #     |> Map.put(:title, tidbit.title <> text)
-  #  end
+  def modify(%__MODULE__{type: ["text"]} = tidbit, %{data: new_data}) when is_binary(new_data) do
+    %{tidbit | data: new_data}
+  end
+
+  def modify(
+        %__MODULE__{type: ["struct", struct_mod]} = tidbit,
+        %{data: new_data}
+      )
+      when is_atom(struct_mod) do
+    if new_data.__struct__ != struct_mod do
+      raise "Struct-type TidBits can only contain a struct of that type in the `data` field. #{inspect(%{struct_type: struct_mod, bad_data: new_data})}"
+    end
+
+    %{tidbit | data: new_data}
+  end
+
+  @actions "actions"
+
+  # a specific modification of the meta of #TODOs
+  def modify(%__MODULE__{tags: tags, meta: meta} = tidbit, %{add_action: a}) when is_binary(a) do
+    if not Enum.member?(tags, "#TODO") do
+      raise "Can not modify the priority of a TidBit which is not a #TODO."
+    end
+
+    case meta do
+      [] ->
+        # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
+        %{tidbit | meta: [%{@actions => [a]}]}
+
+      [%{@actions => a_list} = t_meta_map] ->
+        # probably we want to overwrite here, or put the old/new one in as the next in a list of actions or something
+        # raise "We already have a next action for this TidBit."
+
+        # by convention for #TODOs `meta` is a list containing one map
+        %{tidbit | meta: [t_meta_map |> Map.merge(%{@actions => a_list ++ [a]})]}
+
+      [t_meta_map] when is_map(t_meta_map) ->
+        # the TidBit has a meta field, but it's not a map with a priority key
+        %{tidbit | meta: [Map.merge(t_meta_map, %{@actions => [a]})]}
+    end
+  end
+
+  def modify(%__MODULE__{} = tidbit, %{append_to_history: log_msg}) when is_binary(log_msg) do
+    # TODO record the time we added this history log
+    %{tidbit | history: tidbit.history ++ [log_msg]}
+  end
+
+  # TODO probably dont keep this one but just to get the ball rolling on a new feature...
+  def modify(%__MODULE__{tags: tags, meta: meta} = tidbit, %{next_action: a}) do
+    if not Enum.member?(tags, "#TODO") do
+      raise "Can not modify the priority of a TidBit which is not a #TODO."
+    end
+
+    case meta do
+      [] ->
+        # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
+        %{tidbit | meta: [%{"next_action" => a}]}
+
+      [%{"next_action" => na} = t_meta] when is_binary(na) ->
+        # probably we want to overwrite here, or put the old/new one in as the next in a list of actions or something
+        raise "We already have a next action for this TidBit."
+
+      # %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p + 1})]}
+
+      [t_meta] when is_map(t_meta) ->
+        # the TidBit has a meta field, but it's not a map with a priority key
+        %{tidbit | meta: [Map.merge(t_meta, %{"next_action" => a})]}
+    end
+  end
+
+  @todo_statuses ["done", "cancelled"]
+  def modify(%__MODULE__{} = tidbit, %{"status" => s}) when s in @todo_statuses do
+    %{tidbit | status: s}
+  end
+
+  def modify(
+        %__MODULE__{} = tidbit,
+        %{
+          "planned_date" => %Date{} = pd
+        } = planned_date
+      ) do
+    if not Enum.member?(tidbit.tags, "#TODO") do
+      raise "Can not modify the priority of a TidBit which is not a #TODO."
+    end
+
+    case tidbit.meta do
+      [] ->
+        new_history =
+          (tidbit.history || []) ++
+            ["#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"]
+
+        %{tidbit | meta: [planned_date], history: new_history}
+
+      [%{"planned_date" => old_pd} = t_meta] ->
+        new_history =
+          (tidbit.history || []) ++
+            [
+              "#{DateTime.utc_now()}: Updating 'planned_date' from #{inspect(old_pd)} to #{inspect(pd)}"
+            ]
+
+        %{tidbit | meta: [Map.merge(t_meta, planned_date)], history: new_history}
+
+      [t_meta] when is_map(t_meta) ->
+        # the TidBit has a meta field, but it's not a map with a priority key
+        new_history =
+          (tidbit.history || []) ++
+            [
+              "#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"
+            ]
+
+        %{tidbit | meta: [Map.merge(t_meta, planned_date)]}
+    end
+  end
+
+  def modify(
+        %__MODULE__{} = tidbit,
+        %{
+          "planned_date" => pd = %{"the_week_beginning_on" => %Date{} = _start_of_week}
+        } = planned_date
+      ) do
+    if not Enum.member?(tidbit.tags, "#TODO") do
+      raise "Can not modify the priority of a TidBit which is not a #TODO."
+    end
+
+    # case tidbit.meta do
+    #   [] ->
+    #     # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
+    #     %{tidbit | meta: [planned_date]}
+
+    #   [%{"planned_date" => pd} = _t_meta] ->
+    #     # probably we want to overwrite here, or put the old/new one in as the next in a list of actions or something
+    #     raise "This TODO already has a planned date."
+
+    #   # %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p + 1})]}
+
+    #   [t_meta] when is_map(t_meta) ->
+    #     # the TidBit has a meta field, but it's not a map with a priority key
+    #     %{tidbit | meta: [Map.merge(t_meta, planned_date)]}
+    # end
+    case tidbit.meta do
+      [] ->
+        new_history =
+          (tidbit.history || []) ++
+            ["#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"]
+
+        %{tidbit | meta: [planned_date], history: new_history}
+
+      [%{"planned_date" => old_pd} = t_meta] ->
+        new_history =
+          (tidbit.history || []) ++
+            [
+              "#{DateTime.utc_now()}: Updating 'planned_date' from #{inspect(old_pd)} to #{inspect(pd)}"
+            ]
+
+        %{tidbit | meta: [Map.merge(t_meta, planned_date)], history: new_history}
+
+      [t_meta] when is_map(t_meta) ->
+        # the TidBit has a meta field, but it's not a map with a priority key
+        new_history =
+          (tidbit.history || []) ++
+            [
+              "#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"
+            ]
+
+        %{tidbit | meta: [Map.merge(t_meta, planned_date)], history: new_history}
+    end
+  end
+
+  def modify(
+        %__MODULE__{} = tidbit,
+        %{"due_date" => d_date} = due_date
+      ) do
+    if not Enum.member?(tidbit.tags, "#TODO") do
+      raise "Can not modify the priority of a TidBit which is not a #TODO."
+    end
+
+    # new_meta = Map.get(tidbit, :meta, [])
+    # %{tidbit | meta: [Map.merge(t_meta, %{"next_action" => a})]}
+
+    # add_or_overwrite_meta(tidbit, planned_date)
+    case tidbit.meta do
+      [] ->
+        # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
+        %{tidbit | meta: [due_date]}
+
+      [%{"due_date" => dd} = _t_meta] ->
+        # probably we want to overwrite here, or put the old/new one in as the next in a list of actions or something
+        raise "This TODO already has a planned date."
+
+      # %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p + 1})]}
+
+      [t_meta] when is_map(t_meta) ->
+        # the TidBit has a meta field, but it's not a map with a priority key
+        %{tidbit | meta: [Map.merge(t_meta, due_date)]}
+    end
+  end
+
+  # def add_or_overwrite_meta(%__MODULE__{} = tidbit, new_meta) do
+  #   case tidbit.meta do
+  #     [] ->
+  #       # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
+  #       %{tidbit | meta: [new_meta]}
+
+  #     [%{new_meta_key => _} = _t_meta] ->
+  #       # probably we want to overwrite here, or put the old/new one in as the next in a list of actions or something
+  #       raise "This TODO already has a planned date."
+
+  #     # %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p + 1})]}
+
+  #     [t_meta] when is_map(t_meta) ->
+  #       # the TidBit has a meta field, but it's not a map with a priority key
+  #       %{tidbit | meta: [Map.merge(t_meta, new_meta)]}
+  #   end
+  # end
+
+  def modify(%__MODULE__{tags: t_list, meta: meta} = tidbit, %{"priority" => p}) do
+    if not Enum.member?(t_list, "#TODO") do
+      raise "Can not modify the priority of a TidBit which is not a #TODO."
+    end
+
+    case meta do
+      [] ->
+        # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
+        %{tidbit | meta: [%{"priority" => p}]}
+
+      [%{"priority" => p} = t_meta] when is_integer(p) and p >= 0 ->
+        %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p})]}
+
+      [t_meta] when is_map(t_meta) ->
+        # the TidBit has a meta field, but it's not a map with a priority key
+        %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p})]}
+    end
+  end
+
+  def modify(%__MODULE__{tags: t_list, meta: meta} = tidbit, %{priority: :higher}) do
+    if not Enum.member?(t_list, "#TODO") do
+      raise "Can not modify the priority of a TidBit which is not a #TODO."
+    end
+
+    case meta do
+      [] ->
+        # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
+        %{tidbit | meta: [%{"priority" => 1}]}
+
+      [%{"priority" => p} = t_meta] when is_integer(p) and p >= 0 ->
+        %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p + 1})]}
+
+      [t_meta] when is_map(t_meta) ->
+        # the TidBit has a meta field, but it's not a map with a priority key
+        %{tidbit | meta: [Map.merge(t_meta, %{"priority" => 1})]}
+    end
+  end
+
+  def modify(
+        %__MODULE__{type: ["struct", Collection], data: %Collection{items: c_items}} = tidbit,
+        %{
+          add_to_collection: %Memelex.TidBit{uuid: t_uuid, title: t_title, type: t_type}
+        }
+      ) do
+    new_items = c_items ++ [%{uuid: t_uuid, title: t_title, type: t_type}]
+    %{tidbit | data: %{tidbit.data | items: new_items}}
+  end
+
+  def validate_tags(tags) do
+    tags
+    |> Enum.filter(&is_binary(&1))
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.uniq()
+  end
 
   #  def modify(tidbit, {:append_to_body, text}) do
   #     body_cursor = tidbit.gui.cursors.body
