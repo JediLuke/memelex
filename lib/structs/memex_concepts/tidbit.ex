@@ -300,32 +300,38 @@ defmodule Memelex.TidBit do
   end
 
   def modify(%__MODULE__{} = tidbit, %{append_to_history: log_msg}) when is_binary(log_msg) do
-    # TODO record the time we added this history log
-    %{tidbit | history: tidbit.history ++ [log_msg]}
+    # we shouldn't ever have a nil history, but some very old memexes
+    # might have tidbits with a nil history, so just in case...
+    # ["#{DateTime.utc_now()}: #{log_msg}"]
+    new_history =
+      (tidbit.history || []) ++
+        [%{timestamp: DateTime.utc_now(), log: log_msg}]
+
+    %{tidbit | history: new_history}
   end
 
   # TODO probably dont keep this one but just to get the ball rolling on a new feature...
-  def modify(%__MODULE__{tags: tags, meta: meta} = tidbit, %{next_action: a}) do
-    if not Enum.member?(tags, "#TODO") do
-      raise "Can not modify the priority of a TidBit which is not a #TODO."
-    end
+  # def modify(%__MODULE__{tags: tags, meta: meta} = tidbit, %{next_action: a}) do
+  #   if not Enum.member?(tags, "#TODO") do
+  #     raise "Can not modify the priority of a TidBit which is not a #TODO."
+  #   end
 
-    case meta do
-      [] ->
-        # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
-        %{tidbit | meta: [%{"next_action" => a}]}
+  #   case meta do
+  #     [] ->
+  #       # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
+  #       %{tidbit | meta: [%{"next_action" => a}]}
 
-      [%{"next_action" => na} = t_meta] when is_binary(na) ->
-        # probably we want to overwrite here, or put the old/new one in as the next in a list of actions or something
-        raise "We already have a next action for this TidBit."
+  #     [%{"next_action" => na} = t_meta] when is_binary(na) ->
+  #       # probably we want to overwrite here, or put the old/new one in as the next in a list of actions or something
+  #       raise "We already have a next action for this TidBit."
 
-      # %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p + 1})]}
+  #     # %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p + 1})]}
 
-      [t_meta] when is_map(t_meta) ->
-        # the TidBit has a meta field, but it's not a map with a priority key
-        %{tidbit | meta: [Map.merge(t_meta, %{"next_action" => a})]}
-    end
-  end
+  #     [t_meta] when is_map(t_meta) ->
+  #       # the TidBit has a meta field, but it's not a map with a priority key
+  #       %{tidbit | meta: [Map.merge(t_meta, %{"next_action" => a})]}
+  #   end
+  # end
 
   @todo_statuses ["done", "cancelled"]
   def modify(%__MODULE__{} = tidbit, %{"status" => s}) when s in @todo_statuses do
@@ -344,30 +350,33 @@ defmodule Memelex.TidBit do
 
     case tidbit.meta do
       [] ->
-        new_history =
-          (tidbit.history || []) ++
-            ["#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"]
+        # new_history =
+        #   (tidbit.history || []) ++
+        #     ["#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"]
 
-        %{tidbit | meta: [planned_date], history: new_history}
+        %{tidbit | meta: [planned_date]}
+        |> add_h_log("Setting 'planned_date' to #{inspect(pd)}")
 
       [%{"planned_date" => old_pd} = t_meta] ->
-        new_history =
-          (tidbit.history || []) ++
-            [
-              "#{DateTime.utc_now()}: Updating 'planned_date' from #{inspect(old_pd)} to #{inspect(pd)}"
-            ]
+        # new_history =
+        #   (tidbit.history || []) ++
+        #     [
+        #       "#{DateTime.utc_now()}: Updating 'planned_date' from #{inspect(old_pd)} to #{inspect(pd)}"
+        #     ]
 
-        %{tidbit | meta: [Map.merge(t_meta, planned_date)], history: new_history}
+        %{tidbit | meta: [Map.merge(t_meta, planned_date)]}
+        |> add_h_log("Updating 'planned_date' from #{inspect(old_pd)} to #{inspect(pd)}")
 
       [t_meta] when is_map(t_meta) ->
         # the TidBit has a meta field, but it's not a map with a priority key
-        new_history =
-          (tidbit.history || []) ++
-            [
-              "#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"
-            ]
+        # new_history =
+        #   (tidbit.history || []) ++
+        #     [
+        #       "#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"
+        #     ]
 
         %{tidbit | meta: [Map.merge(t_meta, planned_date)]}
+        |> add_h_log("Setting 'planned_date' to #{inspect(pd)}")
     end
   end
 
@@ -398,30 +407,35 @@ defmodule Memelex.TidBit do
     # end
     case tidbit.meta do
       [] ->
-        new_history =
-          (tidbit.history || []) ++
-            ["#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"]
+        # new_history =
+        #   (tidbit.history || []) ++
+        #     ["#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"]
 
-        %{tidbit | meta: [planned_date], history: new_history}
+        %{tidbit | meta: [planned_date]}
+        |> add_h_log("Setting 'planned_date' to #{inspect(pd)}")
 
       [%{"planned_date" => old_pd} = t_meta] ->
-        new_history =
-          (tidbit.history || []) ++
-            [
-              "#{DateTime.utc_now()}: Updating 'planned_date' from #{inspect(old_pd)} to #{inspect(pd)}"
-            ]
+        # new_history =
+        #   (tidbit.history || []) ++
+        #     [
+        #       "#{DateTime.utc_now()}: Updating 'planned_date' from #{inspect(old_pd)} to #{inspect(pd)}"
+        #     ]
 
-        %{tidbit | meta: [Map.merge(t_meta, planned_date)], history: new_history}
+        %{tidbit | meta: [Map.merge(t_meta, planned_date)]}
+        # %{tidbit | meta: [Map.merge(t_meta, planned_date)], history: new_history}
+        |> add_h_log("Updating 'planned_date' from #{inspect(old_pd)} to #{inspect(pd)}")
 
       [t_meta] when is_map(t_meta) ->
         # the TidBit has a meta field, but it's not a map with a priority key
-        new_history =
-          (tidbit.history || []) ++
-            [
-              "#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"
-            ]
+        # new_history =
+        #   (tidbit.history || []) ++
+        #     [
+        #       "#{DateTime.utc_now()}: Setting 'planned_date' to #{inspect(pd)}"
+        #     ]
 
-        %{tidbit | meta: [Map.merge(t_meta, planned_date)], history: new_history}
+        # %{tidbit | meta: [Map.merge(t_meta, planned_date)], history: new_history}
+        %{tidbit | meta: [Map.merge(t_meta, planned_date)]}
+        |> add_h_log("Setting 'planned_date' to #{inspect(pd)}")
     end
   end
 
@@ -526,6 +540,10 @@ defmodule Memelex.TidBit do
     |> Enum.map(&String.trim/1)
     |> Enum.reject(&(&1 == ""))
     |> Enum.uniq()
+  end
+
+  def add_h_log(%__MODULE__{} = tidbit, log_msg) when is_binary(log_msg) do
+    modify(tidbit, %{append_to_history: log_msg})
   end
 
   #  def modify(tidbit, {:append_to_body, text}) do
