@@ -31,7 +31,17 @@ defmodule Memelex.Utils.WikiManagement do
           end)
 
         :ok = write_wiki_to_disk(state, new_wiki)
-        {:ok, tidbit, new_wiki}
+        # TODO here we should return the tidbit by re-fetching it off the disk,
+        # because we might have changed it in the process of saving it, e.g.
+        # things that get passed in with atom keys, get saved as string keys, and
+        # since eventually once we do fetch everything back off disk they will
+        # inevitebly be in string keys, we should return that here rather than
+        # the form it came in with (atom keys) since we want it to be what actually got saved to disc
+
+        fresh_wiki = read_wiki_from_disk(state)
+        fresh_tidbit = fresh_wiki |> Enum.find(&(&1.uuid == this_uuid))
+
+        {:ok, fresh_tidbit, fresh_wiki}
 
       nil ->
         new_wiki = state.wiki ++ [tidbit]
@@ -143,6 +153,18 @@ defmodule Memelex.Utils.WikiManagement do
     true
   end
 
+  # here we are assuming if we havent defined a cleanup then it doesn't have any external files to clean up,
+  # but it would be better to crash ehre and make us declare it one way or the other...
+  def has_external_files_to_cleanup?(_tidbit) do
+    IO.puts(
+      "WARNING - has_external_files_to_cleanup? called on a tidbit and we dont have an explicit match whether or not there's exernal files to clean up!"
+    )
+
+    # false
+
+    raise "has_external_files_to_cleanup? called on a tidbit and we dont have an explicit match whether or not there's exernal files to clean up!"
+  end
+
   def cleanup_external_files(
         state,
         %{
@@ -178,6 +200,10 @@ defmodule Memelex.Utils.WikiManagement do
 
   def write_wiki_to_disk(state, wiki) do
     Memelex.Utils.FileIO.write(wiki_file(state), wiki)
+  end
+
+  def read_wiki_from_disk(state) do
+    Memelex.Utils.FileIO.read_maplist(wiki_file(state))
   end
 
   def wiki_file(%{memex_directory: dir}) do
