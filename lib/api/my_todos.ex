@@ -205,7 +205,20 @@ defmodule Memelex.My.TODOs do
   #   # |> Enum.sort(fn %{meta: [%{"priority" => p1}]}, %{meta: [%{"priority" => p2}]} -> p1 >= p2 end)
   # end
 
-  # def all(filter: :newest), do: all(filter: {:newest, 10})
+  def all(filter: :newest), do: all(filter: {:newest, 20})
+
+  def all(filter: {:newest, x}) do
+    all()
+    # if t1 is newer or the same as t2, the result will not be :lt
+    |> Enum.sort(fn %{created: t1}, %{created: t2} ->
+      # TODO shouldnt we do this when we take the TODO out of the memex?
+      t1 = make_datetype(t1)
+      t2 = make_datetype(t2)
+
+      DateTime.compare(t1, t2) != :lt
+    end)
+    |> Enum.take(x)
+  end
 
   # def all(filter: :cancelled) do
   #   all()
@@ -222,12 +235,6 @@ defmodule Memelex.My.TODOs do
   def all(filter: :random_5) do
     Enum.take_random(all(), 5)
   end
-
-  # def all(filter: {:newest, x}) do
-  #   all()
-  #   |> Enum.sort(fn %{created: t1}, %{created: t2} -> t1 >= t2 end)
-  #   |> Enum.take(x)
-  # end
 
   # def all(filter: :un_prioritized) do
   #   all()
@@ -618,8 +625,23 @@ defmodule Memelex.My.TODOs do
 
   def make_datetype(%Date{} = d), do: d
 
+  # TODO this feels like hacking around something that ought not exist!?!? Why are we having different datetime strings in different places??
   def make_datetype(date) when is_binary(date) do
-    {:ok, d_date} = Date.from_iso8601(date)
-    d_date
+    case DateTime.from_iso8601(date) do
+      {:ok, d_datetime, _offset} ->
+        d_datetime
+
+      {:error, _reason} ->
+        # Try parsing as a Date
+        case Date.from_iso8601(date) do
+          {:ok, d_date} ->
+            # Convert Date to DateTime for consistency
+            # DateTime.new!(parsed_date, ~T[00:00:00], "Etc/UTC")
+            d_date
+
+          {:error, _reason} ->
+            raise ArgumentError, "Invalid date format"
+        end
+    end
   end
 end
