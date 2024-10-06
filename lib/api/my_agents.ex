@@ -1,29 +1,46 @@
 defmodule Memelex.My.Agents do
   alias Memelex.Lib.Structs.MemexConcepts.V01.Agent
 
+  def show do
+    Memelex.Fluxus.event(:show_agents)
+  end
+
+  # TODO need to make sure this agent doesn't exist already yet (by title?)
   def new(%Agent{} = agent) do
     memex_env = Memelex.Environment.get_environment()
-    :ok = Memelex.Utils.AgentUtils.save_and_load_agent_file(memex_env, agent)
 
-    Memelex.My.Wiki.new(%{
-      title: "Agent: #{agent.name}",
-      data: agent,
-      tags: ["my_agents"],
-      type: {:struct, Agent}
-    })
+    # TODO need to check if this agent already exists somehow...
+
+    agent_t =
+      Memelex.My.Wiki.new(%{
+        title: "Agent: #{agent.name}",
+        data: agent,
+        tags: ["my_agents"],
+        type: ["struct", Agent]
+      })
+
+    {:ok, module_file_path} = Memelex.Utils.AgentUtils.write_agent_module_file(memex_env, agent_t)
+    [{_module, _bytecode}] = Code.load_file(module_file_path)
+
+    # Memelex.Environment.compile_and_load_file(full_file_path)
 
     # and start the agent...
     Memelex.AgentHandler.boot_agent(agent)
   end
 
   def new(%{"name" => name} = args) do
-    agent_name = to_camel_case(name)
-    agent_module = String.to_atom("Elixir.Memelex.My.Agents." <> agent_name)
+    # agent_name = to_camel_case(name)
+
+    # NOTE we need to put "Elixir." in front of the module name because we use String.to_existing_atom
+    # later down the line, and that atom must start with ELixir. for it to already exist
+    agent_module = String.to_atom("Elixir.Memelex.My.Agents." <> name)
+    # agent_module = "Elixir.Memelex.My.Agents." <> name
 
     config =
-      (args["config"] || %{})
-      |> Map.put("type", "gen_server")
-      |> Map.put("mfa", {agent_module, :start_link, [[]]})
+      args["config"] ||
+        %{}
+        # |> Map.put("type", "gen_server")
+        |> Map.put("mfa", {agent_module, :start_link, [[]]})
 
     %Agent{} =
       structified_args =
@@ -43,8 +60,11 @@ defmodule Memelex.My.Agents do
   end
 
   def all do
-    {:ok, results} = Memelex.My.Wiki.find_all(tagged: "my_agents")
-    results
+    Memelex.My.Wiki.find_all(tagged: "my_agents")
+  end
+
+  def all(opt_key) when opt_key in [:t, :titles] do
+    all() |> Enum.map(& &1.title)
   end
 
   def list do
@@ -63,7 +83,7 @@ defmodule Memelex.My.Agents do
   def show do
     # fire an event which will be ignored by Memelex but picked up by Flamelex
     # TODO print a warning if we're not in GUI mode or whatever
-    Memelex.Utils.EventWrapper.event(:show_agents)
+    Memelex.Fluxus.event(:show_agents)
   end
 
   defp to_camel_case(string) do

@@ -29,8 +29,9 @@ defmodule Memelex.My.Collections do
   collection is important.
 
   """
-  alias Memelex.WikiServer
-  alias Memelex.Utils.TidBits
+  # alias Memelex.WikiServer
+  # alias Memelex.Utils.TidBits
+  alias Memelex.Lib.Structs.MemexConcepts.V01.Collection
 
   #   # note - collections, and tags, are the same thing! What we need is this https://tiddlywiki.com/#Order%20of%20Tagged%20Tiddlers
 
@@ -46,27 +47,58 @@ defmodule Memelex.My.Collections do
 
   # I basically need `new` & `add_to` for MVP
 
+  def new(name) when is_bitstring(name) do
+    Memelex.My.Wiki.new(%{
+      title: name,
+      type: ["struct", Collection],
+      data: Collection.new(%{"name" => name})
+    })
+  end
+
+  # this should return all TidBits of type "collection" but filter out sub-collections
   def all do
-    {:ok, wiki} = GenServer.call(WikiServer, :list_all_tidbits)
-    wiki |> Enum.filter(fn tidbit -> tidbit.tags |> Enum.member?("my_collections") end)
+    # TODO don't copyu entire wiki back here, do this inside the WikiServer process
+    {:ok, wiki} = GenServer.call(Memelex.WikiServer, :list_all_tidbits)
+
+    # TODO remove sub-sollections here
+    is_collection? = fn
+      %{type: ["struct", Collection]} ->
+        true
+
+      _otherwise ->
+        false
+    end
+
+    wiki |> Enum.filter(is_collection?)
+  end
+
+  def all(opts) when opts in [:title, :t] do
+    all() |> Enum.map(& &1.title)
   end
 
   # appends a tidbit to a collection
-  # def add(%{uuid: uuid} = collection, tidbit) do
+  def add_to(%Memelex.TidBit{data: %Collection{}} = collection_t, %Memelex.TidBit{} = t) do
+    # TODO this should also add something to the tidbit we're adding, put something in the metadata about being part of a collection...
+    {:ok, modified_collection_t} =
+      GenServer.call(Memelex.WikiServer, {:modify_tidbit, collection_t, %{add_to_collection: t}})
 
-  # end
-
-  # def add_to(%__MODULE__{}, %Memelex.TidBit{} = t) do
-  #   # TODO
-  # end
+    modified_collection_t
+  end
 
   # def create_tidref_list(tidbits) do
   #   recursively_create_list(tidbits, [])
   # end
 
-  # def fetch(collection) do
+  def fetch(title) when is_binary(title) do
+    # TODO don't do this here do it inside wiki server lol
+    case all() |> Enum.filter(&(&1.title == title)) do
+      [] ->
+        {:error, "No collection found with title: #{title}"}
 
-  # end
+      [collection] ->
+        {:ok, collection}
+    end
+  end
 
   # def recursively_create_list([], tidrefs), do: tidrefs
 
