@@ -46,8 +46,10 @@ defmodule Memelex.EventListener do
     :ignore
   end
 
-  def do_process({ignored_event, _data}) do
-    do_process(ignored_event)
+  def do_process({ignored_event, _data})
+      when ignored_event in @ignored_events do
+    Logger.info("Memelex ignoring an event: #{inspect(ignored_event)}...")
+    :ignore
   end
 
   def do_process({:open_text_snippet, %{data: %{"file_path" => file_path}}}) do
