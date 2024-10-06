@@ -37,7 +37,8 @@ defmodule Memelex.EventListener do
     :open_tidbit,
     :tidbit_saved,
     :reloaded_my_modz,
-    :show_todos
+    :show_todos,
+    :show_agents
   ]
 
   def do_process(ignored_event)
@@ -56,6 +57,15 @@ defmodule Memelex.EventListener do
     # raise "here we should open it in sublime or gedit"
     Memelex.Utils.ToolBag.open_gedit(file_path)
   end
+
+  # def do_process(:show_agents) do
+  #   IO.puts("got the event in Memelex, but skip it, it's a Flemelx event")
+  #   :ignore
+  #   # IO.puts("Flamelex catches the event which got sent up from Memelex")
+  #   # Flamelex.Fluxus.action(:show_agents)
+  #   # Memelex.My.Agents.show()
+  #   # note we cant call back down to agent.show, because that would cause a loop
+  # end
 
   # def do_process(memelex_event) do
   #   Logger.warn("#{__MODULE__} *NOT* handling event: #{inspect(memelex_event)} - ignoring...")
