@@ -123,18 +123,25 @@ defmodule Memelex.WikiServer do
   # end
 
   def handle_call({:save_tidbit, %TidBit{} = tidbit}, _from, state) do
-    {:ok, saved_tidbit, new_wiki} = save_tidbit_fire_event(state, tidbit)
-    {:reply, {:ok, saved_tidbit}, %{state | wiki: new_wiki}}
+    case Wormhole.capture(save_tidbit_fn(state, tidbit), crush_report: true) do
+      {:ok, {saved_tidbit, new_wiki}} ->
+        {:reply, {:ok, saved_tidbit}, %{state | wiki: new_wiki}}
+
+      {:error, reason} ->
+        Logger.error("#{__MODULE__} failed to save TidBit. #{inspect(reason)}")
+        {:reply, :error, state}
+    end
   end
 
-  def handle_call({:modify_tidbit, %TidBit{} = tidbit, updates}, _from, state) do
-    # TODO this should at the least be done in Wormhole
-    {:ok, saved_tidbit, new_wiki} =
-      tidbit
-      |> TidBit.modify(updates)
-      |> save_tidbit_fire_event(state)
+  def handle_call({:modify_tidbit, %TidBit{} = tidbit, args}, _from, state) do
+    case Wormhole.capture(modify_tidbit_fn(state, tidbit, args), crush_report: true) do
+      {:ok, {saved_tidbit, new_wiki}} ->
+        {:reply, {:ok, saved_tidbit}, %{state | wiki: new_wiki}}
 
-    {:reply, {:ok, saved_tidbit}, %{state | wiki: new_wiki}}
+      {:error, reason} ->
+        Logger.error("#{__MODULE__} failed to modify TidBit. #{inspect(reason)}")
+        {:reply, :error, state}
+    end
   end
 
   def handle_call({:update_tidbit, %TidBit{} = tidbit, updates}, from, state) do
@@ -143,6 +150,7 @@ defmodule Memelex.WikiServer do
   end
 
   def handle_call({:delete, tidbit}, _from, state) do
+    # TODO use wormhole
     {:ok, new_wiki} = WikiManagement.delete_tidbit(state, tidbit)
     {:reply, :ok, %{state | wiki: new_wiki}}
   end
@@ -212,17 +220,23 @@ defmodule Memelex.WikiServer do
   #   {:update, tidbit, updates}
   # })
 
-  defp save_tidbit_fire_event(%TidBit{} = t, state) do
-    # TODO reverse order of these args... sve_tidbit(t, state) !!
-    {:ok, saved_tidbit, new_wiki} = WikiManagement.save_tidbit(state, t)
-    Memelex.Fluxus.event({:tidbit_saved, saved_tidbit})
-    {:ok, saved_tidbit, new_wiki}
+  def save_tidbit_fn(state, %TidBit{} = tidbit) do
+    fn ->
+      {:ok, saved_tidbit, new_wiki} = WikiManagement.save_tidbit(state, tidbit)
+      Memelex.Fluxus.event({:tidbit_saved, saved_tidbit})
+
+      {saved_tidbit, new_wiki}
+    end
   end
 
-  defp save_tidbit_fire_event(state, tidbit) do
-    {:ok, saved_tidbit, new_wiki} = WikiManagement.save_tidbit(state, tidbit)
-    Memelex.Fluxus.event({:tidbit_saved, saved_tidbit})
-    {:ok, saved_tidbit, new_wiki}
+  def modify_tidbit_fn(state, %TidBit{} = tidbit, args) do
+    fn ->
+      modified_tidbit = TidBit.modify(tidbit, args)
+      {:ok, saved_tidbit, new_wiki} = WikiManagement.save_tidbit(state, modified_tidbit)
+      Memelex.Fluxus.event({:tidbit_saved, saved_tidbit})
+
+      {saved_tidbit, new_wiki}
+    end
   end
 
   defp wiki_file(%{memex_directory: dir}) do
