@@ -20,39 +20,58 @@ defmodule Memelex.Environment do
     :backups_directory
   ]
 
-  def new(%{name: name, memex_directory: memex_directory}) do
-    %__MODULE__{
-      name: name,
-      memex_directory: memex_directory,
-      created_at: DateTime.utc_now()
-    }
-  end
+  # # # A list or map of personal notes
+  # # :notes,
+  # # # A list or map of bookmarks or favorite links
+  # # :bookmarks,
+  # # # A list or map of personal documents
+  # # :documents,
+  # # # A list or map of personal contacts
+  # # :contacts,
+  # # # A list or map of tasks or to-dos
+  # # :tasks,
+
+  # def new(%{name: name, memex_directory: memex_directory}) do
+  #   %__MODULE__{
+  #     name: name,
+  #     memex_directory: memex_directory,
+  #     created_at: DateTime.utc_now()
+  #   }
+  # end
 
   # TODO do something more elegant here lol
-  def new(%{
-        "backups_directory" => backups_directory,
-        "created_at" => created_at,
-        "memex_directory" => memex_directory,
-        "metadata" => metadata,
-        "my_modz" => my_modz,
-        "name" => name,
-        "owner" => owner
-      }) do
+  # this is necessary though because when we load dotfiles,
+  # they come in a string maps like this... we should
+  # make this more generic, to handle if the keys change,
+  # but also we should do validation on the data coming in,
+  # maybe we need a changeset for environments :crazy_talk:
+  # def new(%{
+  #       "backups_directory" => backups_directory,
+  #       "created_at" => created_at,
+  #       "memex_directory" => memex_directory,
+  #       "metadata" => metadata,
+  #       "my_modz" => my_modz,
+  #       "name" => name,
+  #       "owner" => owner
+  #     }) do
+  def new(params) do
     %__MODULE__{
-      backups_directory: backups_directory,
-      created_at: created_at,
-      memex_directory: memex_directory,
-      metadata: metadata,
-      my_modz: my_modz,
-      name: name,
-      owner: owner
+      backups_directory: Map.get(params, "backups_directory"),
+      created_at: Map.get(params, "created_at", DateTime.utc_now()),
+      memex_directory: Map.get(params, "backups_directory"),
+      metadata: Map.get(params, "metadata"),
+      my_modz: Map.get(params, "my_modz"),
+      name: Map.get(params, "name"),
+      owner: Map.get(params, "owner")
     }
   end
 
   # NOTE: We enforce that all environments be started with an %Environment{} struct,
   # so that right from the top we can access the environment here
-  def start_link(%__MODULE__{name: name} = params) when is_binary(name) do
-    GenServer.start_link(__MODULE__, params,
+  def start_link(%__MODULE__{name: name, memex_directory: memex_dir} = args)
+      when is_binary(name) and
+             is_binary(memex_dir) do
+    GenServer.start_link(__MODULE__, args,
       name: {:via, Registry, {Memelex.EnviroRegistry, {__MODULE__, name}}}
     )
   end
@@ -90,6 +109,9 @@ defmodule Memelex.Environment do
   #   |> reload_modz()
   # end
 
+  # TODO automatically add a .gitignore into each memex directory so it's impossible to accidentally commit the memex - anything except the my_modz.ex file
+  # note that although it can never be committed, we also make a my_secretz.ex file
+
   # if we want to interact with a loaded environment, not necessarily the system one, we can use this
   def call_env(env_name, msg) do
     registered_env = {:via, Registry, {Memelex.EnviroRegistry, {__MODULE__, env_name}}}
@@ -116,16 +138,22 @@ defmodule Memelex.Environment do
   def init(
         %__MODULE__{
           name: memex_environment_name,
-          memex_directory: _memex_dir
+          memex_directory: memex_dir
         } = memex_env
       )
-      when is_binary(memex_environment_name) do
-    Logger.debug("#{__MODULE__} initializing...")
+      when is_binary(memex_environment_name) and
+             is_binary(memex_dir) do
+    # Logger.debug("#{__MODULE__} initializing...")
 
     # TODO here we should subscribe to the memex_environments channel,
     # then in the future, we can start multiple environments at the same time,
     # and we can also start them from the Flamelex app, and bubble up events
     # to Flamelex, so that it can start the environments from there
+
+    # TODO here, we should broadcast that the new environment has booted
+    # - then the radix state will be updated by whatever listener is listening to this
+    # channel, this will get pushed down to the MenuBar, and the MenuBar can respond to new environments
+    # being loaded!
 
     # we can easily write a function for something like "list all the active environments"
     # then because we just broadcast a msg like 'msg xyz to sign off' and the supervisor
@@ -134,25 +162,25 @@ defmodule Memelex.Environment do
     {:ok, memex_env, {:continue, :load_memex_from_disk}}
   end
 
-  def init(
-        %{
-          memex_directory: _memex_dir
-        } = memex_env
-      )
-      when is_binary(memex_environment_name) do
-    Logger.debug("#{__MODULE__} initializing...")
+  # def init(
+  #       %{
+  #         memex_directory: _memex_dir
+  #       } = memex_env
+  #     )
+  #     when is_binary(memex_environment_name) do
+  #   Logger.debug("#{__MODULE__} initializing...")
 
-    # TODO here we should subscribe to the memex_environments channel,
-    # then in the future, we can start multiple environments at the same time,
-    # and we can also start them from the Flamelex app, and bubble up events
-    # to Flamelex, so that it can start the environments from there
+  #   # TODO here we should subscribe to the memex_environments channel,
+  #   # then in the future, we can start multiple environments at the same time,
+  #   # and we can also start them from the Flamelex app, and bubble up events
+  #   # to Flamelex, so that it can start the environments from there
 
-    # we can easily write a function for something like "list all the active environments"
-    # then because we just broadcast a msg like 'msg xyz to sign off' and the supervisor
-    # (or other middle-management) should keep  tabs on the active environments & expect regular heartbeats
+  #   # we can easily write a function for something like "list all the active environments"
+  #   # then because we just broadcast a msg like 'msg xyz to sign off' and the supervisor
+  #   # (or other middle-management) should keep  tabs on the active environments & expect regular heartbeats
 
-    {:ok, memex_env, {:continue, :load_memex_from_disk}}
-  end
+  #   {:ok, memex_env, {:continue, :load_memex_from_disk}}
+  # end
 
   @impl GenServer
   def handle_continue(:load_memex_from_disk, memex_env) do
@@ -210,8 +238,7 @@ defmodule Memelex.Environment do
       %{state | async_task_ref: nil}
       |> Map.put(:env_modz_module, env_modz_module)
 
-    # TODO fire an event saying we reloaded the memex modz file
-    Memelex.Utils.EventWrapper.event({:reloaded_my_modz, new_state})
+    Memelex.Fluxus.event({:reloaded_my_modz, new_state})
 
     {:noreply, new_state}
   end
@@ -228,7 +255,7 @@ defmodule Memelex.Environment do
       created_at: DateTime.utc_now(),
       metadata: %{},
       my_modz: JediLuke,
-      memex_directory: memex_dir,
+      memex_directory: "/home/luke/memex/JediLuke",
       backups_directory: nil
     }
 
@@ -242,7 +269,7 @@ defmodule Memelex.Environment do
   def load_memex_dir(memex_dir) when is_bitstring(memex_dir) do
     # check dir exists
 
-    IO.puts("not loading #{memex_dir} lol !")
+    raise "not loading #{memex_dir} lol !"
     # lookj fot dotfile
 
     # load dotfile, construct new Environment struct from it (botch this to be hard-copded to JediLuke for now)
@@ -261,22 +288,24 @@ defmodule Memelex.Environment do
     # # The path to the directory where the memex' backups are saved
     # :backups_directory
 
-    env = %__MODULE__{
-      owner: "JediLuke",
-      name: "JediLuke",
-      created_at: DateTime.utc_now(),
-      metadata: %{},
-      my_modz: JediLuke,
-      memex_directory: memex_dir,
-      backups_directory: nil
-    }
+    # env = %__MODULE__{
+    #   owner: "JediLuke",
+    #   name: "JediLuke",
+    #   created_at: DateTime.utc_now(),
+    #   metadata: %{},
+    #   my_modz: JediLuke,
+    #   memex_directory: "/home/luke/memex/JediLuke",
+    #   backups_directory: nil
+    # }
 
-    # :ok = build_environment(%{memex_directory: memex_dir})
-    Memelex.App.EnvironmentSupervisor.start_env(env)
+    # # :ok = build_environment(%{memex_directory: memex_dir})
+    # Memelex.App.EnvironmentSupervisor.start_env(env)
   end
 
   def load_memex_from_disk(memex_env) do
     # Memelex.App.EnvironmentSupervisor
+
+    # TODO check for dotfile??
 
     with :ok <- build_environment(memex_env),
          # TODO here, we should do better, start this under a proper supervisor!
@@ -461,9 +490,17 @@ defmodule Memelex.Environment do
         do_reload_modz_file(modz_file)
       end
     )
+
+    # Wormhole.capture(
+    #   fn ->
+    #     do_reload_modz_file(modz_file)
+    #   end,
+    #   crush_report: true
+    # )
   end
 
   def do_reload_modz_file(modz_file) do
+    # TODO eventually we want to be able to start multiple environments at the same time... so we will need to know *which* environment to reload the mods for
     Logger.info("Loading customizations from #{modz_file}...")
 
     # if not Code.ensure_loaded?(memex_name) do

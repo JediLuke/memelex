@@ -4,8 +4,6 @@ defmodule Memelex.Utils.EnviroTools do
   """
   require Logger
 
-  alias Memelex.Lib.Structs.MemexConcepts.MemexEnv
-
   def initialize_new_environment do
     Logger.info("creating a new Memex environment...")
 
@@ -29,6 +27,7 @@ defmodule Memelex.Utils.EnviroTools do
   end
 
   def environment_details do
+    # TODO lol
     Application.get_env(:memelex, :environment)
   end
 
@@ -38,7 +37,7 @@ defmodule Memelex.Utils.EnviroTools do
     case Registry.lookup(Memelex.EnviroRegistry, {Memelex.Environment, memex_name}) do
       [{pid, _value}] when is_pid(pid) ->
         case GenServer.call(pid, :get_environment_details, 5000) do
-          {:ok, %MemexEnv{} = memex_env} ->
+          {:ok, %Memelex.Environment{} = memex_env} ->
             memex_env
 
           {:error, reason} ->
@@ -71,12 +70,13 @@ defmodule Memelex.Utils.EnviroTools do
       env_module_name = String.to_atom(env_name)
       IO.puts("custom my_modz module is: #{inspect(env_module_name)}")
 
-      memex_env = %{
-        name: env_name,
-        my_modz: env_module_name,
-        memex_directory: memex_env_directory,
-        backups_directory: memex_backups_dir
-      }
+      memex_env =
+        Memelex.Environment.new(%{
+          name: env_name,
+          my_modz: env_module_name,
+          memex_directory: memex_env_directory,
+          backups_directory: memex_backups_dir
+        })
 
       IO.puts("Writing custom my_modz.ex file...")
       :ok = Memelex.Utils.GenerateMyModz.write_new_my_modz(memex_env)
@@ -112,41 +112,45 @@ defmodule Memelex.Utils.EnviroTools do
     {:ok, memex_dotfile}
   end
 
-  def load_env(dir) when is_binary(dir) do
-    load_env(%{dir: dir})
-  end
+  # def load_env(directory) when is_binary(directory) do
+  #   # TODO get the name from inside the directory? Do we even really *need* a name for the Memex??
+  #   # assume that the name of the directory is the name of the Memex
+  #   name =
+  #     directory
+  #     |> Path.split()
+  #     |> List.last()
 
-  def load_env(%{dir: memex_env_directory}) do
-    name = get_last_directory_part(memex_env_directory)
+  #   memex_env =
+  #     Memelex.Environment.new(%{
+  #       name: name,
+  #       memex_directory: directory
+  #     })
 
-    memex_env =
-      Memelex.Lib.Structs.MemexConcepts.MemexEnv.new(%{
-        name: name,
-        memex_directory: memex_env_directory
-      })
+  #   load_env(memex_env)
+  # end
 
-    load_env(memex_env)
-  end
-
-  def load_env(%Memelex.Lib.Structs.MemexConcepts.MemexEnv{} = memex_env) do
-    Logger.info("Loading `#{memex_env.name || "unnamed"}` Memex...")
+  def load_env(%Memelex.Environment{} = memex_env) do
+    Logger.info("Loading Memelex.Environment `#{memex_env.name}`...")
 
     # update the app config so we have the details of the current memex loaded
+    # TODO this should propbably go away eventually... we want to talk to
+    # some kind of central environment manager, who knows what the current
+    # active environment is, not just stash it in config!
     :ok = Application.put_env(:memelex, :environment, memex_env)
 
     # push an event so other parts of the application can react to booting into the new Memex environment
     # Memelex.Utils.EventWrapper.event({:starting_mexex, memex_env})
-    Memelex.Utils.EventWrapper.event({:loaded_memex, memex_env})
+    Memelex.Fluxus.event({:loaded_memex, memex_env})
+    # this event firing is a good idea, but it is supposed to be done
+    # by the Memelex.Environment process, not here in this Utils module...
 
     {:ok, _pid} = Memelex.App.EnvironmentSupervisor.start_env(memex_env)
     :ok
   end
 
-  def get_last_directory_part(directory) do
-    directory
-    |> Path.split()
-    |> List.last()
-  end
+  # # TODO figurte out why this isnt coming in as a Memelex.Environment{}
+  # def load_env(%{memex_directory: "/home/luke/memex/JediLuke", name: "JediLuke"}) do
+  # end
 
   def deactivate do
     environment_details() |> deactivate()
@@ -159,7 +163,7 @@ defmodule Memelex.Utils.EnviroTools do
   def deactivate(%{name: memex_name}) when is_binary(memex_name) do
     Logger.warn("de-activating #{memex_name}...")
 
-    Registry.lookup(Memelex.EnviroRegistry, {Memelex.Environment.TopSupervisor, memex_name})
+    Registry.lookup(Memelex.EnviroRegistry, {Memelex.Environment.TreeTopSuprvsr, memex_name})
     |> case do
       [{pid, _value}] when is_pid(pid) ->
         :ok = DynamicSupervisor.stop(pid)
@@ -171,7 +175,13 @@ defmodule Memelex.Utils.EnviroTools do
         :ok
 
       [] ->
-        raise "failed to shut down the memex, could not find an Environment process named `#{memex_name}`"
+        Logger.warning(
+          "failed to shut down the memex, could not find an Environment process named `#{memex_name}`"
+        )
+
+        Application.put_env(:memelex, :environment, nil)
+        # {:ok, %{}}
+        :ok
     end
   end
 end

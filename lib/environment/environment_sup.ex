@@ -1,3 +1,5 @@
+# TODO move this under another group of supervisors so it's not started by the top level
+# of the app... also ENvironmentSupervisor is a bad name, it should be App.EnvironmentTree or something
 defmodule Memelex.App.EnvironmentSupervisor do
   @moduledoc """
   A DynamicSupervisor which manages the Memex environment processes.
@@ -23,10 +25,10 @@ defmodule Memelex.App.EnvironmentSupervisor do
   @doc """
   Start the process-tree for a particular Memex environment.
   """
-  def start_env(%Memelex.Environment{} = e) do
+  def start_env(%Memelex.Environment{name: env_name} = e) do
     DynamicSupervisor.start_child(__MODULE__, %{
-      id: MemexEnvironment,
-      start: {Memelex.Environment.TreeTopSuprvsr, :start_link, [e]},
+      id: env_name,
+      start: {Memelex.Environment, :start_link, [e]},
       restart: :transient,
       shutdown: :infinity,
       type: :supervisor
