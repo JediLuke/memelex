@@ -51,7 +51,7 @@ defmodule Memelex.TidBit do
     # timestamp for deletion, if it has been soft-deleted
     deleted_at: nil,
     # the text to be displayed in a tab or button
-    caption: nil,
+    # caption: nil,
     # a place to put extra data, e.g. `due_date`
     meta: []
   ]
@@ -532,6 +532,61 @@ defmodule Memelex.TidBit do
       ) do
     new_items = c_items ++ [%{uuid: t_uuid, title: t_title, type: t_type}]
     %{tidbit | data: %{tidbit.data | items: new_items}}
+  end
+
+  def due_date(%__MODULE__{} = t) do
+    case t do
+      %{meta: [%{"due_date" => due_date}]} ->
+        _due_date = make_datetype(due_date)
+
+      _otherwise ->
+        nil
+    end
+  end
+
+  def priority(%__MODULE__{} = tidbit) do
+    case tidbit do
+      %{meta: [%{"priority" => p}]} ->
+        p
+
+      otherwise ->
+        nil
+    end
+  end
+
+  def planned_date(%__MODULE__{} = tidbit) do
+    case tidbit do
+      %{meta: [%{"planned_date" => %{"the_week_beginning_on" => week_start}}]} ->
+        _plnd_date = make_datetype(week_start)
+
+      %{meta: [%{"planned_date" => plnd_date}]} ->
+        _plnd_date = make_datetype(plnd_date)
+
+      _otherwise ->
+        nil
+    end
+  end
+
+  defp make_datetype(%Date{} = d), do: d
+
+  # TODO this feels like hacking around something that ought not exist!?!? Why are we having different datetime strings in different places??
+  defp make_datetype(date) when is_binary(date) do
+    case DateTime.from_iso8601(date) do
+      {:ok, d_datetime, _offset} ->
+        d_datetime
+
+      {:error, _reason} ->
+        # Try parsing as a Date
+        case Date.from_iso8601(date) do
+          {:ok, d_date} ->
+            # Convert Date to DateTime for consistency
+            # DateTime.new!(parsed_date, ~T[00:00:00], "Etc/UTC")
+            d_date
+
+          {:error, _reason} ->
+            raise ArgumentError, "Invalid date format when calculating TidBit planned/due date"
+        end
+    end
   end
 
   def validate_tags(tags) do
