@@ -66,7 +66,7 @@
 #   end
 
 #   def handle_info({:reminder!, r}, state) do
-#     Logger.warn "REMINDING YOU ABOUT! - #{inspect r}"
+#     Logger.warning "REMINDING YOU ABOUT! - #{inspect r}"
 #     #TODO right now, schedule to remind me again (so I don't forget) - when it's acknowledged, this will stop
 #     Process.send_after(self(), {:reminder!, r}, @default_reminder_time_in_minutes * (60 * 1000))
 #     {:noreply, state}
@@ -111,7 +111,7 @@
 #         Process.send_after(self(), {:reminder!, r}, notify_delay_ms)
 #         state ++ [r]
 #       past_or_present when past_or_present in [:lt, :eq] ->
-#         Logger.warn "This reminder is in the past! #{inspect r}"
+#         Logger.warning "This reminder is in the past! #{inspect r}"
 #         Process.send_after(self(), {:reminder!, r}, @default_reminder_time_in_minutes * (60 * 1000))
 #         state ++ [r]
 #     end
@@ -135,7 +135,7 @@
 #   # end
 
 #   # def handle_info({:reminder!, r}, state) do
-#   #   Logger.warn "REMINDING YOU ABOUT! - #{inspect r}"
+#   #   Logger.warning "REMINDING YOU ABOUT! - #{inspect r}"
 #   #   #TODO right now, schedule to remind me again (so I don't forget) - when it's acknowledged, this will stop
 #   #   Process.send_after(self(), {:reminder!, r}, @default_reminder_time_in_minutes * (60 * 1000))
 #   #   {:noreply, state}
@@ -180,7 +180,7 @@
 #   #       Process.send_after(self(), {:reminder!, r}, notify_delay_ms)
 #   #       state ++ [r]
 #   #     past_or_present when past_or_present in [:lt, :eq] ->
-#   #       Logger.warn "This reminder is in the past! #{inspect r}"
+#   #       Logger.warning "This reminder is in the past! #{inspect r}"
 #   #       Process.send_after(self(), {:reminder!, r}, @default_reminder_time_in_minutes * (60 * 1000))
 #   #       state ++ [r]
 #   #   end

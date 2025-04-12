@@ -6,7 +6,7 @@ defmodule Memelex.Utils.WikiSearch do
   def find_one(wiki, search_term) when is_binary(search_term) do
     wiki
     # TODO look at things other than title eventually
-    |> Enum.sort_by(&String.jaro_distance(search_term, &1.title), :desc)
+    |> Enum.sort_by(&String.jaro_distance(search_term, &1.title || ""), :desc)
     |> case do
       [] ->
         {:error, "Unable to find TidBit."}
@@ -18,6 +18,10 @@ defmodule Memelex.Utils.WikiSearch do
 
   def find_one(wiki, tagged: tag) when is_binary(tag) do
     wiki |> tag_search(all_of: [tag])
+  end
+
+  def find_one(wiki, %{"uuid" => t_uuid}) do
+    wiki |> Enum.filter(&(&1.uuid == t_uuid))
   end
 
   @doc """
@@ -51,8 +55,8 @@ defmodule Memelex.Utils.WikiSearch do
     # end)
     # |> Enum.sort_by(&String.jaro_distance(search_term, &1.title), :desc)
     # # ...
-    |> Enum.filter(&(String.jaro_distance(search_term, &1.title) >= cutoff))
-    |> Enum.sort_by(&String.jaro_distance(search_term, &1.title), :desc)
+    |> Enum.filter(&(String.jaro_distance(search_term, &1.title || "") >= cutoff))
+    |> Enum.sort_by(&String.jaro_distance(search_term, &1.title || ""), :desc)
     |> Enum.take(max_t)
   end
 

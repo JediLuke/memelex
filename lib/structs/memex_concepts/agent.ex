@@ -12,6 +12,7 @@ defmodule Memelex.Lib.Structs.MemexConcepts.V01.Agent do
   - `status`: Indicates the current status of the Agent (e.g., active, dormant, error).
   - `last_activity`: Timestamp of the last activity performed by the Agent.
   - `config`: Configuration or settings specific to this Agent's operation.
+  - `state`: The current state of the Agent.
   """
 
   @type status :: :active | :inactive | :error | :paused
@@ -19,38 +20,94 @@ defmodule Memelex.Lib.Structs.MemexConcepts.V01.Agent do
   # need to be able to captyure agents which are GenServers, and those which are powered by LLMs,
   # and for those types what the prompt is etc...
 
+  @type loop_phase :: :perceive | :plan | :act | :adapt
+
   @type t :: %__MODULE__{
           name: String.t(),
           status: status(),
-          last_activity: DateTime.t(),
+          # last_activity: DateTime.t(),
           config: map(),
-          boot_seq: list(any()) | nil,
-          cache: list(any()) | nil,
-          log_tidbit_uuid: String.t()
+          # boot_seq: list(any()) | nil,
+          # cache: list(any()) | nil,
+          # log_tidbit_uuid: String.t(),
+          # run_queue: [],
+          # state: map(),
+          loop_phase: loop_phase(),
+          percepts: [],
+          plans: [],
+          results: [],
+          evaluation: []
         }
+
+  use StructAccess
+  require Logger
 
   defstruct [
     :name,
     :status,
-    :last_activity,
+    # :last_activity,
     :config,
-    :boot_seq,
-    :cache,
-    :log_tidbit_uuid
+    # :boot_seq,
+    # :cache,
+    # :log_tidbit_uuid,
+    # :run_queue,
+    # :state,
+    :loop_phase,
+    :percepts,
+    :plans,
+    :results,
+    :evaluation
   ]
 
   # NOTE this has to go *after* we've defined the struct
   use Memelex.Utils.JsonEncodable
 
   def new(%{"name" => name} = args) when is_binary(name) do
-    name = to_camel_case(name)
+    # name = to_camel_case(name)
+
+    status = case args["status"] do
+      nil ->
+        :inactive
+      "active" ->
+        :active
+      "inactive" ->
+        :inactive
+      "paused" ->
+        :paused
+      "error" ->
+        :error
+      "manual" ->
+        Logger.warn "Manual status sdetected"
+        :inactive
+      # s when is_atom(s) ->
+      #   s
+    end
+
+    loop_phase = case args["loop_phase"] do
+      nil ->
+        :perceive
+      "perceive" ->
+        :perceive
+      "plan" ->
+        :plan
+      "act" ->
+        :act
+      "adapt" ->
+        :adapt
+    end
 
     %__MODULE__{
       name: name,
-      status: :active,
-      last_activity: DateTime.utc_now(),
+      status: status,
+      loop_phase: loop_phase,
+      # last_activity: DateTime.utc_now(),
       config: agent_config(args),
-      boot_seq: Map.get(args, "boot_seq") || nil
+      # boot_seq: Map.get(args, "boot_seq") || nil,
+      # state: Map.get(args, "state") || %{}
+      percepts: args["percepts"] || [],
+      plans: args["plans"] || [],
+      results: args["results"] || [],
+      evaluation: args["evaluation"] || [],
     }
   end
 
@@ -59,24 +116,29 @@ defmodule Memelex.Lib.Structs.MemexConcepts.V01.Agent do
       nil ->
         %{}
 
+      %{"mfa" => {mod, fun, args}} = config_with_mfa when is_atom(mod) and is_atom(fun) ->
+        Map.put(config_with_mfa, "mfa", {mod, fun, args})
+
       %{"mfa" => [mod, fun, args]} = config_with_mfa ->
         # override the `mfa` list-of-strings with a normal MFA tuple
+
         Map.put(
           config_with_mfa,
           "mfa",
           # should be able to use `to_existing_atom` because Agent structs should have been loaded by now...
-          {String.to_existing_atom(mod), String.to_existing_atom(fun), args}
+          # {String.to_existing_atom(mod), String.to_existing_atom(fun), args}
+          {String.to_atom(mod), String.to_atom(fun), args}
         )
 
-      config_without_mfa when is_map(config_without_mfa) ->
-        config_without_mfa
+        # config_without_mfa when is_map(config_without_mfa) ->
+        #   config_without_mfa
     end
   end
 
-  defp to_camel_case(string) do
-    string
-    |> String.split(~r/[^a-zA-Z0-9]+/)
-    |> Enum.map(&String.capitalize(&1))
-    |> Enum.join("")
-  end
+  # defp to_camel_case(string) do
+  #   string
+  #   |> String.split(~r/[^a-zA-Z0-9]+/)
+  #   |> Enum.map(&String.capitalize(&1))
+  #   |> Enum.join("")
+  # end
 end

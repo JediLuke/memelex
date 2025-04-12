@@ -29,6 +29,8 @@ defmodule Memelex do
   defdelegate find!, to: Memelex.My.Wiki
   defdelegate find!(query), to: Memelex.My.Wiki
 
+  defdelegate start_new_memex, to: Memelex.Utils.EnviroTools
+
   # defdelegate search(search_term), to: Memelex.My.Wiki
   # defdelegate search(search_term, opts), to: Memelex.My.Wiki
 

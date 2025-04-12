@@ -98,6 +98,11 @@ defmodule Memelex.My.TODOs do
     todo_tidbit
   end
 
+  def append_description(%Memelex.TidBit{} = todo, description) when is_binary(description) do
+    {:ok, todo_tidbit} = Memelex.My.Wiki.update(todo, %{data: todo.data <> "\n" <> description})
+    todo_tidbit
+  end
+
   def log(%Memelex.TidBit{} = todo, log) when is_binary(log) do
     # {:ok, todo_tidbit} = Memelex.My.Wiki.update(todo, %{append_to_history: log})
     {:ok, todo_tidbit} = Memelex.My.Wiki.rec_history(todo, log)
@@ -205,7 +210,17 @@ defmodule Memelex.My.TODOs do
   #   # |> Enum.sort(fn %{meta: [%{"priority" => p1}]}, %{meta: [%{"priority" => p2}]} -> p1 >= p2 end)
   # end
 
-  def all(filter: :newest), do: all(filter: {:newest, 20})
+  def all(filter: :cancelled) do
+    all()
+    |> Enum.filter(& &1.status == "cancelled")
+  end
+
+  def all(filter: :done) do
+    all()
+    |> Enum.filter(& &1.status == "done")
+  end
+
+  # def all(filter: :newest), do: all(filter: {:newest, 20})
 
   def all(filter: {:newest, x}) do
     all()
@@ -220,6 +235,40 @@ defmodule Memelex.My.TODOs do
     |> Enum.take(x)
   end
 
+  # def all(filter: :oldest), do: all(filter: {:oldest, 20})
+
+  def all(filter: {:oldest, x}) do
+    all()
+    # if t1 is older or the same as t2, the result will not be :gt
+    |> Enum.sort(fn %{created: t1}, %{created: t2} ->
+      # TODO shouldnt we do this when we take the TODO out of the memex?
+      t1 = make_datetype(t1)
+      t2 = make_datetype(t2)
+
+      DateTime.compare(t1, t2) != :gt
+    end)
+    |> Enum.take(x)
+  end
+
+  def all(filter: :needs_triage) do
+    all()
+    |> Enum.filter(&is_nil(Memelex.TidBit.priority(&1)))
+    |> Enum.reject(& &1.status == "done" or &1.status == "cancelled")
+  end
+
+  def all(filter: {:top_priority, n}) do
+    all()
+    |> Enum.reject(&is_nil(Memelex.TidBit.priority(&1)))
+    |> Enum.sort(fn t1, t2 ->
+      # we want to sort it so that items with "lower" priority are actually higher, priority 1 is higher than priority 10
+      Memelex.TidBit.priority(t2) >= Memelex.TidBit.priority(t1)
+    end)
+    # TODO sort by due date somehow, rank them on how close the due date is
+    # TODO somehow rank them by impact, what would it mean if I don't do this
+    |> Enum.reject(& &1.status == "done" or &1.status == "cancelled")
+    |> Enum.take(n)
+  end
+
   # def all(filter: :cancelled) do
   #   all()
   #   |> Enum.filter(fn
@@ -232,8 +281,8 @@ defmodule Memelex.My.TODOs do
   #   end)
   # end
 
-  def all(filter: :random_5) do
-    Enum.take_random(all(), 5)
+  def all(filter: {:random, x}) do
+    Enum.take_random(all(), x)
   end
 
   # def all(filter: :un_prioritized) do
@@ -264,6 +313,8 @@ defmodule Memelex.My.TODOs do
   def all(filter: :overdue) do
     all()
     |> filter(:action_date_passed)
+    |> Enum.reject(& &1.status == "done")
+    |> Enum.reject(& &1.status == "cancelled")
 
     # |> filter(:in_progress)
   end
@@ -513,7 +564,6 @@ defmodule Memelex.My.TODOs do
         Date.compare(due_date, today) == :lt
 
       %{meta: [%{"planned_date" => %{"the_week_beginning_on" => plnd_date}}]} ->
-        IO.puts("EVEN IN THE RIGFHT ARENA")
         plnd_date = make_datetype(plnd_date)
         this_week = Memelex.My.Calendar.this_week()
         # IO.inspect(plnd_date)
@@ -527,7 +577,7 @@ defmodule Memelex.My.TODOs do
         Date.compare(plnd_date, today) == :lt
 
       _otherwise ->
-        IO.puts("no due date or planned date found")
+        # IO.puts("no due date or planned date found")
         false
     end
   end
@@ -591,7 +641,15 @@ defmodule Memelex.My.TODOs do
     updated_todo
   end
 
-  def set_priority(%Memelex.TidBit{} = todo, p) when is_integer(p) and p >= 0 do
+  def set_status(%Memelex.TidBit{} = todo, status) do
+    # {:ok, updated_todo} = Memelex.My.Wiki.update(todo, %{"status" => status})
+    # updated_todo
+
+      IO.inspect(status, label: "BUNK STATUS???")
+      todo
+  end
+
+  def set_priority(%Memelex.TidBit{} = todo, p) when is_integer(p) and p >= 1 do
     {:ok, updated_todo} = Memelex.My.Wiki.update(todo, %{"priority" => p})
     updated_todo
   end

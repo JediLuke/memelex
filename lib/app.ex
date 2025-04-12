@@ -20,8 +20,10 @@ defmodule Memelex.App do
 
     base_children = [
       {Registry, keys: :unique, name: Memelex.EnviroRegistry},
+      # todo see this is whack, now we have this stupid task supervisor up here... this is dumb get rid of it!
+      {Task.Supervisor, name: Memelex.Environment.TaskSupervisor},
       Memelex.App.EnvironmentSupervisor,
-      Memelex.Utils.AudioRecorderServer,
+      # Memelex.Utils.AudioRecorderServer,
       Memelex.LLModels.AsyncBooter,
       Memelex.App.BootLoader
     ]

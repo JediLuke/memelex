@@ -91,7 +91,7 @@
 
 #   def load_init_state_from_passwords_file(state) do
 #     if not File.exists?(passwords_file(state)) do
-#       Logger.warn "Could not find a Passwords file for this environment. Creating one now..."
+#       Logger.warning "Could not find a Passwords file for this environment. Creating one now..."
 #       passwords_file(state)
 #       |> Utils.FileIO.write_maplist([], encrypted?: true, key: secret_key()) # write an empty list to the file
 #     end
@@ -192,7 +192,7 @@
 
 #     case fetch_passwords do
 #       :error ->
-#         Logger.warn "Fetch passwords failed!"
+#         Logger.warning "Fetch passwords failed!"
 #         []
 #       passwords when is_list(passwords) ->
 #         passwords

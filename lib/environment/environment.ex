@@ -56,13 +56,13 @@ defmodule Memelex.Environment do
   #     }) do
   def new(params) do
     %__MODULE__{
-      backups_directory: Map.get(params, "backups_directory"),
-      created_at: Map.get(params, "created_at", DateTime.utc_now()),
-      memex_directory: Map.get(params, "backups_directory"),
-      metadata: Map.get(params, "metadata"),
-      my_modz: Map.get(params, "my_modz"),
-      name: Map.get(params, "name"),
-      owner: Map.get(params, "owner")
+      backups_directory: Map.get(params, "backups_directory") || Map.get(params, :backups_directory),
+      created_at: Map.get(params, "created_at")  || Map.get(params, :backups_directory) || DateTime.utc_now(),
+      memex_directory: Map.get(params, "memex_directory") || Map.get(params, :memex_directory),
+      metadata: Map.get(params, "metadata") || Map.get(params, :metadata),
+      my_modz: Map.get(params, "my_modz") || Map.get(params, :my_modz),
+      name: Map.get(params, "name") || Map.get(params, :name),
+      owner: Map.get(params, "owner" || Map.get(params, :owner))
     }
   end
 

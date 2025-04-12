@@ -54,7 +54,7 @@ defmodule Memelex.Utils.AudioRecorderServer do
   # end
 
   @impl true
-  @voice_memo_directory "/home/luke/memex/JediLuke/voice_memos"
+  @voice_memo_directory "/home/luke/memex/SammyDemo/voice_memos"
   def handle_call({:start_recording, title}, _from, state) do
     if state.recording? do
       {:reply, {:error, "Recording is already in progress"}, state}
@@ -95,6 +95,17 @@ defmodule Memelex.Utils.AudioRecorderServer do
       {:noreply, state}
     end
   end
+
+  # def handle_info(_anything, state) do
+  #   # if state.recording? do
+  #   #   Logger.warn("Recording stopped due to 15-minute timeout.")
+  #   #   stop_recording_task(state.task)
+  #   #   new_state = %{state | recording?: false, task: nil}
+  #   #   {:noreply, new_state}
+  #   # else
+  #   {:noreply, state}
+  #   # end
+  # end
 
   # Private Helpers
 

@@ -17,10 +17,16 @@ defmodule Memelex.Utils.WikiManagement do
   # I WILL ADD THIS CHECK HERE
   def save_tidbit(state, tidbit = %Memelex.TidBit{uuid: this_uuid}) do
     # if it doesn't already exist, we need to create it
+
+    #TODO update referenced tidbits? When we save a TidBit should we then go and update referenced tidbits?
+    # at this point it would be cool to move to sqlite
+
     case state.wiki |> Enum.find(&(&1.uuid == this_uuid)) do
       %{uuid: ^this_uuid} ->
+        IO.puts "GOT UUID TO OVERWRITE #{this_uuid}"
         new_wiki =
-          Enum.map(state.wiki, fn
+          state.wiki
+          |> Enum.map(fn
             %{uuid: ^this_uuid} ->
               # replace with the incoming tidbit
               tidbit
@@ -29,6 +35,8 @@ defmodule Memelex.Utils.WikiManagement do
               # don't change it...
               any_other_tidbit
           end)
+          # |> update_referenced_tidbits(this_uuid)
+
 
         :ok = write_wiki_to_disk(state, new_wiki)
         # TODO here we should return the tidbit by re-fetching it off the disk,
@@ -49,6 +57,17 @@ defmodule Memelex.Utils.WikiManagement do
         {:ok, tidbit, new_wiki}
     end
   end
+
+  # def update_referenced_tidbits(wiki, base_uuid) do
+  #   base_t = wiki |> Enum.find_one!(&(&1.uuid == this_uuid))
+
+  #   case base_t.meta do
+  #     %{"member_of_these_collections" => col_uuids} ->
+
+  #     _otherwise_do_nothing ->
+  #       wiki
+  #   end
+  # end
 
   # def add_tag(%{tag: tag, state: state, tidbit: %Memelex.TidBit{} = tidbit})
   #   when is_bitstring(tag) do

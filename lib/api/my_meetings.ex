@@ -8,6 +8,7 @@ defmodule Memelex.My.Meetings do
     params
     |> TidBitUtils.sanitize_conveniences()
     |> TidBitUtils.apply_tag(@my_meetings)
+    #TODO move this behind My.Wiki
     |> Memelex.TidBit.new()
     |> Memelex.My.Wiki.new()
   end

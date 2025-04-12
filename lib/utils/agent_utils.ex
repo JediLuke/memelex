@@ -1,17 +1,21 @@
 defmodule Memelex.Utils.AgentUtils do
-  alias Memelex.Lib.Structs.MemexConcepts.MemexEnv
+  # alias Memelex.Lib.Structs.MemexConcepts.MemexEnv
   alias Memelex.Lib.Structs.MemexConcepts.V01.Agent
 
   require Logger
 
-  def save_and_load_agent_file(
-        %MemexEnv{} = memex_env,
-        %Agent{
-          config: %{
-            "type" => "gen_server",
-            "mfa" => {agent_module, :start_link, [[]]}
-          }
-        } = agent
+  def write_agent_module_file(
+        %Memelex.Environment{} = memex_env,
+        %Memelex.TidBit{
+          uuid: t_uuid,
+          data:
+            %Agent{
+              config: %{
+                # "type" => "gen_server",
+                "mfa" => {agent_module, :start_link, [[]]}
+              }
+            } = agent
+        } = agent_t
       ) do
     # agent_filepath = "agents/#{to_snake_case(agent.name)}.ex"
     full_file_path = Path.join(memex_env.memex_directory, agent_filepath(agent))
@@ -20,13 +24,15 @@ defmodule Memelex.Utils.AgentUtils do
       raise "The agent file already exists: #{full_file_path}"
     else
       # generate the code for the agent
-      {:ok, agent_code} = gen_server_agent_creator(agent_module)
+      {:ok, agent_code} = agent_codegen(agent_t)
+      # {:ok, agent_code} = gen_server_agent_creator(agent_module, agent.name)
 
       # save the new agent file inside the memex
       :ok = File.write!(full_file_path, agent_code)
+      {:ok, full_file_path}
 
-      # load the file into our BEAM runtime
-      Memelex.Environment.compile_and_load_file(full_file_path)
+      # # load the file into our BEAM runtime
+      # Memelex.Environment.compile_and_load_file(full_file_path)
     end
   end
 
@@ -34,7 +40,7 @@ defmodule Memelex.Utils.AgentUtils do
     File.rm!(full_agent_filepath(memex_env, agent))
   end
 
-  def full_agent_filepath(%MemexEnv{memex_directory: dir}, agent) do
+  def full_agent_filepath(%Memelex.Environment{memex_directory: dir}, agent) do
     Path.join(dir, agent_filepath(agent))
   end
 
@@ -91,7 +97,7 @@ defmodule Memelex.Utils.AgentUtils do
 
   # end
 
-  def save_agent(%MemexEnv{} = memex_env, :yes_man) do
+  def save_agent(%Memelex.Environment{} = memex_env, :yes_man) do
     save_agent(memex_env, %{
       name: "YesMan",
       module: Memelex.My.Agents.YesMan,
@@ -99,7 +105,7 @@ defmodule Memelex.Utils.AgentUtils do
     })
   end
 
-  def save_agent(%MemexEnv{} = memex_env, :moneypenny) do
+  def save_agent(%Memelex.Environment{} = memex_env, :moneypenny) do
     save_agent(memex_env, %{
       name: "MoneyPenny",
       module: Memelex.My.Agents.MoneyPenny,
@@ -170,6 +176,38 @@ defmodule Memelex.Utils.AgentUtils do
   #   add_to_memex(agent)
   # end
 
+  def agent_codegen(%Memelex.TidBit{
+        uuid: agent_t_uuid,
+        data: %Agent{
+          name: agent_name,
+          config: %{
+            # "type" => "gen_server",
+            "mfa" => {agent_module, :start_link, [[]]}
+          }
+        }
+      }) do
+    # make agents inactive by default
+    agent_active? = false
+
+    code = """
+    defmodule #{agent_module} do
+      @agent_active? #{agent_active?}
+      use Memelex.Agents.Behaviour
+
+      def uuid, do: "#{agent_t_uuid}"
+
+      def tag, do: "#{to_snake_case(agent_name)}"
+
+      def do_work(state) do
+        IO.puts "#{agent_name} is doing work!"
+        {:ok, state}
+      end
+    end
+    """
+
+    {:ok, code}
+  end
+
   def gen_server_agent_creator(module_name) do
     code = gen_server_agent_creator(:on_loop, module_name)
     {:ok, code}
@@ -235,10 +273,11 @@ defmodule Memelex.Utils.AgentUtils do
     """
   end
 
-  # fire the action to trigger changing us to the agents screen
-  def show_agents do
-    Flamelex.Fluxus.action({Flamelex.Fluxus.RadixReducer, :show_agents})
-  end
+  # # fire the action to trigger changing us to the agents screen
+  # def show_agents do
+  #   raise "need to throw event here"
+  #   # Flamelex.Fluxus.action({Flamelex.Fluxus.RadixReducer, :show_agents})
+  # end
 
   defp to_snake_case(string) do
     string

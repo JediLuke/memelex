@@ -10,9 +10,18 @@ config :logger,
        # no additional newline
        format: "[$level] $message $metadata\n"
 
-config :nx, default_backend: EXLA.Backend
-
 config :memelex,
   text_editor_shell_command: "subl"
+
+config :nx, default_backend: EXLA.Backend
+config :nx, :default_defn_options, [compiler: EXLA]
+
+# config :exla, [
+#   default_client: :cuda,
+#   clients: [
+#     host: [platform: :host, preallocate: false, memory_fraction: 0.5],
+#     cuda: [platform: :cuda]
+#   ]
+# ]
 
 import_config "#{config_env()}.exs"

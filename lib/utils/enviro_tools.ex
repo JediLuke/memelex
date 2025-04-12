@@ -4,7 +4,7 @@ defmodule Memelex.Utils.EnviroTools do
   """
   require Logger
 
-  def initialize_new_environment do
+  def start_new_memex do
     Logger.info("creating a new Memex environment...")
 
     # TODO what if we already detect an environment!?!?
@@ -70,6 +70,8 @@ defmodule Memelex.Utils.EnviroTools do
       env_module_name = String.to_atom(env_name)
       IO.puts("custom my_modz module is: #{inspect(env_module_name)}")
 
+      IO.inspect(memex_env_directory, label: "MMX DIR 111")
+
       memex_env =
         Memelex.Environment.new(%{
           name: env_name,
@@ -78,11 +80,20 @@ defmodule Memelex.Utils.EnviroTools do
           backups_directory: memex_backups_dir
         })
 
+      IO.inspect(memex_env.memex_directory, label: "MMX DIR 222")
+
       IO.puts("Writing custom my_modz.ex file...")
       :ok = Memelex.Utils.GenerateMyModz.write_new_my_modz(memex_env)
 
-      IO.puts("Writing new memex env file...")
-      {:ok, dotfile} = write_new_memex_dotfile(memex_env)
+      write_memex_dotfile? =
+        IO.gets("Would you like to create a memex dotfile in your home directory? [y/n]: ")
+        |> then(&(String.downcase(String.trim(&1)) == "y"))
+
+      if write_memex_dotfile? do
+        IO.puts("Writing new memex env file...")
+        {:ok, dotfile} = write_new_memex_dotfile(memex_env)
+      end
+
 
       IO.puts("""
       Done. The following has been achieved:
@@ -90,8 +101,8 @@ defmodule Memelex.Utils.EnviroTools do
       * Create a new directory `#{memex_env_directory}` to save Memex data into.
       * Written various files into this directory, such as:
         - tidbit-db.json  # this is the file where we save TidBits
-        - my_modz.ex      # this will actually be called `your_environment.ex`, it is your custom Elixir module loaded at runtime, separately from the Flamelex codep
-      * Create a new  file `#{dotfile}` file in the home directory, so that we recognise this environment on future bootups.
+        - my_modz.ex      # this will actually be called `your_environment.ex`, it is your custom Elixir module loaded at runtime, separately from the Flamelex code
+      * Create a new dotfile in the home directory, so that we recognise this environment on future bootups, if #{write_memex_dotfile?}.
       """)
 
       boot_now? =

@@ -1,4 +1,11 @@
 defmodule Memelex.App.BootLoader do
+  @moduledoc """
+  This process checks for a valid Memex environment and boots it if found.
+
+  The process is automatically started as part of the `Memex` app's supervision tree,
+  but it could also be called from within an external application (i.e. Flamelex)
+  to boot a Memex environment.
+  """
   use GenServer
   require Logger
 
@@ -23,44 +30,55 @@ defmodule Memelex.App.BootLoader do
 
   @impl GenServer
   def handle_continue(:check_for_memex_environment, state) do
-    case Memelex.Environment.get_environment() do
-      nil ->
+    # TODO here - check for dotfiles? or just use the config?
+    cond do
+      dotfile_found?() ->
+        memex_env =
+          Memelex.Utils.FileIO.readmap(dotfile())
+          |> Memelex.Environment.new()
+
+        probe(memex_env)
+
+        {:noreply, state}
+
+      env_declared_in_elixir_app_config?() ->
+        # TODO here we need to load the environment from the config
+        # and then boot it
+        {:noreply, state}
+
+      true ->
         Logger.warn(
           "booting Memex with no environment configured...\n\nConsider using `Memelex.load_env/1` to load a Memex environment."
         )
 
-        # TODO ask to start a new environment here??
+        # TODO ask to start/create a new environment here??
         {:noreply, state}
-
-      env = %{name: name} when is_bitstring(name) and name != "" ->
-        # initiate the boot process for this environment, then this process simply goes into idle
-        probe(env)
-
-        {:noreply, state}
-
-      otherwise ->
-        Logger.error(
-          "Memex environment is not configured correctly. Got environment: #{inspect(otherwise)}"
-        )
-
-        raise "Memex environment is not configured correctly."
     end
   end
 
-  # def search_for_environment do
-  #    case Application.get_env(:memelex, :environment) do
+  # def boot_from_dotfile do
+  #   dotfile = dotfile_path()
+  #   Logger.info("#{__MODULE__} found dotfile at #{dotfile}")
 
-  # case search_for_environment() do
-  #    {:found_memex_env, env} ->
-  #       probe(env)
-  #       {:noreply, state}
-  #    :no_env_found ->
-  #       # Logger.error "Unable to detect a Memex environment."
-  #       # {:noreply, state}
-  #       raise "Unable to detect a Memex environment."
+  #   # TODO here we need to load the environment from the dotfile
+  #   # and then boot it
+  #   {:ok, _} = Memelex.Utils.EnviroTools.load_env_from_dotfile(dotfile)
   # end
-  #    end
-  # end
+
+  def dotfile_found? do
+    File.exists?(dotfile())
+  end
+
+  def dotfile do
+    # Get the current user's home directory
+    home_dir = System.user_home()
+
+    # Construct the path to the .memex file in the home directory
+    Path.join(home_dir, ".memex")
+  end
+
+  # TODO
+  def env_declared_in_elixir_app_config?, do: false
 
   def boot_env(env) do
     # this function is mainly used when we boot into an inactive memex mode (like in development) and want to boot into a known memex
@@ -84,19 +102,35 @@ defmodule Memelex.App.BootLoader do
     """)
   end
 
-  def probe(%{name: name, memex_directory: dir} = env)
-      when is_bitstring(name) and
-             is_bitstring(dir) do
-    if File.dir?(dir) do
-      Memelex.Utils.EnviroTools.load_env(env)
+  def probe(%{name: memex_name, memex_directory: memex_dir} = env)
+      when is_bitstring(memex_name) and
+             is_bitstring(memex_dir) do
+    if File.dir?(memex_dir) do
+      # def load_env(dir) when is_binary(dir) do
+      #   load_env(%{dir: dir})
+      # end
+
+      # def load_env(%{dir: memex_env_directory}) do
+      # directyor = get_last_directory_part(memex_env_directory)
+
+      memex_env =
+        Memelex.Environment.new(%{
+          name: memex_name,
+          memex_directory: memex_dir
+        })
+
+      # load_env(memex_env)
+      # end
+
+      Memelex.Utils.EnviroTools.load_env(memex_env)
     else
       # start_new_memex(env)
       stop_boot("""
-      The Memex directory defined in `config.exs` does not exist.
+      The Memex directory specified for this Memex environment does not exist.
 
-      The directory #{inspect(dir)} does not exist. Please create it before running the Memelex. For example, on Linux:
+      The directory #{inspect(memex_dir)} does not exist. Please create it before running the Memelex. For example, on Linux:
 
-      mkdir -p #{dir}
+      mkdir -p #{memex_dir}
 
       Note that the full path must be declared in the config.
 
@@ -142,5 +176,10 @@ defmodule Memelex.App.BootLoader do
     # Exit in a separate process, so we don't get a warning in console
     # about not having correct return for handle_continue/2
     spawn(fn -> System.stop(1) end)
+  end
+
+  # if we have /home/user/some/directory/here, return `here`, the last part
+  defp get_last_directory_part(directory) do
+    directory |> Path.split() |> List.last()
   end
 end

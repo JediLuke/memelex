@@ -65,6 +65,7 @@ defmodule Memelex.Utils.ToolBag do
     :ok
   end
 
+  #TODO probably shouyldnt use elkixir process for this, use shell hax to make this run in the background
   def open_gedit(filepath) do
     # run this in a separate process so we never lock the IEx console
     {:ok, _pid} =

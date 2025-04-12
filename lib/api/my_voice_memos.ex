@@ -17,7 +17,8 @@ defmodule Memelex.My.VoiceMemos do
           title: "Voice Memo: #{title}",
           data: %{"file_path" => file_path},
           tags: [@tag],
-          type: ["external", "wavfile"]
+          # is it mpeg or wav though??
+          type: ["external", "audio/mpeg"]
         })
 
       {:error, reason} ->
@@ -80,7 +81,10 @@ defmodule Memelex.My.VoiceMemos do
     |> Kernel.<>("-voice-memo")
   end
 
-  def transcribe(%Memelex.TidBit{type: ["external", "wavfile"], data: %{"file_path" => file_path}}) do
+  def transcribe(%Memelex.TidBit{
+        type: ["external", "audio/mpeg"],
+        data: %{"file_path" => file_path}
+      }) do
     {:ok, result} = Memelex.NxServ.Whisper.transcribe(file_path)
   end
 end

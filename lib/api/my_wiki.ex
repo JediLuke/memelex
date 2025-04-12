@@ -7,7 +7,7 @@ defmodule Memelex.My.Wiki do
   require Logger
 
   # def new(param_one, param_two) do
-  #   Logger.warn "Here, we should be enabling things like:
+  #   Logger.warning "Here, we should be enabling things like:
 
   #       Memelex.new 'Hippy string title', tags: 'blah', 'nlajh'
 
@@ -25,6 +25,14 @@ defmodule Memelex.My.Wiki do
   #   Memelex.WikiServer |> GenServer.call({:new_tidbit, t})
   # end
 
+  def new do
+    new(%{})
+  end
+
+  def new(name) when is_binary(name) do
+    new(%{title: name})
+  end
+
   def new(%Memelex.TidBit{} = new_tidbit) do
     {:ok, saved_tidbit} = save(new_tidbit)
     saved_tidbit
@@ -35,6 +43,14 @@ defmodule Memelex.My.Wiki do
     # |> TidBiztUtils.sanitize_conveniences()
     |> Memelex.TidBit.new()
     |> new()
+  end
+
+  def add(args) do
+    new(args)
+  end
+
+  def find(args) do
+    find_all(args)
   end
 
   @doc ~s(Return a list containing every single TidBit.)
@@ -83,12 +99,22 @@ defmodule Memelex.My.Wiki do
     end
   end
 
+  # why not lol
+  # def edit(tidbit, updates) do
+  #   update(tidbit, updates)
+  # end
+
+  # use modify over update, what is an update? it's a modification
+  def modify(%Memelex.TidBit{} = tidbit, updates) do
+    GenServer.call(WikiServer, {:modify_tidbit, tidbit, updates})
+  end
+
   @doc """
   Perform an edit on an existing TidBit. This means update content,
   change the title, etc.
   """
   def update(%Memelex.TidBit{} = tidbit, updates) do
-    GenServer.call(WikiServer, {:update_tidbit, tidbit, updates})
+    GenServer.call(WikiServer, {:modify_tidbit, tidbit, updates})
   end
 
   # def close(tidbit) do
@@ -130,35 +156,40 @@ defmodule Memelex.My.Wiki do
 
   def find_one!(query) do
     case find_one(query) do
-      {:ok, %Memelex.TidBit{} = tidbit} ->
-        tidbit
+      # {:ok, %Memelex.TidBit{} = tidbit} ->
+      {:ok, []} ->
+        raise "Could not find a TidBit with query: #{inspect(query)}.}"
 
-      {:error, reason} ->
-        raise "Could not find a TidBit with query: #{inspect(query)}.\n\n#{inspect(reason)}"
+      {:ok, [%Memelex.TidBit{} = tidbit]} ->
+        tidbit
+      # {:error, reason} ->
     end
   end
 
   def find_all(query) do
-    GenServer.call(WikiServer, {:find_all, query})
+    {:ok, wiki} = GenServer.call(WikiServer, {:find_all, query})
+    wiki
   end
 
-  def find_all!(query) do
-    GenServer.call(WikiServer, {:find_all, query})
-    |> case do
-      {:ok, []} ->
-        raise "Could not find any TidBits with query: #{inspect(query)}"
-
-      {:ok, [%Memelex.TidBit{} = _t | _rest] = results} ->
-        results
-    end
+  # this is just a shorthand I made because quite often all I want is the titles
+  def find_all(query, key_opt) when key_opt in [:t, :title] do
+    find_all(query) |> Enum.map(& &1.title)
   end
 
-  # def tag(%{tidbit_uuid: _t_uuid} = tidbit, new_tags) do
-  #   # find!(tidbit) |> tag(new_tags) |> save()
-  #   find!(tidbit) |> tag(new_tags)
-  # end
+  def tag(%Memelex.TidBit{} = t, new_tag) when is_binary(new_tag) do
+    tag(t, [new_tag])
+  end
 
-  # def tag(%Memelex.TidBit{} = t, new_tags) do
+  def tag(%Memelex.TidBit{} = t, new_tags) when is_list(new_tags) do
+    # GenServer.call(WikiServer, {:edit_tidbit, t, %oupdate({add_tags: new_tags}})
+    update(t, %{add_tags: new_tags})
+  end
+
+  # record some history about a TidBit - adds a timestamped log to the TidBit's history
+  def rec_history(%Memelex.TidBit{} = t, log) when is_binary(log) do
+    update(t, %{append_to_history: log})
+  end
+
   #   # add_tag(tidbit, tag)
 
   #   # TODO should we put this tidbit into edit mode, considering we aren't saving it???
@@ -173,10 +204,16 @@ defmodule Memelex.My.Wiki do
   #   # Memelex.Fluxus.action({TidbitReducer, {:update_tidbit, t, {:add_tags, new_tags}}})
   # end
 
-  # def open(%Memelex.TidBit{} = t) do
-  #   # this is inside Memelex, and `open` only has any effect in GUI mode, so fire an event
-  #   Memelex.Utils.EventWrapper.event({:open_tidbit, t})
-  # end
+  def open(%Memelex.TidBit{} = t) do
+    # this is inside Memelex, and `open` only has any effect in GUI mode, so fire an event
+    # even if we want Memelex to open an external GUI e.g. gedit, then the internal event
+    # handler inside Memelex (which is disabled when running in GUI mode aka as a part of Flamelex) will handle it
+    Memelex.Fluxus.event({:open_tidbit, t})
+  end
+
+  def open(%{"uuid" => t_uuid}) do
+    Memelex.Fluxus.event({:open_tidbit, get!(t_uuid)})
+  end
 
   @doc ~s(Create a link between two TidBits.)
   def link(base_node, link_node) do
@@ -197,17 +234,16 @@ defmodule Memelex.My.Wiki do
     :ok
   end
 
-  # def open(params) do
-  #   find(params) |> Memelex.Utils.ToolBag.open_external_textfile()
-  # end
-
   # @spec delete(any) :: any
-  # def delete([tidbit | rest]) do
-  #   GenServer.call(Memelex.WikiServer, {:delete_tidbit, tidbit})
-  #   delete(rest)
-  # end
+  def delete([]), do: :ok
 
-  def delete(%Memelex.TidBit{} = tidbit) do
-    GenServer.call(WikiServer, {:delete_tidbit, tidbit})
+  def delete([tidbit | rest]) do
+    # TODO maybe do this as a bulk operation
+    GenServer.call(Memelex.WikiServer, {:delete, tidbit})
+    delete(rest)
+  end
+
+  def delete(query) do
+    GenServer.call(WikiServer, {:delete, query})
   end
 end

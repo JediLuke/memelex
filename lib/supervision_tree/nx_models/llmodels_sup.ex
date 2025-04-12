@@ -10,15 +10,14 @@ defmodule Memelex.LLModels.Supervisor do
   def init(_args) do
     Logger.debug("#{__MODULE__} initializing...")
 
+    # to debug booting the children, try calling ModelServer.serving() in iex
     children = [
-      # Mistral - NX.Serving & the GenServer which controls access to it
-      # {Nx.Serving, serving: Memelex.LLModelServer.Mistral.serving(), name: Mistral},
-      # Memelex.LLModelServer.Mistral,
-      Memelex.NxServ.Whisper
+      # {Nx.Serving, serving: Memelex.NxModels.Mistral7B.serving(), name: Mistral7B}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
   end
+
 end
 
 # defmodule Memelex.LLM.Supervisor do
@@ -43,7 +42,7 @@ end
 # Start the process-tree for a particular Memex environment.
 # """
 # def start_env(environment_details) do
-#   memex_top_mod = Memelex.Environment.TopSupervisor
+#   memex_top_mod = Memelex.Environment.TreeTopSuprvsr
 
 #   DynamicSupervisor.start_child(__MODULE__, %{
 #     id: memex_top_mod,

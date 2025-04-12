@@ -28,7 +28,9 @@ defmodule Memelex.Utils.GenerateMyModz do
             end
             """
 
-        IO.inspect(my_modz_elixir_module_code)
+        # IO.inspect(my_modz_elixir_module_code)
+
+        IO.inspect(memex_env_directory, label: "MMX DIR")
 
         my_modz_full_filepath = memex_env_directory <> "/" <> @my_modz
 

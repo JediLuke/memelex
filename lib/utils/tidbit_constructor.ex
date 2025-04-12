@@ -47,7 +47,13 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
     params |> Map.merge(%{uuid: UUID.uuid4()})
   end
 
+  # def title_is_valid_or_volatile!(%{is_volatile?: true} = params) do
+  #   Logger.warning "creating a voltile tidbit..."
+  #   params
+  # end
+
   def title_is_valid!(%{title: t} = params) when is_bitstring(t) do
+    #TODO should ssert volatile is false
     params
   end
 
@@ -119,12 +125,18 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
   # end
 
   def validate_type!(%{type: {:struct, struct_module}} = params) when is_atom(struct_module) do
-    # TODO deprecate these tuples I think... just use lists
+    # TODO maybe we should just ditch this whole idea of having a `:struct` type, and just USE IT DIRECTLY? I think I had a reason for doing it though??
+    # Also, keep this tuple, we might aswell, and just convert it to the list (which we need for JSON serializing, I think right?>???)
     params |> Map.merge(%{type: ["struct", struct_module]})
   end
 
   def validate_type!(%{type: ["struct", struct_module]} = params) when is_atom(struct_module) do
     params |> Map.merge(%{type: ["struct", struct_module]})
+  end
+
+  def validate_type!(%{type: nil} = params) do
+    # raise "attempting to create a new TidBit with unknown type: #{inspect(unknown)}"
+    params
   end
 
   def validate_type!(%{type: unknown}) do
@@ -133,8 +145,7 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
 
   def validate_type!(params) do
     params
-    # default to simple text TidBit if type isn't provided
-    |> Map.merge(%{type: ["text"]})
+    |> Map.merge(%{type: nil})
     |> validate_type!()
   end
 
@@ -179,6 +190,14 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
     create_new_text_snippet_file(params |> Map.merge(%{data: ""}))
   end
 
+  def enforce_type_field_is_a_list!(%{type: nil} = params) do
+    Map.merge(params, %{type: []})
+  end
+
+  def enforce_type_field_is_a_list!(%{type: []} = params) do
+    params
+  end
+
   def enforce_type_field_is_a_list!(%{type: [_type | _rest]} = params) do
     params
   end
@@ -186,6 +205,34 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
   # def enforce_type_field_is_a_list!(%{type: _t}) do
   #   raise "type field must be a list of strings"
   # end
+
+  def check_the_data_is_valid_for_the_given_type(%{type: nil, data: d} = params) when is_binary(d) do
+    check_the_data_is_valid_for_the_given_type(params |> Map.put(:type, ["text"]))
+    # raise "TidBits with no type cannot contain data"
+  end
+
+  def check_the_data_is_valid_for_the_given_type(%{type: [], data: d} = params) when is_binary(d) do
+    check_the_data_is_valid_for_the_given_type(params |> Map.put(:type, ["text"]))
+    # raise "TidBits with no type cannot contain data"
+  end
+
+  def check_the_data_is_valid_for_the_given_type(%{type: nil, data: d} = params) when not is_nil(d) do
+    raise "TidBits with no type cannot contain data"
+  end
+
+  def check_the_data_is_valid_for_the_given_type(%{type: [], data: d} = params) when not is_nil(d) do
+    raise "TidBits with no type cannot contain data"
+  end
+
+  def check_the_data_is_valid_for_the_given_type(%{type: nil} = params) do
+    Map.merge(params, %{type: [], data: []})
+    |> merge_meta(%{"is_draft?" => true})
+  end
+
+  def check_the_data_is_valid_for_the_given_type(%{type: []} = params) do
+    Map.merge(params, %{type: [], data: []})
+    |> merge_meta(%{"is_draft?" => true})
+  end
 
   def check_the_data_is_valid_for_the_given_type(
         %{type: ["text_snippet"], data: %{filename: filename}} = params
@@ -200,13 +247,18 @@ defmodule Memelex.Utils.TidBits.ConstructorLogic do
   end
 
   # external means, it's a file saved on the disc
-  def check_the_data_is_valid_for_the_given_type(%{type: ["external", _any_sub_type]} = params) do
+  def check_the_data_is_valid_for_the_given_type(%{type: ["external", sub_type]} = params) do
     case params.data do
       %{"file_path" => fp} when is_binary(fp) ->
         if File.exists?(fp) do
           params
         else
-          raise "Could not create new TidBit - the filepath appears valid, but could not file a file at: #{inspect(params.data)}"
+          if sub_type == "audio/mpeg" do
+            # hax hax hax lol, need to ignore it if we make a new voice recording
+            params
+          else
+            raise "Could not create new TidBit - the filepath appears valid, but could not file a file at: #{inspect(params.data)}"
+          end
         end
 
       # TODO maybe just get rid of this tuple thing... what's wrong with string-key maps??

@@ -8,7 +8,8 @@ defmodule Memelex.Lib.Structs.MemexConcepts.V01.Collection do
 
   - `name`: The name or title of the collection.
   - `description`: A brief overview or summary of the collection.
-  - `type`: The type of collection (e.g., Book, Project, Playlist).
+  - `type`: The type of collection (e.g., ordered_list, tag_heirarchy, computed).
+  - `meta_type`: The type of collection (e.g., Book, Project, Playlist).
   - `items`: A list of references to TidBits or other collections included in this collection.
   - `relationships`: Describes the relationships between this collection and other collections or TidBits.
   - `curator`: Information about who is curating or managing the collection.
@@ -22,6 +23,7 @@ defmodule Memelex.Lib.Structs.MemexConcepts.V01.Collection do
   defstruct name: nil,
             description: nil,
             type: nil,
+            meta_type: nil,
             items: [],
             relationships: %{},
             curator: nil,
@@ -31,7 +33,8 @@ defmodule Memelex.Lib.Structs.MemexConcepts.V01.Collection do
           name: String.t(),
           description: String.t(),
           type: String.t(),
-          items: [TidBit.t() | t()],
+          meta_type: String.t() | nil,
+          items: [map()],
           relationships: map(),
           curator: String.t() | nil,
           metadata: map()
@@ -41,7 +44,9 @@ defmodule Memelex.Lib.Structs.MemexConcepts.V01.Collection do
     %__MODULE__{
       name: name,
       description: args["description"],
-      type: "ordered_list"
+      #TODO maybe dont default like this?
+      type: args["type"] || "ordered_list",
+      items: args["items"] || []
     }
   end
 end

@@ -8,7 +8,7 @@ defmodule Memelex.My.Journal do
   # def now do
   #   now = Memelex.My.current_time()
   #   {:ok, t} = now |> find_journal_entry()
-  #   Logger.warn "#TODO we should be appending a timestamp here..."
+  #   Logger.warning "#TODO we should be appending a timestamp here..."
   #   #TidBit.append(t, journal_timestamp(now)) #TODO and update modified time
   #   open(t)
   # end
@@ -69,6 +69,7 @@ defmodule Memelex.My.Journal do
     Logger.info("creating new Journal entry `#{new_title}`...")
 
     t =
+      #TODO hide this behind My.Wiki dont use M.TidBit
       Memelex.TidBit.new(%{
         title: new_title,
         type: {:external, :textfile},

@@ -28,6 +28,10 @@ defmodule Memelex.My.Agents do
     Memelex.AgentHandler.boot_agent(agent)
   end
 
+  def activate(agent) do
+
+  end
+
   def new(%{"name" => name} = args) do
     # agent_name = to_camel_case(name)
 

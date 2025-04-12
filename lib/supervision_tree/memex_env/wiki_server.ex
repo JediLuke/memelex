@@ -8,7 +8,6 @@ defmodule Memelex.WikiServer do
   """
   use GenServer
   require Logger
-  alias Memelex.TidBit
   alias Memelex.Utils.{FileIO, WikiSearch, WikiManagement}
 
   def start_link(params) do
@@ -31,7 +30,8 @@ defmodule Memelex.WikiServer do
     {:noreply, state |> Map.merge(%{wiki: tidbit_list})}
   end
 
-  def handle_call({:new_tidbit, %TidBit{} = t}, _from, state) do
+  def handle_call({:new_tidbit, %Memelex.TidBit{} = t}, _from, state) do
+     #TODO this needs to be done in wormhole !
     WikiManagement.new_tidbit(%{tidbit: t, state: state})
     |> case do
       {:ok, new_wiki} ->
@@ -52,18 +52,20 @@ defmodule Memelex.WikiServer do
   end
 
   def handle_call({:get, %{uuid: t_uuid}}, _from, state) when is_binary(t_uuid) do
+     #TODO this needs to be done in wormhole !
     case Enum.find(state.wiki, &(&1.uuid == t_uuid)) do
       nil ->
         {:reply, {:error, "No TidBit found with UUID #{t_uuid}"}, state}
 
-      %TidBit{} = t ->
+      %Memelex.TidBit{} = t ->
         {:reply, {:ok, t}, state}
     end
   end
 
   def handle_call({:find_one, query}, _from, state) do
+    #TODO this needs to be done in wormhole !
     result = WikiSearch.find_one(state.wiki, query)
-    {:reply, result, state}
+    {:reply, {:ok, result}, state}
   end
 
   # returns multiple tidbits, in a list (no tuple)
@@ -102,11 +104,11 @@ defmodule Memelex.WikiServer do
   #   {:reply, {:ok, %{"deleted_items" => deleted_items}}, %{state | wiki: new_wiki}}
   # end
 
-  def handle_call(:deactivate, _from, memex_env) do
-    Logger.info("deactivating...")
-    # TODO update Application config, shjut down the Wiki, etc...
-    {:stop, :normal, memex_env}
-  end
+  # def handle_call(:deactivate, _from, memex_env) do
+  #   Logger.info("deactivating...")
+  #   # TODO update Application config, shjut down the Wiki, etc...
+  #   {:stop, :normal, memex_env}
+  # end
 
   # # fetches exactly 1 TidBit
   # def handle_call({:find_tidbit, params}, _from, state) do
@@ -122,7 +124,7 @@ defmodule Memelex.WikiServer do
   #   end
   # end
 
-  def handle_call({:save_tidbit, %TidBit{} = tidbit}, _from, state) do
+  def handle_call({:save_tidbit, %Memelex.TidBit{} = tidbit}, _from, state) do
     case Wormhole.capture(save_tidbit_fn(state, tidbit), crush_report: true) do
       {:ok, {saved_tidbit, new_wiki}} ->
         {:reply, {:ok, saved_tidbit}, %{state | wiki: new_wiki}}
@@ -133,7 +135,9 @@ defmodule Memelex.WikiServer do
     end
   end
 
-  def handle_call({:modify_tidbit, %TidBit{} = tidbit, args}, _from, state) do
+  def handle_call({:modify_tidbit, %Memelex.TidBit{} = tidbit, args}, _from, state) do
+    IO.inspect(tidbit)
+    IO.inspect(args)
     case Wormhole.capture(modify_tidbit_fn(state, tidbit, args), crush_report: true) do
       {:ok, {saved_tidbit, new_wiki}} ->
         {:reply, {:ok, saved_tidbit}, %{state | wiki: new_wiki}}
@@ -144,9 +148,9 @@ defmodule Memelex.WikiServer do
     end
   end
 
-  def handle_call({:update_tidbit, %TidBit{} = tidbit, updates}, from, state) do
+  def handle_call({:update_tidbit, %Memelex.TidBit{} = tidbit, updates}, from, state) do
     IO.puts("UPDATE??? CALL MODIFY!!!")
-    handle_call({:modify_tidbit, %TidBit{} = tidbit, updates}, from, state)
+    handle_call({:modify_tidbit, %Memelex.TidBit{} = tidbit, updates}, from, state)
   end
 
   def handle_call({:delete, tidbit}, _from, state) do
@@ -220,7 +224,7 @@ defmodule Memelex.WikiServer do
   #   {:update, tidbit, updates}
   # })
 
-  def save_tidbit_fn(state, %TidBit{} = tidbit) do
+  def save_tidbit_fn(state, %Memelex.TidBit{} = tidbit) do
     fn ->
       {:ok, saved_tidbit, new_wiki} = WikiManagement.save_tidbit(state, tidbit)
       Memelex.Fluxus.event({:tidbit_saved, saved_tidbit})
@@ -229,10 +233,12 @@ defmodule Memelex.WikiServer do
     end
   end
 
-  def modify_tidbit_fn(state, %TidBit{} = tidbit, args) do
+  def modify_tidbit_fn(state, %Memelex.TidBit{} = tidbit, args) do
     fn ->
-      modified_tidbit = TidBit.modify(tidbit, args)
+      modified_tidbit = Memelex.TidBit.modify(tidbit, args)
+      IO.inspect(modified_tidbit, label: "AFTER THE MODS\n\n")
       {:ok, saved_tidbit, new_wiki} = WikiManagement.save_tidbit(state, modified_tidbit)
+      IO.inspect(saved_tidbit, label: "\n\nafter the save \n\n")
       Memelex.Fluxus.event({:tidbit_saved, saved_tidbit})
 
       {saved_tidbit, new_wiki}

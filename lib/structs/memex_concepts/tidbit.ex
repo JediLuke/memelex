@@ -15,9 +15,11 @@ defmodule Memelex.TidBit do
   @enforce_keys [:uuid, :title, :created, :creator, :modified, :modifier]
 
   @derive Jason.Encoder
-
   alias Memelex.Lib.Structs.MemexConcepts.V01.Collection
   require Logger
+  use StructAccess
+
+  alias Memelex.Lib.Structs.MemexConcepts.V01.Agent
 
   defstruct [
     # each tiddler has a UUID
@@ -46,6 +48,8 @@ defmodule Memelex.TidBit do
     status: nil,
     # each time a TidBit changes, we track the history #TODO
     history: [],
+    # a flag that we set to true when need to create a TidBit but which hasn't been saved to disk yet
+    # draft?: true,
     # a flag for allowing soft-delete
     deleted?: false,
     # timestamp for deletion, if it has been soft-deleted
@@ -56,9 +60,18 @@ defmodule Memelex.TidBit do
     meta: []
   ]
 
+  # NOTE the ONLY place this should get called from is Memelex.My.Wiki, all other parts of the softwre wanting to interface with the Wiki need to go through that module
   def new(params) do
     Memelex.Utils.TidBits.ConstructorLogic.construct(params)
+
+    #TODO save it here??
   end
+
+  # def new(params, save?: true) do
+  #   params
+  #   |> new()
+  #   |> Memelex.My.Wiki.save()
+  # end
 
   @doc ~s(This is here for the sake of the nice API: TidBit.new/1)
   # def new(params) do
@@ -183,7 +196,7 @@ defmodule Memelex.TidBit do
   #   %__MODULE__{gui: %{focus: :body}, type: ["external", "textfile"]} = tidbit,
   #   {:move_cursor, _section, _delta}
   # ) do
-  #   Logger.warn "unable to apply modification: `:move_cursor` to tidbit of type: #{inspect tidbit.type}"
+  #   Logger.warning "unable to apply modification: `:move_cursor` to tidbit of type: #{inspect tidbit.type}"
   #   tidbit
   # end
 
@@ -273,6 +286,14 @@ defmodule Memelex.TidBit do
     %{tidbit | data: new_data}
   end
 
+  def modify(%__MODULE__{meta: old_meta} = tidbit, %{meta: new_meta}) when is_map(old_meta) and is_map(new_meta) do
+    %{tidbit | meta: Map.merge(old_meta, new_meta)}
+  end
+
+  # def modify(%__MODULE__{meta: []} = tidbit, %{meta: new_meta}) when is_map(new_meta) do
+  #   %{tidbit | meta: [new_meta]}
+  # end
+
   @actions "actions"
 
   # a specific modification of the meta of #TODOs
@@ -310,6 +331,11 @@ defmodule Memelex.TidBit do
     %{tidbit | history: new_history}
   end
 
+  def modify(%__MODULE__{data: %Agent{} = agent} = tidbit, %{agent_status: agent_s}) do
+    new_agent = %{agent|status: agent_s}
+    %{tidbit|data: new_agent}
+  end
+
   # TODO probably dont keep this one but just to get the ball rolling on a new feature...
   # def modify(%__MODULE__{tags: tags, meta: meta} = tidbit, %{next_action: a}) do
   #   if not Enum.member?(tags, "#TODO") do
@@ -333,7 +359,8 @@ defmodule Memelex.TidBit do
   #   end
   # end
 
-  @todo_statuses ["done", "cancelled"]
+  #TODO move todo status to a meta field
+  @todo_statuses ["done", "cancelled", "blocked"]
   def modify(%__MODULE__{} = tidbit, %{"status" => s}) when s in @todo_statuses do
     %{tidbit | status: s}
   end
@@ -486,7 +513,7 @@ defmodule Memelex.TidBit do
   #   end
   # end
 
-  def modify(%__MODULE__{tags: t_list, meta: meta} = tidbit, %{"priority" => p}) do
+  def modify(%__MODULE__{tags: t_list, meta: meta} = tidbit, %{"priority" => p}) when is_integer(p) and p >= 1 do
     if not Enum.member?(t_list, "#TODO") do
       raise "Can not modify the priority of a TidBit which is not a #TODO."
     end
@@ -496,8 +523,8 @@ defmodule Memelex.TidBit do
         # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
         %{tidbit | meta: [%{"priority" => p}]}
 
-      [%{"priority" => p} = t_meta] when is_integer(p) and p >= 0 ->
-        %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p})]}
+      # [%{"priority" => p} = t_meta] when is_integer(p) ->
+      #   %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p})]}
 
       [t_meta] when is_map(t_meta) ->
         # the TidBit has a meta field, but it's not a map with a priority key
@@ -527,11 +554,63 @@ defmodule Memelex.TidBit do
   def modify(
         %__MODULE__{type: ["struct", Collection], data: %Collection{items: c_items}} = tidbit,
         %{
-          add_to_collection: %Memelex.TidBit{uuid: t_uuid, title: t_title, type: t_type}
+          add_item_to_this_collection: %Memelex.TidBit{uuid: t_uuid, title: t_title, type: t_type}
         }
       ) do
     new_items = c_items ++ [%{uuid: t_uuid, title: t_title, type: t_type}]
     %{tidbit | data: %{tidbit.data | items: new_items}}
+  end
+
+  def modify(
+        %__MODULE__{} = tidbit,
+        {:part_of_collection, %Memelex.TidBit{type: ["struct", Collection]} = collection_t}
+      ) do
+    # new_items = c_items ++ [%{uuid: t_uuid, title: t_title, type: t_type}]
+    # %{tidbit | data: %{tidbit.data | items: new_items}}
+
+    # case meta do
+    #   [] ->
+    #     # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
+    #     %{tidbit | meta: [%{"priority" => 1}]}
+
+    #   [%{"part_of_collections" => p} = t_meta] when is_integer(p) and p >= 0 ->
+    #     %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p + 1})]}
+
+    #   [t_meta] when is_map(t_meta) ->
+    #     # the TidBit has a meta field, but it's not a map with a priority key
+    #     %{tidbit | meta: [Map.merge(t_meta, %{"priority" => 1})]}
+    # end
+
+
+    # %{tidbit | meta: %{tidbit.data | items: new_items}}
+
+    IO.puts "HERE ADD SOME META TO #{inspect tidbit.meta}"
+
+    new_meta =
+      case m = tidbit.meta do
+        # [] ->
+        #   # %{tidbit | meta: [%{"urgency" => 1, "importance" => 1}]}
+        #   %{tidbit | meta: [%{"priority" => 1}]}
+
+        # [%{"priority" => p} = t_meta] when is_integer(p) and p >= 0 ->
+        #   %{tidbit | meta: [Map.merge(t_meta, %{"priority" => p + 1})]}
+
+        # [t_meta] when is_map(t_meta) ->
+        #   # the TidBit has a meta field, but it's not a map with a priority key
+        #   %{tidbit | meta: [Map.merge(t_meta, %{"priority" => 1})]}
+
+        #TODO maybe change this to "member_of_these_collections
+        %{"member_of_these_collections" => collections_list} ->
+          Map.merge(m, %{"member_of_these_collections" => collections_list ++ [collection_t.uuid]})
+
+        m when is_map(m) ->
+          Map.merge(m, %{"member_of_these_collections" => [collection_t.uuid]})
+
+        # _otherwise ->
+        #   raise "couldn't match META"
+      end
+
+    %{tidbit | meta: new_meta}
   end
 
   def due_date(%__MODULE__{} = t) do
@@ -541,6 +620,16 @@ defmodule Memelex.TidBit do
 
       _otherwise ->
         nil
+    end
+  end
+
+  def due_date(%__MODULE__{} = tidbit, as: String) do
+    case due_date(tidbit) do
+      nil ->
+        nil
+
+      %Date{} = d ->
+        Date.to_string(d)
     end
   end
 
@@ -564,6 +653,16 @@ defmodule Memelex.TidBit do
 
       _otherwise ->
         nil
+    end
+  end
+
+  def planned_date(%__MODULE__{} = tidbit, as: String) do
+    case planned_date(tidbit) do
+      nil ->
+        nil
+
+      %Date{} = d ->
+        Date.to_string(d)
     end
   end
 

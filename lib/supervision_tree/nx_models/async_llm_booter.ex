@@ -19,21 +19,13 @@ defmodule Memelex.LLModels.AsyncBooter do
 
   def handle_continue(:boot_async, state) do
     Logger.debug("#{__MODULE__} starting asynchronous LLM servers...")
-    # You can match on the result here and decide what to do if the supervisor fails to start
-    case Memelex.LLModels.Supervisor.start_link([]) do
-      {:ok, _pid} ->
-        Logger.info("LLM Supervisor started successfully.")
-
-      {:error, _reason} ->
-        Logger.error("LLM Supervisor failed to start.")
-    end
+    Memelex.LLModels.Supervisor.start_link([])
 
     {:noreply, state}
   end
 
-  # You'll also need to define a handle_info callback to deal with exit messages
   def handle_info({:EXIT, _pid, reason}, state) do
-    Logger.warn("Process exited with reason: #{inspect(reason)}")
+    Logger.warn("Memelex.LLModels.Supervisor exited with reason: #{inspect(reason)}")
     # Take any necessary action here, such as restarting the process or alerting someone
     {:noreply, state}
   end

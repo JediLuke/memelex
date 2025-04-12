@@ -8,6 +8,7 @@ defmodule Memelex.My.Snippets do
     |> TidBitUtils.sanitize_conveniences()
     |> Map.merge(%{type: ["external", "textfile"]})
     |> TidBitUtils.apply_tag(@snippets_tag)
+    #TODO move this behind My.Wiki
     |> Memelex.TidBit.new()
     |> Memelex.My.Wiki.new()
   end

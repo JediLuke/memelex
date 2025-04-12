@@ -47,13 +47,38 @@ defmodule Memelex.My.Collections do
 
   # I basically need `new` & `add_to` for MVP
 
-  def new(name) when is_bitstring(name) do
-    Memelex.My.Wiki.new(%{
-      title: name,
+  # def new(name) when is_bitstring(name) do
+  #   Memelex.My.Wiki.new(%{
+  #     title: name,
+  #     type: ["struct", Collection],
+  #     data: Collection.new(%{"name" => name})
+  #   })
+  # end
+
+  # This does the same thing as `new` it returns a TidBit, it just doesn't save it to the DB
+  # the reason is because when we create a new tidbit through the GUI I want to be able to
+  # instantiate the struct, but without actually creating it yet - think of it like a client
+  # side validation, I _have_ to wait for the user to enter a valid name before I can save the Collection
+  def new_draft do
+    # create new TidBit struct without saving it in the Memex (to disk)
+    #TODO hide this behind My.Wiki
+    t = Memelex.TidBit.new(%{
+      title: "unnamed",
       type: ["struct", Collection],
-      data: Collection.new(%{"name" => name})
+      data: Collection.new(%{"name" => "unnamed"})
     })
+
+    # return the tuple so it cant easliy get confused with a real saved TidBit
+    {:draft, t}
   end
+
+  # def new_draft_item(collection_tidbit_uuid) do
+  #   Memelex.TidBit.new(%{
+  #     title: "unnamed",
+  #     type: ["struct", Collection],
+  #     data: Collection.new(%{"name" => "unnamed"})
+  #   }, save?: true)
+  # end
 
   # this should return all TidBits of type "collection" but filter out sub-collections
   def all do
@@ -76,11 +101,21 @@ defmodule Memelex.My.Collections do
     all() |> Enum.map(& &1.title)
   end
 
+  def add_to(tidbit_uuid, %Memelex.TidBit{} = t) when is_binary(tidbit_uuid) do
+    add_to(Memelex.My.Wiki.get!(tidbit_uuid), t)
+  end
+
   # appends a tidbit to a collection
   def add_to(%Memelex.TidBit{data: %Collection{}} = collection_t, %Memelex.TidBit{} = t) do
-    # TODO this should also add something to the tidbit we're adding, put something in the metadata about being part of a collection...
+    # TODO this should also add something to the tidbit we're adding, ...
+
+    # put something in the metadata of the TidBit we're adding, about being part of a collection
+    {:ok, _modified_t} =
+      GenServer.call(Memelex.WikiServer, {:modify_tidbit, t, {:part_of_collection, collection_t}})
+
+    # modify the collection to include the new item
     {:ok, modified_collection_t} =
-      GenServer.call(Memelex.WikiServer, {:modify_tidbit, collection_t, %{add_to_collection: t}})
+      GenServer.call(Memelex.WikiServer, {:modify_tidbit, collection_t, %{add_item_to_this_collection: t}})
 
     modified_collection_t
   end
@@ -98,6 +133,10 @@ defmodule Memelex.My.Collections do
       [collection] ->
         {:ok, collection}
     end
+  end
+
+  def force_refresh(%Memelex.TidBit{data: %Collection{}} = collection_t) do
+    # go through the collection & refresh names etc
   end
 
   # def recursively_create_list([], tidrefs), do: tidrefs
