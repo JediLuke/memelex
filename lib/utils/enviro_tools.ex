@@ -70,8 +70,6 @@ defmodule Memelex.Utils.EnviroTools do
       env_module_name = String.to_atom(env_name)
       IO.puts("custom my_modz module is: #{inspect(env_module_name)}")
 
-      IO.inspect(memex_env_directory, label: "MMX DIR 111")
-
       memex_env =
         Memelex.Environment.new(%{
           name: env_name,
@@ -79,8 +77,6 @@ defmodule Memelex.Utils.EnviroTools do
           memex_directory: memex_env_directory,
           backups_directory: memex_backups_dir
         })
-
-      IO.inspect(memex_env.memex_directory, label: "MMX DIR 222")
 
       IO.puts("Writing custom my_modz.ex file...")
       :ok = Memelex.Utils.GenerateMyModz.write_new_my_modz(memex_env)

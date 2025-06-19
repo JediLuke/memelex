@@ -11,9 +11,14 @@ defmodule Memelex.Utils.GenerateMyModz do
         name: memex_name,
         my_modz: module_name,
         memex_directory: memex_env_directory
-    }) do
+    }) when is_binary(memex_name) do
 
         #TODO validate the name first??
+
+        # capitalize the first letter - https://elixirforum.com/t/string-capitalize-should-have-a-leave-the-rest-of-the-word-alone-option/31095/10
+	<<first_grapheme::utf8, rest::binary>> = memex_name
+        memex_name = String.capitalize(<<first_grapheme::utf8>>) <> rest
+
         my_modz_elixir_module_code =
             """
             defmodule #{memex_name} do
@@ -27,10 +32,6 @@ defmodule Memelex.Utils.GenerateMyModz do
                 end
             end
             """
-
-        # IO.inspect(my_modz_elixir_module_code)
-
-        IO.inspect(memex_env_directory, label: "MMX DIR")
 
         my_modz_full_filepath = memex_env_directory <> "/" <> @my_modz
 

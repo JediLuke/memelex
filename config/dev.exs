@@ -1,6 +1,5 @@
 import Config
 
-
 # # e.g. `/home/luke/.memex`
 # memex_dotfile = System.user_home!() <> "/.memex"
 
@@ -31,7 +30,7 @@ import Config
 # end
 
 config :memelex,
-  active?: false,
+  active?: false
   # environment: %{
   #   name: @memex,
   #   memex_directory: "/Users/luke/memex/#{@memex}_copy",

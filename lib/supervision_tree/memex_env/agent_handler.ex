@@ -11,7 +11,7 @@ defmodule Memelex.AgentHandler do
   end
 
   def boot_agent(agent) do
-    GenServer.cast(__MODULE__, {:boot_agent, agent})
+    GenServer.call(__MODULE__, {:boot_agent, agent})
   end
 
   def boot_agents_under_handler() do
@@ -30,6 +30,11 @@ defmodule Memelex.AgentHandler do
     Logger.debug("#{__MODULE__} is booting all agents in the memex...")
     :ok = boot_agents()
     {:reply, :ok, state}
+  end
+
+  def handle_call({:boot_agent, %Agent{} = agent}, _from, state) do
+    r = do_boot_agent(agent)
+    {:reply, r, state}
   end
 
   def handle_cast({:boot_agent, %Agent{} = agent}, state) do
@@ -97,6 +102,14 @@ defmodule Memelex.AgentHandler do
   defp do_boot_agent(%Agent{config: %{"mfa" => {agent_mod, :start_link, [args]}}} = agent) do
     Logger.debug("#{__MODULE__} attempting to boot #{agent.name}...")
 
+    #{:ok, module_file_path} = Memelex.Utils.AgentUtils.write_agent_module_file(memex_env, agent_t)
+    #[{_module, _bytecode}] = Code.load_file(module_file_path)
+
+    mmx_dir = Memelex.Utils.EnviroTools.environment_details().memex_directory
+    agent_file = Memelex.Utils.AgentUtils.agent_filepath(agent)
+
+    agent_module_file = Path.join(mmx_dir, agent_file)
+    [{agent_mod, _bytecode}] = Code.load_file(agent_module_file)
 
     # # {:ok, _pid} = agent_mod.start_link(args)
     # # {:error, {:already_started, #PID<0.1911.0>}}
@@ -113,16 +126,20 @@ defmodule Memelex.AgentHandler do
         case agent_mod.start_link(args) do
           {:ok, _} ->
             Logger.debug("#{__MODULE__} successfully booted #{agent_mod}.")
+            {:ok, "#{__MODULE__} successfully booted #{agent_mod}."}
 
           {:error, {:already_started, _}} ->
             Logger.warn("#{__MODULE__} tried to boot #{agent_mod} but it was already running.")
+            {:error, "#{__MODULE__} tried to boot #{agent_mod} but it was already running."}
         end
 
       {:error, :nofile} ->
         Logger.debug("#{__MODULE__} unable to load #{agent_mod} because it doesn't exist.")
+        {:error, :nofile}
 
       {:error, reason} ->
         Logger.error("#{__MODULE__} unable to load #{agent_mod}. #{inspect(reason)}")
+        {:error, reason}
     end
   end
 

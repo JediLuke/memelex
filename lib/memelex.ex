@@ -14,22 +14,20 @@ defmodule Memelex do
   ```
   """
 
-  defdelegate environment_details, to: Memelex.Utils.EnviroTools
+  defdelegate start_new_memex, to: Memelex.Utils.EnviroTools
 
-  defdelegate initialize_new_environment, to: Memelex.Utils.EnviroTools
+  defdelegate environment_details, to: Memelex.Utils.EnviroTools
 
   defdelegate load_env(env), to: Memelex.Utils.EnviroTools
 
   defdelegate deactivate, to: Memelex.Utils.EnviroTools
 
-  defdelegate new(args), to: Memelex.My.Wiki
+  # defdelegate new(args), to: Memelex.My.Wiki
 
-  defdelegate edit(args), to: Memelex.My.Wiki
+  # defdelegate edit(args), to: Memelex.My.Wiki
 
   defdelegate find!, to: Memelex.My.Wiki
   defdelegate find!(query), to: Memelex.My.Wiki
-
-  defdelegate start_new_memex, to: Memelex.Utils.EnviroTools
 
   # defdelegate search(search_term), to: Memelex.My.Wiki
   # defdelegate search(search_term, opts), to: Memelex.My.Wiki

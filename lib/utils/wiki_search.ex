@@ -301,7 +301,6 @@ defmodule Memelex.Utils.WikiSearch do
   # TODO `find` always tried to get exactly one tidbit returned
 
   # def find(%{tidbit_uuid: t_uuid}) when is_bitstring(t_uuid) do
-  #   IO.puts("DEPRECATE MEEEE")
   #   find(%{uuid: t_uuid})
   # end
 

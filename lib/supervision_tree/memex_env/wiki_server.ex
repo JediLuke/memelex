@@ -46,9 +46,9 @@ defmodule Memelex.WikiServer do
     {:reply, {:ok, state.wiki}, state}
   end
 
-  def handle_call(:list_all_tidbits, _from, state) do
-    IO.puts("DEPRECATE MEEEEE")
-    {:reply, {:ok, state.wiki}, state}
+  def handle_call(:list_all_tidbits, from, state) do
+    # one day go through & rip out the calls to `:list_all_tidbits` but for now just reroute
+    handle_call(:list_all, from, state)
   end
 
   def handle_call({:get, %{uuid: t_uuid}}, _from, state) when is_binary(t_uuid) do

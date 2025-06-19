@@ -30,7 +30,6 @@ defmodule Memelex.App.BootLoader do
 
   @impl GenServer
   def handle_continue(:check_for_memex_environment, state) do
-    # TODO here - check for dotfiles? or just use the config?
     cond do
       dotfile_found?() ->
         memex_env =
@@ -106,21 +105,12 @@ defmodule Memelex.App.BootLoader do
       when is_bitstring(memex_name) and
              is_bitstring(memex_dir) do
     if File.dir?(memex_dir) do
-      # def load_env(dir) when is_binary(dir) do
-      #   load_env(%{dir: dir})
-      # end
-
-      # def load_env(%{dir: memex_env_directory}) do
-      # directyor = get_last_directory_part(memex_env_directory)
 
       memex_env =
         Memelex.Environment.new(%{
           name: memex_name,
           memex_directory: memex_dir
         })
-
-      # load_env(memex_env)
-      # end
 
       Memelex.Utils.EnviroTools.load_env(memex_env)
     else
