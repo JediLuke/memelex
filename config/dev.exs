@@ -30,7 +30,12 @@ import Config
 # end
 
 config :memelex,
-  active?: false
+  active?: true,
+  environment: %{
+    name: "Archimedes",
+    memex_directory: "/Users/luke/memex/dev/Archimedes",
+    backups_directory: "/Users/luke/memex/backups/dev/Archimedes"
+  }
   # environment: %{
   #   name: @memex,
   #   memex_directory: "/Users/luke/memex/#{@memex}_copy",

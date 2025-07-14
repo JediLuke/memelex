@@ -31,18 +31,22 @@ defmodule Memelex.App.BootLoader do
   @impl GenServer
   def handle_continue(:check_for_memex_environment, state) do
     cond do
+      env_declared_in_elixir_app_config?() ->
+        # Load environment from app config (dev/test environments have priority)
+        app_env = Application.get_env(:memelex, :environment)
+        Logger.info("Loading Memex environment from app config: #{inspect(app_env[:name])}")
+        memex_env = Memelex.Environment.new(app_env)
+        probe(memex_env)
+        {:noreply, state}
+
       dotfile_found?() ->
+        # Use dotfile as fallback
+        Logger.info("Loading Memex environment from dotfile")
         memex_env =
           Memelex.Utils.FileIO.readmap(dotfile())
           |> Memelex.Environment.new()
 
         probe(memex_env)
-
-        {:noreply, state}
-
-      env_declared_in_elixir_app_config?() ->
-        # TODO here we need to load the environment from the config
-        # and then boot it
         {:noreply, state}
 
       true ->
@@ -50,7 +54,6 @@ defmodule Memelex.App.BootLoader do
           "booting Memex with no environment configured...\n\nConsider using `Memelex.load_env/1` to load a Memex environment."
         )
 
-        # TODO ask to start/create a new environment here??
         {:noreply, state}
     end
   end
@@ -76,8 +79,13 @@ defmodule Memelex.App.BootLoader do
     Path.join(home_dir, ".memex")
   end
 
-  # TODO
-  def env_declared_in_elixir_app_config?, do: false
+  def env_declared_in_elixir_app_config? do
+    case Application.get_env(:memelex, :environment) do
+      nil -> false
+      _ -> true
+    end
+  end
+
 
   def boot_env(env) do
     # this function is mainly used when we boot into an inactive memex mode (like in development) and want to boot into a known memex
