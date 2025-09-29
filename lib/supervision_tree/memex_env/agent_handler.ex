@@ -42,6 +42,11 @@ defmodule Memelex.AgentHandler do
     {:noreply, state}
   end
 
+  def handle_cast({:start_agent, %Agent{} = agent}, state) do
+    do_boot_agent(agent)
+    {:noreply, state}
+  end
+
   # TODO this should probably be a dynamic supervisor, not a GenServer...
 
   def handle_info({:EXIT, _pid, _reason}, state) do
@@ -52,11 +57,6 @@ defmodule Memelex.AgentHandler do
 
   def handle_info(:boot_agents, state) do
     :ok = boot_agents()
-    {:noreply, state}
-  end
-
-  def handle_cast({:start_agent, %Agent{} = agent}, state) do
-    do_boot_agent(agent)
     {:noreply, state}
   end
 
@@ -93,13 +93,13 @@ defmodule Memelex.AgentHandler do
         do_boot_agent(agent)
       end)
     else
-      Logger.warn("Not booting custom agents because `boot_custom_agents?()` returned false.")
+      Logger.warning("Not booting custom agents because `boot_custom_agents?()` returned false.")
     end
 
     :ok
   end
 
-  defp do_boot_agent(%Agent{config: %{"mfa" => {agent_mod, :start_link, [args]}}} = agent) do
+  defp do_boot_agent(%Agent{config: %{"mfa" => {_agent_mod, :start_link, [args]}}} = agent) do
     Logger.debug("#{__MODULE__} attempting to boot #{agent.name}...")
 
     #{:ok, module_file_path} = Memelex.Utils.AgentUtils.write_agent_module_file(memex_env, agent_t)
@@ -109,7 +109,7 @@ defmodule Memelex.AgentHandler do
     agent_file = Memelex.Utils.AgentUtils.agent_filepath(agent)
 
     agent_module_file = Path.join(mmx_dir, agent_file)
-    [{agent_mod, _bytecode}] = Code.load_file(agent_module_file)
+    [{agent_mod, _bytecode}] = Code.require_file(agent_module_file)
 
     # # {:ok, _pid} = agent_mod.start_link(args)
     # # {:error, {:already_started, #PID<0.1911.0>}}
@@ -129,7 +129,7 @@ defmodule Memelex.AgentHandler do
             {:ok, "#{__MODULE__} successfully booted #{agent_mod}."}
 
           {:error, {:already_started, _}} ->
-            Logger.warn("#{__MODULE__} tried to boot #{agent_mod} but it was already running.")
+            Logger.warning("#{__MODULE__} tried to boot #{agent_mod} but it was already running.")
             {:error, "#{__MODULE__} tried to boot #{agent_mod} but it was already running."}
         end
 
@@ -148,7 +148,7 @@ defmodule Memelex.AgentHandler do
       }) do
     case Process.whereis(agent_mod) do
       nil ->
-        Logger.warn("Unable to stop agent #{agent_mod} because it's not running.")
+        Logger.warning("Unable to stop agent #{agent_mod} because it's not running.")
 
       pid ->
         GenServer.stop(pid)

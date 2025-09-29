@@ -3,7 +3,7 @@ defmodule Memelex.My.Wiki do
   W.I.K.I. = What I Know is...
   """
   alias Memelex.WikiServer
-  alias Memelex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
+  # alias Memelex.Utils.TidBits.ConstructorLogic, as: TidBitUtils
   require Logger
 
   # def new(param_one, param_two) do
